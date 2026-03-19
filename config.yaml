@@ -25,3 +25,48 @@ subscriptions:
     stage: A
     diff_threshold_pct: 15
   keyword_recall_mode: or
+  intent_profiles:
+    - tag: 3DGSIR
+      description: 查找3D Gaussian Splatting与逆向渲染（Inverse Rendering）相关的学术论文
+      enabled: true
+      keywords:
+        - keyword: Inverse Rendering
+          keyword_cn: 逆向渲染
+          query: Inverse rendering techniques for 3D reconstruction
+        - keyword: 3D Gaussian
+          keyword_cn: 3D高斯
+          query: G
+        - keyword: 3D Gaussian Splatting
+          keyword_cn: 3D高斯泼溅
+          query: 3D Gaussian Splatting representation and rendering
+        - keyword: Relighting
+          keyword_cn: 重打光
+          query: Relighting and illumination decomposition using 3DGS
+        - keyword: Physically Based Rendering
+          keyword_cn: 基于物理的渲染
+          query: Physically based rendering for Gaussian Splatting
+        - keyword: Geometry Reconstruction
+          keyword_cn: 几何重建
+          query: Geometry and surface reconstruction from Gaussians
+      intent_queries:
+        - query: State of the art methods for inverse rendering using 3D Gaussian Splatting
+          query_cn: 使用3D高斯泼溅进行逆向渲染的前沿方法
+          enabled: true
+          source: manual
+          note: ''
+        - query: Decomposing material and lighting from 3D Gaussian representations
+          query_cn: 从3D高斯表示中分解材质和光照
+          enabled: true
+          source: manual
+          note: ''
+        - query: Differentiable Gaussian Splatting for scene appearance acquisition
+          query_cn: 用于场景外观获取的可微高斯泼溅技术
+          enabled: true
+          source: manual
+          note: ''
+        - query: Physically based inverse rendering with 3D Gaussian primitives
+          query_cn: 基于3D高斯原语的物理逆向渲染
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-03-19T15:16:36.331Z'
