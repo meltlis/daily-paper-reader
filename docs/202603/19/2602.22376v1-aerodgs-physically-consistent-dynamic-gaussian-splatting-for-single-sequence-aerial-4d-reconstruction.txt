@@ -1,0 +1,241 @@
+Title: AeroDGS: Physically Consistent Dynamic Gaussian Splatting for Single-Sequence Aerial 4D Reconstruction
+
+URL Source: https://arxiv.org/pdf/2602.22376v1
+
+Published Time: Fri, 27 Feb 2026 01:11:54 GMT
+
+Number of Pages: 11
+
+Markdown Content:
+# AeroDGS: Physically Consistent Dynamic Gaussian Splatting for Single-Sequence Aerial 4D Reconstruction 
+
+# Hanyang Liu The Ohio State University 
+
+liu.12021@buckeyemail.osu.edu 
+
+# Rongjun Qin The Ohio State University 
+
+qin.324@osu.edu 
+
+(a) Input aerial video captured from a moving flight over urban scenes 
+
+(b) Fixed-view rendered video of the reconstructed dynamic scene 
+
+(c) Vehicle trajectory comparison in the green box of (b) with SOTA 
+
+Figure 1. Summary. Given (a) a monocular aerial video of dynamic urban scenes, AeroDGS reconstructs a physically consistent 4D model by jointly integrating static structures and dynamic motion with Gaussian representation. The framework (b) performs photorealistic novel-view synthesis with temporally coherent geometry and (c) achieves higher reconstruction fidelity compared to state-of-the-art methods. Please use Adobe Reader / PDF-XChange Editor to see animations. 
+
+# Abstract 
+
+Recent advances in 4D scene reconstruction have signifi-cantly improved dynamic modeling across various domains. However, existing approaches remain limited under aerial conditions with single-view capture, wide spatial range, and dynamic objects of limited spatial footprint and large mo-tion disparity. These challenges cause severe depth am-biguity and unstable motion estimation, making monocu-lar aerial reconstruction inherently ill-posed. To this end, we present AeroDGS , a physics-guided 4D Gaussian splat-ting framework for monocular UAV videos. AeroDGS in-troduces a Monocular Geometry Lifting module that recon-structs reliable static and dynamic geometry from a single aerial sequence, providing a robust basis for dynamic es-timation. To further resolve monocular ambiguity, we pro-pose a Physics-Guided Optimization module that incorpo-rates differentiable ground-support, upright-stability, and trajectory-smoothness priors, transforming ambiguous im-age cues into physically consistent motion. The framework jointly refines static backgrounds and dynamic entities with stable geometry and coherent temporal evolution. We addi-tionally build a real-world UAV dataset that spans various altitudes and motion conditions to evaluate dynamic aerial reconstruction. Experiments on synthetic and real UAV scenes demonstrate that AeroDGS outperforms state-of-the-art methods, achieving superior reconstruction fidelity in dynamic aerial environments. 
+
+# 1. Introduction 
+
+Aerial-based 4D reconstruction provides a unique vantage for urban perception by offering wide spatial coverage, un-obstructed viewpoints and temporally continuous observa-tions [34, 37]. These advantages make it an appealing foundation for applications such as large-scale scene un-derstanding [11], autonomous navigation [36], digital twin construction [7], and city-level dynamic perception [52]. However, aerial 4D reconstruction also faces severe chal-lenges [37] due to the intrinsic limitations of UAV imag-ing. Lightweight platforms typically operate with a sin-gle monocular camera, offering narrow baselines and lim-ited parallax. The large flight altitude introduces wide depth variation, while dynamic objects appear small, move rapidly, and undergo strong illumination and appearance changes across frames [25]. These factors together make accurate depth estimation and motion recovery in aerial monocular settings highly ill-posed. 
+
+> arXiv:2602.22376v1 [cs.CV] 25 Feb 2026
+
+Recent explicit Gaussian representation [17] has opened new possibilities for efficient scene reconstruction. By encoding geometry and appearance through spatially dis-tributed Gaussian primitives, it enables efficient optimiza-tion and real-time rendering with fine geometric and photo-metric detail. Building upon this formulation, 4DGS [45] extends Gaussian Splatting from static to dynamic scenes, achieving high-fidelity temporal modeling. More advances [13, 23, 35, 41, 46] further demonstrate strong scalability and visual quality in large-scale outdoor environments. In parallel, several feed-forward based methods [40, 42, 48] are proposed for fast 3D and 4D reconstruction from single-view videos, showing strong potential for efficient scene re-covery. However, these approaches remain limited under aerial conditions. Indoor methods [45, 47] are typically designed for small-scale scenes with large articulated motions and controlled illumination, and thus always struggle to general-ize to large-scale outdoor environments with varying light-ing and small fast-moving objects of limited spatial foot-print. Ground-based outdoor frameworks [13, 23] rely on multi-view and LiDAR supervision, which is often imprac-tical for lightweight UAV platforms operating at high al-titude. Due to the lack of large-scale aerial datasets, most feed-forward monocular models are trained on ground-level scenes [40, 48], leading to unreliable motion recovery and inaccurate dynamic localization when applied to aerial im-agery. As a result, monocular aerial 4D reconstruction re-mains an open and fundamental challenge. To this end, we propose AeroDGS, a physics-guided 4D Gaussian Splatting framework designed for monocular UAV videos. The central idea is that while depth cues in aerial imagery are inherently ambiguous, urban scenes are not arbitrary. Since their geometry is shaped by persistent physical and structural regularities, buildings, roads, and dynamic objects follow stable spatial relations that define a low-dimensional manifold of plausible configurations. AeroDGS proposes a Physics-Guided Optimization module that encodes these regularities as differentiable constraints, guiding each object to maintain ground support, upright sta-bility, and trajectory smoothness. These physics-guided ob-jectives are coupled with a Monocular Geometry Lifting module that refines both static geometry and dynamic struc-ture from raw monocular cues. Together, they transform in-herently ambiguous monocular observations into consistent 4D reconstructions with stable geometry and coherent mo-tion. We summarize our main contributions as follows: • We present AeroDGS , a novel 4D Gaussian Splatting framework for single-sequence aerial dynamic recon-struction. The framework integrates object decomposi-tion, temporal association, and Gaussian-based optimiza-tion to recover both static background and dynamic mo-tion in urban environments. • We propose a Physics-Guided Optimization module as a monocular regularization paradigm. It embeds physics-guided priors into differentiable optimization for aerial monocular reconstruction, enabling stable recovery of moving objects under single-view ambiguity. • We construct a real-world Aero4D dataset that captures representative urban layouts and motion patterns, offering rich geometric and semantic context. The dataset serves as a benchmark for advancing aerial 4D reconstruction under realistic monocular conditions. We demonstrate that AeroDGS delivers high-quality recon-struction of dynamic urban scenes and outperforms exist-ing methods across both synthetic and real UAV scenarios, achieving state-of-the-art performance in dynamic aerial 4D reconstruction. 
+
+# 2. Related Work 
+
+2.1. Urban Scene Reconstruction 
+
+Urban reconstruction has been extensively studied for decades [51]. Early pipelines such as Structure-from-Motion [32] and Multi-View Stereo [33] enable large-area geometry recovery from multi-view imagery. With NeRF [26] and its urban variants [24, 39], the task is reformulated as volumetric neural rendering, which improves realism and robustness to outdoor appearance changes. To enhance effi-ciency and scalability, 3DGS [17] introduces explicit neural primitives. It replaces dense volumetric sampling with spa-tially distributed Gaussians, achieving real-time rendering and compact storage. Later frameworks [13, 23, 35, 41, 46] further explore hierarchical optimization and temporal con-sistency, showing that explicit primitives can achieve a good balance between quality, speed, and extensibility at the city scale. Meanwhile, feed-forward neural models [40, 42, 48] have emerged that learn to predict geometric and appear-ance information in a single pass, enabling fast reconstruc-tion from sparse observations. These advances are applied in both ground and aerial set-tings. Ground-based systems for autonomous driving bene-fit from dense coverage and stable trajectories, while aerial reconstruction from UAV and satellite imagery provides broad spatial reach and unobstructed viewpoints. Despite extensive research, most aerial reconstructions [20, 22, 25, 39] still focus on static mapping, recovering buildings, ter-rain, and infrastructure while filtering out moving elements. The limited parallax and small footprint of dynamic objects make consistent temporal modeling especially challenging. A recent work [10] explores pedestrian reconstruction from low-altitude UAV videos and demonstrates promising per-formance. It relies on mesh-based surface modeling tai-lored to close-range human motion capture. Building on these foundations, we present a novel framework for dy-namic aerial reconstruction of urban scenes, which jointly Figure 2. Overview of the proposed AeroDGS. Given a monocular aerial sequence, AeroDGS introduces a Monocular Geometry Lifting module to reconstruct scene geometry and separate dynamic foreground from static background. The recovered seeds are composed and jointly optimized in a unified Gaussian representation. A Physics-Guided Optimization module is proposed to resolve pose ambiguity of dynamic objects under monocular settings, ensuring physically consistent 4D reconstruction. 
+
+represents static structures and temporally coherent motion. 
+
+2.2. Dynamic Scene Representations 
+
+Modeling time-varying scenes is a key challenge in 3D re-construction. Early NeRF-based work [19, 29, 38] extended the static formulation by introducing canonical spaces and deformation fields. These approaches achieve high-quality dynamic view synthesis but are computationally expensive and difficult to scale. Subsequent studies [5, 14] improve efficiency through structured encodings. More recently, explicit neural primitives are adopted for dynamic model-ing. 4DGS [45] represents motion using Gaussian defor-mation fields, while frameworks integrate motion regular-ization [41], parametric trajectories [13, 23], and contex-tual reasoning [35] to achieve real-time rendering and tem-porally consistent reconstruction. Complementary to these optimization-based pipelines, feed-forward neural methods [40, 48] leverage learned scene priors to estimate dynamic geometry and motion efficiently, bypassing iterative opti-mization across time. Despite this progress, most optimization-based dynamic representations [13, 45] rely on multi-view inputs to pro-vide geometric priors for motion estimation. Such priors help disambiguate object trajectories and maintain spatial consistency, but they are difficult to obtain in aerial imagery captured by a single monocular camera. Meanwhile, sev-eral feed-forward methods have been proposed for dynamic reconstruction, yet most [40, 42] are trained on ground-based data and fail to generalize to aerial settings due to limited training resources. In UAV scenes, dynamic objects often occupy only a small fraction of the image, and their locations along depth are inherently ambiguous, making it challenging to recover accurate and consistent motion. To this end, we design a set of physically guided regularization terms to resolve the positional ambiguity of dynamic ob-jects in monocular settings, reducing their degrees of free-dom to conform to real-world physical rules and improving reconstruction stability. 
+
+2.3. UAV Dataset 
+
+Progress in aerial vision research is driven by datasets. Most existing benchmarks [3, 6, 12] provide large-scale an-notated imagery for 2D perception tasks. Several subse-quent datasets [8, 43] extend this line of research toward 3D geometry recovery and static reconstruction, provid-ing dense point clouds and multi-view imagery to bench-mark aerial mapping, surface reconstruction, and localiza-tion tasks. However, datasets for aerial 4D reconstruction remain scarce. Partial simulation-based resources [15, 49] offer synthetic aerial scenes that can approximately support spatio-temporal modeling, yet they are generated in virtual environments and contain discrete image sequences where adjacent frames are captured from widely separated view-points. The large spatial gaps and lack of natural motion continuity prevent them from representing realistic aerial dynamics. Moreover, collecting real dynamic UAV data is also challenging due to flight regulations, costly annotation, and the difficulty of maintaining precise temporal align-ment and object consistency [31]. To address this gap, we construct a representative UAV dataset comprising multiple aerial sequences with both static and dynamic components, serving as a benchmark for dynamic aerial reconstruction under realistic flight conditions. 
+
+# 3. Method 
+
+We present AeroDGS, a physics-guided dynamic Gaus-sian framework for monocular UAV videos that recon-structs physically consistent 4D scenes under real-world constraints. An overview of our method is shown in Fig. 2. Sec. 3.1 defines the problem, Sec. 3.2 introduces the Monocular Geometry Lifting module, Sec. 3.3 details Figure 3. Physics-Guided Optimization. (a) In monocular UAV scenes, dynamic objects exhibit uncertain 3D positions and orientations due to single-view geometry and small image foot-prints. AeroDGS introduces differentiable physics-guided con-straints that enforce (b) ground support , maintaining consistent contact with the local plane; (c) upright stability , aligning the ver-tical axis with the reference direction; and (d) trajectory smooth-ness , ensuring continuous acceleration and temporally coherent motion. (e) These constraints transform under-determined poses into a single real-world-consistent configuration, yielding accurate motion recovery and stable optimization. 
+
+the Gaussian representation, and Sec. 3.4 describes the pro-posed Physics-Guided Optimization module. 
+
+3.1. Problem Setup 
+
+Given a monocular UAV video sequence {It}Tt=1 captured by a moving aerial camera flying over an urban area, each frame It observes a scene composed of a static background and a set of dynamic objects O. The camera intrinsics and poses Pt ∈ SE (3) are unknown and will be estimated. For each dynamic object o ∈ O , its 3D center co,t and transfor-mation To,t ∈ SE (3) describe its motion through time. The goal is to reconstruct a temporally coherent 4D scene rep-resentation that enables photorealistic novel-view rendering and consistent recovery of camera trajectories, scene geom-etry, and dynamic motion from monocular input. 
+
+3.2. Monocular Geometry Lifting 
+
+Conventional Structure-from-Motion pipelines [32, 33] of-ten fail to reconstruct dynamic objects and produce only sparse ground points, lacking the geometric priors required for subsequent motion reasoning and physical constraints [4]. Therefore, we introduce a Monocular Geometry Lifting module that recovers complete 3D geometry, camera poses, and dynamic instances from a single sequence input. We first leverage zero-shot 2D foundation cues to ob-tain coarse semantic and structural priors for subsequent reconstruction. For each frame It, a depth estimator [28] provides a dense pseudo-depth map Dt and camera intrin-sics K. Segmentation [21, 30] and tracking [9] of po-tentially movable instances produce 2D correspondences across all frames, maintaining consistent object identities over time. Meanwhile, long-term background feature tracks 
+
+{kt,j } [16] are triangulated and refined through local bundle adjustment [2] to estimate scale-consistent keypoints and camera poses Pt = [ Rt | tt].To correct scale variations in monocular depth, a local ratio field between geometric and predicted depths is com-puted on tracked points and interpolated to yield a refined depth ˜Dt. Each pixel x is then back-projected into 3D as 
+
+Xt(x) = Π −1(x, ˜Dt(x), K ), (1) forming a point map that jointly represents static and po-tentially dynamic regions. Pixels belonging to the same 2D instance are grouped into an object-level point set Po,t . For each object, an oriented bounding box is fitted via PCA [1] to estimate its 3D center co,t and footprint size (w, ℓ ). The height h is predicted by a pretrained MLP, since each mov-ing object is captured under single-view geometry in the monocular setting, where depth cannot be inferred due to the absence of multi-view constraints. ID switches and oc-clusions in 2D instance tracking are resolved in 3D space by grounding objects on physically plausible positions along camera rays and enforcing trajectory smoothness. Objects with 3D displacements below a threshold are regarded as static to reduce unnecessary tracking overhead, and the rest are initialized as dynamic candidates. This process provides dense ground geometry and temporally consistent object priors as a robust foundation for subsequent optimization. 
+
+3.3. Scene Representation 
+
+We represent both static backgrounds and dynamic fore-grounds using explicit 3D Gaussian primitives [17]. This unified and differentiable representation enables object-level motion optimization while preserving geometric con-sistency with the static scene. 
+
+Gaussian primitives. Each primitive is defined by its center position μi ∈ R3, covariance Σi ∈ R3×3, opacity 
+
+αi, and appearance Ai. Aerial imagery exhibits large ap-pearance variation caused by changing sunlight direction, surface reflection, and camera motion. Inspired by [13], we model the appearance of each Gaussian as a continuous field: 
+
+Ai = fϕ(μi, d, t, e o), (2) where fϕ denotes a shared appearance field conditioned on spatial position μi, viewing direction d, and temporal in-dex t, with an additional embedding eo for dynamic in-stances. The field is parameterized through three com-plementary encodings. Spatial coordinates are normalized within the scene bounds and embedded through a hash grid [27] to capture localized spatial variation. Directional de-pendency is represented by a spherical-harmonic basis to account for view-related appearance changes, while tempo-ral information is encoded by sinusoidal embeddings that maintain temporal ordering and support smooth appearance evolution. This joint parameterization models the rich ap-pearance variations of urban environments without storing per-Gaussian spherical harmonics, enhancing temporal co-herence and reducing memory cost for denser Gaussian rep-resentation. 
+
+Dynamic object encoding. For each moving instance o,a subset of Gaussians Go is defined in its canonical ob-ject space bounded by an axis-aligned box with dimensions 
+
+(w, ℓ, h ). The motion of each object is modeled as a contin-uous 6DoF trajectory in the Lie group SE (3) ,
+
+To,t = exp  ξo(t), (3) where ξo(t) ∈ se (3) denotes the time-dependent twist vec-tor describing rotational and translational components. To account for small deviations and pose uncertainties, a resid-ual correction ∆To,t is introduced and optimized jointly with other parameters, 
+
+T ′ 
+
+> o,t
+
+= ∆ To,t · To,t . (4) Each Gaussian center is then transformed into the world co-ordinate system as 
+
+μi,t = T ′ 
+
+> o,t
+
+◦ μi. (5) Temporal continuity between timestamps is achieved by spline interpolation in SE (3) , ensuring smooth and phys-ically consistent trajectories. 
+
+Scene composition. At each timestamp t, the scene is represented as the union of a static Gaussian set and dy-namic subsets. The static component Gstatic encodes back-ground geometry and appearance, while each dynamic sub-set Go evolves over time through its transformation T ′
+
+> o,t
+
+.The overall scene at time t is formulated as 
+
+G(t) = Gstatic ∪ [
+
+> o∈O
+
+T ′ 
+
+> o,t
+
+◦ G o. (6) To ensure physical consistency under monocular recon-struction, we introduce a Physics-Guided Optimization module that reduces motion uncertainty of dynamic objects based on real-world physical constraints. A local ground plane Γt is inferred from static geometry to guide dynamic motion, ensuring physically plausible trajectories while al-lowing local flexibility. The detailed formulations are de-scribed in Sec. 3.4 and illustrated in Fig. 3. 
+
+Rendering. The composed scene G(t) is rendered follow-ing the differentiable rasterization of 3DGS [17]. Each primitive projects to a 2D Gaussian on the image plane, and pixel colors are obtained by standard α-compositing: 
+
+It(x) = X
+
+> i
+
+"
+
+αi(x) Ai(x) Y
+
+> j<i
+
+ 1 − αj (x)#
+
+. (7) 
+
+3.4. Physics-Guided Optimization 
+
+Initialization. The optimization begins with the result of the Monocular Geometry Lifting. Static Gaussians are de-fined in the world coordinate system, where each recon-structed 3D point provides the mean μi, and its local spa-tial distribution determines the covariance Σi. Dynamic Gaussians are represented in canonical object spaces and initialized from the 3D points within the estimated object bounding regions. Camera poses Pt obtained from bundle adjustment are refined by a learnable residual ∆Pt to cor-rect small frame misalignments. 
+
+Overall objective. We couple photometric supervision with physics-guided regularization to jointly optimize ap-pearance fidelity and physically consistent motion. The to-tal loss is defined as: 
+
+L = λphoto Lphoto +λsup Lsupport +λupr Lupright +λtraj Ltraj . (8) 
+
+Photometric supervision. The photometric term Lphoto 
+
+measures the color consistency between the rendered image 
+
+ˆIt and the input frame It using a combination of L1 norm and SSIM losses [44]. During the warm-up stage, static and dynamic regions are equally weighted to stabilize the opti-mization. After the static background converges, the weight of dynamic regions is increased to refine fine-scale appear-ance and motion. 
+
+Physics-guided regularization. To achieve geometri-cally and temporally consistent motion under monocular UAV input, three regularization terms are proposed. 
+
+Support consistency. Each dynamic object is encouraged to stay close to the estimated local ground level. The sup-port loss is defined as: 
+
+Lsupport = Eo,t 
+
+ψ r⊤
+
+> o,t
+
+(co,t − ˆc go,t ) , (9) where ψ(·) is a robust penalty that measures the signed dis-tance between the object center and its ground projection along the camera viewing ray ro,t . co,t denotes the 3D cen-ter of object o at time t, and ˆc go,t is its intersection with the local ground plane. In our formulation, the constraint is ap-plied to co,t shifted upward by half of the object height, en-suring that the bottom of the vehicle stays sufficiently close to the ground along the ray direction while tolerating small reconstruction noise. 
+
+Upright stability. The upright constraint aligns the verti-cal axis of each object with the reference direction: 
+
+Lupright = Eo,t [1 − | uo,t ·vo,t |] , (10) where uo,t denotes the object’s vertical axis and vo,t is the reference vector, defined as the ground normal nt for rigid objects and the gravity direction g for non-rigid ones. This loss constrains 3-DoF rotations to align with physically plausible motion by encouraging rotation around the verti-cal axis, reducing unrealistic tilting and facilitating stable pose optimization. 
+
+Trajectory smoothness. To promote temporally coherent motion, we design a second-order smoothness constraint: 
+
+Ltraj = Eo,t 
+
+∥co,t +1 − 2co,t + co,t −1∥22
+
+ . (11) This loss suppresses high-frequency jitter and enforces con-tinuous acceleration. It also allows objects exiting the scene to retain their motion momentum, ensuring they move nat-urally out of view rather than abruptly stopping at the scene boundary. 
+
+# 4. Dataset 
+
+Real-world monocular UAV data for dynamic 4D recon-struction remain scarce. Existing related aerial datasets [31, 49] are synthetic and lack temporally continuous view-points, limiting their suitability for real-world dynamic modeling. To address this gap, we build the Aero4D dataset, a curated and compact validation dataset consisting of UAV sequences that capture realistic flight trajectories, temporal continuity, and varied dynamic scenes. 
+
+Data collection. The dataset combines aerial data col-lected in urban environments with representative aerial footage selected from online sources. All sequences are recorded at resolutions from 2K to 4K, at 15 fps, with flight altitudes between 50 m and 100 m, covering areas of ap-proximately 2,000–18,000 m 2 and a ground sampling dis-tance of 3–5 cm/px. The scenes include varied illumination and motion conditions, with the aim of reflecting typical UAV observation settings. 
+
+Annotations. Each frame is associated with a camera pose and a dense point cloud representing the static en-vironment. Dynamic instances are annotated with pixel-level instance masks and temporally consistent IDs. For each instance, we provide 3D bounding boxes with 6-DoF poses and trajectories defined in a global coordinate system. Please refer to the supplementary material for more details. 
+
+# 5. Experiments 
+
+Scenes. We evaluate our method on both synthetic and real UAV benchmarks. For the synthetic dataset UAV3D [49], we use the sequences in Town03, which contain a relatively large number of dynamic objects and diverse motion patterns. For real-world evaluation, we select three representative UAV scenes: Intersection-Night, a low-altitude nighttime intersection with dense traffic and specu-lar reflections; Downtown-High, a high-altitude flight over urban blocks where dynamic objects appear small; and Intersection-Day, a daytime intersection featuring vehicles that slowly start or stop near traffic lights. These scenes to-gether cover diverse altitudes, illumination conditions, and traffic dynamics for comprehensive evaluation. 
+
+Evaluation metrics. Following prior work, we evaluate novel-view image quality using PSNR, SSIM [44], and LPIPS [50], and assess dynamic fidelity with Dyn-PSNR, computed as the PSNR within dynamic regions. All re-ported results are averaged over three independent runs for consistency. 
+
+5.1. Implementation Details 
+
+Experiments are conducted on a single NVIDIA RTX 6000 Ada GPU with 48 GB of memory. Train-ing is performed for 30K iterations using the Adam optimizer [18]. The loss weights are set to λphoto = 1 .0,
+
+λsup = 0 .05 , λupr = 0 .1, and λtraj = 0 .02 . The dynamic-mask weighting increases linearly from 1.0 to 1.3 between 7K and 15K iterations. Meanwhile, the physics-guided constraints decay by 50% over the same period. Training uses full-resolution images, with an 8:2 split between training and validation frames. 
+
+5.2. Comparison to State-of-the-Art 
+
+We compare our method with recent state-of-the-art approaches in dynamic 4D reconstruction, including B´ ezierGS [23], CoDa-4DGS [35], DeGauss [41], 4DGF [13], and 4DGS [45]. Our method operates on monoc-ular video input and internally estimates scene geometry, whereas baselines require external priors. Accordingly, baselines are evaluated using the priors provided with each dataset following their standard protocols. For the Aero4D dataset, although these priors are carefully refined during dataset construction, minor residual inaccuracies may still persist due to the inherent ambiguity of monocular aerial capture, consistent with realistic UAV conditions. 
+
+Quantitative results. Tab. 1 and Tab. 2 summarize the novel-view synthesis results on the synthetic and real-world UAV datasets, respectively. Our method achieves the best overall performance across the metrics, outperforming pre-vious approaches by up to 4 dB on dynamic regions. Although our method achieves the best dynamic quality among all baselines, we observe that the gap between static and dynamic metrics is relatively large, which should not be interpreted as a direct quality difference. Due to the non-linear motion of the UAV platform and moving objects, the estimated positions of dynamic objects in the novel views may exhibit slight deviations from the ground truth loca-tions. For small moving objects that occupy only a limited number of pixels in the image, such positional differences can lead to a noticeable drop in PSNR, even when the per-ceptual quality remains comparable. This effect is further reflected in our qualitative results, which provide additional evidence of the robustness of our dynamic reconstruction. Table 1. Novel-view synthesis results on Aero4D dataset. AeroDGS performs better than state-of-the-art methods under varying alti-tudes, illumination, and real-world conditions.                                                                                       
+
+> Intersection-Night Downtown-High Intersection-Day Method PSNR ↑SSIM ↑LPIPS ↓Dyn-PSNR ↑PSNR ↑SSIM ↑LPIPS ↓Dyn-PSNR ↑PSNR ↑SSIM ↑LPIPS ↓Dyn-PSNR ↑
+> 4DGS [45] 22.02 0.808 0.420 11.74 23.06 0.784 0.402 10.50 19.33 0.729 0.644 -B´ ezierGS [23] 21.89 0.794 0.295 12.50 19.51 0.726 0.366 -28.31 0.928 0.120 -CoDa-4DGS [35] 23.10 0.834 0.335 -15.37 0.583 0.652 9.56 19.75 0.727 0.521 -DeGauss [41] 27.90 0.925 0.114 -28.31 0.908 0.110 18.70 28.00 0.880 0.194 15.30 4DGF [13] 30.54 0.969 0.036 13.48 35.38 0.977 0.014 17.94 32.35 0.967 0.023 17.26
+> AeroDGS (Ours) 32.71 0.971 0.024 17.65 37.91 0.974 0.013 22.47 34.84 0.971 0.018 21.75
+
+Table 2. Novel-view synthesis results on the challenging syn-thetic UAV3D [49] dataset. AeroDGS outperforms the state of the art, with notably better performance in dynamic scene regions.                             
+
+> Method PSNR ↑SSIM ↑LPIPS ↓Dyn-PSNR ↑
+> 4DGS [45] 11.65 0.326 0.742 -B´ ezierGS [23] 10.34 0.303 0.620 7.16 CoDa-4DGS [35] 13.36 0.385 0.602 -DeGauss [41] 23.53 0.834 0.139 -4DGF [13] 31.78 0.968 0.031 10.63
+> AeroDGS (Ours) 33.61 0.972 0.026 15.60
+
+Notably, the overall metrics of the synthetic benchmark are lower than those of the real-world sequences. This re-sults from discrete camera trajectories and long-baseline viewpoint shifts in the synthetic UAV3D [49] dataset, which amplify temporal misalignment and reveal the lack of a ded-icated, high-quality dataset for aerial 4D reconstruction. 
+
+Qualitative results. Novel view synthesis results on the synthetic UAV3D [49] and real-world Aero4D dataset are shown in Figure 4. For the synthetic scenario, 4DGS [45], B´ ezierGS [23], and CoDa-4DGS [35] exhibit no-ticeable blurring and incomplete geometry under wide-baseline viewpoints, while DeGauss [41] and 4DGF [13] successfully reconstruct static structures but struggle to re-cover dynamic objects. In contrast, our method produces more complete and consistent reconstructions for both static and dynamic components. For the real-world scenes, our method reconstructs dynamic objects with sharper details and clearer shapes than previous art across diverse altitudes, illumination conditions, and motion ranges, demonstrating the effectiveness of our dynamic object representation. 
+
+5.3. Ablation Studies 
+
+Scene initialization. We compare our Monocular Geom-etry Lifting module with an SfM-based setup. In the base-line, sparse points and camera poses are reconstructed by COLMAP [32], and a ground plane is fitted from the sparse points. Dynamic objects are localized by projecting their 
+
+Table 3. Ablation study. Novel view synthesis on the Aero4D dataset.                            
+
+> PSNR ↑SSIM ↑LPIPS ↓Dyn-PSNR ↑
+> w/o Initialization 33.82 0.952 0.027 17.75 w/o Ground Support 34.51 0.967 0.022 19.23 w/o Upright Stability 34.10 0.963 0.025 19.35 w/o Trajectory Smoothness 34.63 0.966 0.022 19.89 w/o Dynamic Mask 34.23 0.959 0.024 19.12 Ours (Full Model) 34.67 0.971 0.021 20.07
+
+2D mask centers onto this plane along camera rays, esti-mating 3D position, moving direction, and size from the back-projected region with a fixed height prior. Tracking is obtained by associating 3D centers across frames. This initialization provides only a coarse prior, which in-troduces plane bias and consequently leads to pose inaccu-racies for dynamic objects. As shown in Tab. 3, the dynamic PSNR drops noticeably. 
+
+Physics-Guided optimization. Tab. 3 further demon-strates the contribution of each physics-guided constraint and the dynamic-mask weighting. Removing the ground-support, upright-stability, or trajectory-smoothness term de-grades reconstruction fidelity and temporal coherence, con-firming that each physically grounded constraint stabilizes monocular optimization and enforces realistic motion. In addition, removing the dynamic-mask weighting weakens small-object reconstruction, as it reduces attention to fine-scale motion in aerial views. The full model achieves the best overall performance across the metrics, validating the effectiveness of the proposed regularization module. 
+
+5.4. Limitation 
+
+Despite the strong performance of AeroDGS, several limita-tions remain. First, our current 3 m motion-threshold strat-egy for dynamic–static separation may misclassify objects with small localized motion, causing them to be processed by the static pipeline and appear blurred in the rendered re-sults. Second, we do not reconstruct pedestrians, as they appear only partially with extremely limited pixel coverage in high-altitude aerial views. Figure 4. Qualitative comparison of novel-view synthesis results. Our method achieves high overall reconstruction quality on both synthetic and real-world UAV datasets, maintaining high fidelity under diverse altitudes, illumination, and object motion patterns. Sharper structures and more consistent appearance are preserved compared with state-of-the-art methods. Yellow and red rectangular boxes high-light enlarged views of corresponding areas for visual comparison. 
+
+# 6. Conclusion 
+
+We present AeroDGS, a physics-guided dynamic Gaus-sian splatting framework for monocular aerial 4D recon-struction. The Monocular Geometry Lifting module initial-izes the scene geometry, while Gaussian-based optimiza-tion jointly refines static and dynamic components. The Physics-Guided Optimization module resolves pose ambi-guity of dynamic objects in monocular aerial videos through physically grounded motion modeling. Experiments under varying flight altitudes, illumination, and motion conditions show that AeroDGS outperforms state-of-the-art methods, delivering high-fidelity reconstruction and temporally co-herent dynamics. 7. Acknowledgements 
+
+This work was partially supported by the United States Air Force Research Laboratory and the AFRL Regional Hub under Cooperative Agreement No. FA8750-22-2-0501, the Intelligence Advanced Research Projects Activity (IARPA) via the Department of Interior/Interior Business Center (DOI/IBC) under Grant No. 140D0423C0075, and the Of-fice of Naval Research under Grant No. N000142312670. 
+
+# References 
+
+[1] Herv´ e Abdi and Lynne J Williams. Principal component analysis. Wiley interdisciplinary reviews: computational statistics , 2(4):433–459, 2010. 4 [2] Sameer Agarwal, Noah Snavely, Steven M Seitz, and Richard Szeliski. Bundle adjustment in the large. In Euro-pean conference on computer vision , pages 29–42. Springer, 2010. 4 [3] Mohammadamin Barekatain, Miquel Mart´ ı, Hsueh-Fu Shih, Samuel Murray, Kotaro Nakayama, Yutaka Matsuo, and Hel-mut Prendinger. Okutama-action: An aerial view video dataset for concurrent human action detection. In Proceed-ings of the IEEE conference on computer vision and pattern recognition workshops , pages 28–35, 2017. 3 [4] Berta Bescos, Jos´ e M F´ acil, Javier Civera, and Jos´ e Neira. Dynaslam: Tracking, mapping, and inpainting in dynamic scenes. IEEE robotics and automation letters , 3(4):4076– 4083, 2018. 4 [5] Ang Cao and Justin Johnson. Hexplane: A fast representa-tion for dynamic scenes. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,pages 130–141, 2023. 3 [6] Yaru Cao, Zhijian He, Lujia Wang, Wenguan Wang, Yix-uan Yuan, Dingwen Zhang, Jinglin Zhang, Pengfei Zhu, Luc Van Gool, Junwei Han, et al. Visdrone-det2021: The vision meets drone object detection challenge results. In Proceed-ings of the IEEE/CVF International conference on computer vision , pages 2847–2854, 2021. 3 [7] Kanishk Chaturvedi and Thomas H Kolbe. Integrating dy-namic data and sensors with semantic 3d city models in the context of smart cities. ISPRS Annals of the Photogramme-try, Remote Sensing and Spatial Information Sciences , 4:31– 38, 2016. 1 [8] Meida Chen, Qingyong Hu, Zifan Yu, Hugues Thomas, An-drew Feng, Yu Hou, Kyle McCullough, Fengbo Ren, and Lucio Soibelman. Stpls3d: A large-scale synthetic and real aerial photogrammetry 3d point cloud dataset. arXiv preprint arXiv:2203.09065 , 2022. 3 [9] Ho Kei Cheng, Seoung Wug Oh, Brian Price, Alexander Schwing, and Joon-Young Lee. Tracking anything with de-coupled video segmentation. In ICCV , 2023. 4 [10] Jaehoon Choi, Dongki Jung, Christopher Maxey, Yong-han Lee, Sungmin Eum, Dinesh Manocha, and Heesung Kwon. Uav4d: Dynamic neural rendering of human-centric uav imagery using gaussian splatting. arXiv preprint arXiv:2506.05011 , 2025. 2 [11] Qiulei Dong, Mao Shu, Hainan Cui, Huarong Xu, and Zhanyi Hu. Learning stratified 3d reconstruction. Science China Information Sciences , 61(2):023101, 2018. 1 [12] Dawei Du, Yuankai Qi, Hongyang Yu, Yifan Yang, Kaiwen Duan, Guorong Li, Weigang Zhang, Qingming Huang, and Qi Tian. The unmanned aerial vehicle benchmark: Object detection and tracking. In Proceedings of the European con-ference on computer vision (ECCV) , pages 370–386, 2018. 3[13] Tobias Fischer, Jonas Kulhanek, Samuel Rota Bul` o, Lorenzo Porzi, Marc Pollefeys, and Peter Kontschieder. Dynamic 3d gaussian fields for urban areas. In The Thirty-eighth An-nual Conference on Neural Information Processing Systems ,2024. 2, 3, 4, 6, 7 [14] Sara Fridovich-Keil, Giacomo Meanti, Frederik Rahbæk Warburg, Benjamin Recht, and Angjoo Kanazawa. K-planes: Explicit radiance fields in space, time, and appearance. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vi-sion and Pattern Recognition , pages 12479–12488, 2023. 3 [15] Yue Hu, Shaoheng Fang, Weidi Xie, and Siheng Chen. Aerial monocular 3d object detection. IEEE Robotics and Automation Letters , 8(4):1959–1966, 2023. 3 [16] Nikita Karaev, Iurii Makarov, Jianyuan Wang, Natalia Neverova, Andrea Vedaldi, and Christian Rupprecht. Co-Tracker3: Simpler and better point tracking by pseudo-labelling real videos. 2024. 4 [17] Bernhard Kerbl, Georgios Kopanas, Thomas Leimk¨ uhler, and George Drettakis. 3d gaussian splatting for real-time radiance field rendering. ACM Transactions on Graphics , 42 (4), 2023. 2, 4, 5 [18] Diederik P. Kingma and Jimmy Ba. Adam: A method for stochastic optimization, 2017. 6 [19] Zhengqi Li, Simon Niklaus, Noah Snavely, and Oliver Wang. Neural scene flow fields for space-time view synthesis of dy-namic scenes. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 6498– 6508, 2021. 3 [20] Jiaqi Lin, Zhihao Li, Xiao Tang, Jianzhuang Liu, Shiy-ong Liu, Jiayue Liu, Yangdi Lu, Xiaofei Wu, Songcen Xu, Youliang Yan, and Wenming Yang. Vastgaussian: Vast 3d gaussians for large scene reconstruction. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 5166–5175, 2024. 2 [21] Shilong Liu, Zhaoyang Zeng, Tianhe Ren, Feng Li, Hao Zhang, Jie Yang, Chunyuan Li, Jianwei Yang, Hang Su, Jun Zhu, et al. Grounding dino: Marrying dino with grounded pre-training for open-set object detection. arXiv preprint arXiv:2303.05499 , 2023. 4 [22] Yang Liu, Chuanchen Luo, Zhongkai Mao, Junran Peng, and Zhaoxiang Zhang. Citygaussianv2: Efficient and geometri-cally accurate reconstruction for large-scale scenes. In The Thirteenth International Conference on Learning Represen-tations , 2025. 2 [23] Zipei Ma, Junzhe Jiang, Yurui Chen, and Li Zhang. B´ eziergs: Dynamic urban scene reconstruction with b´ ezier curve gaus-sian splatting. In ICCV , 2025. 2, 3, 6, 7 [24] Ricardo Martin-Brualla, Noha Radwan, Mehdi SM Sajjadi, Jonathan T Barron, Alexey Dosovitskiy, and Daniel Duck-worth. Nerf in the wild: Neural radiance fields for uncon-strained photo collections. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,pages 7210–7219, 2021. 2 [25] Christopher Maxey, Jaehoon Choi, Hyungtae Lee, Dinesh Manocha, and Heesung Kwon. Uav-sim: Nerf-based syn-thetic data generation for uav-based perception. In 2024 IEEE International Conference on Robotics and Automation (ICRA) , pages 5323–5329. IEEE, 2024. 1, 2 [26] Ben Mildenhall, Pratul P. Srinivasan, Matthew Tancik, Jonathan T. Barron, Ravi Ramamoorthi, and Ren Ng. Nerf: Representing scenes as neural radiance fields for view syn-thesis. In ECCV , 2020. 2 [27] Thomas M¨ uller, Alex Evans, Christoph Schied, and Alexan-der Keller. Instant neural graphics primitives with a multires-olution hash encoding. ACM Trans. Graph. , 41(4):102:1– 102:15, 2022. 4 [28] Luigi Piccinelli, Yung-Hsu Yang, Christos Sakaridis, Mattia Segu, Siyuan Li, Luc Van Gool, and Fisher Yu. UniDepth: Universal monocular metric depth estimation. In Proceed-ings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2024. 4 [29] Albert Pumarola, Enric Corona, Gerard Pons-Moll, and Francesc Moreno-Noguer. D-nerf: Neural radiance fields for dynamic scenes. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition , pages 10318–10327, 2021. 3 [30] Nikhila Ravi, Valentin Gabeur, Yuan-Ting Hu, Ronghang Hu, Chaitanya Ryali, Tengyu Ma, Haitham Khedr, Roman R¨ adle, Chloe Rolland, Laura Gustafson, Eric Mintun, Junt-ing Pan, Kalyan Vasudev Alwala, Nicolas Carion, Chao-Yuan Wu, Ross Girshick, Piotr Doll´ ar, and Christoph Feicht-enhofer. Sam 2: Segment anything in images and videos. 
+
+arXiv preprint arXiv:2408.00714 , 2024. 4 [31] Giulia Rizzoli, Francesco Barbato, Matteo Caligiuri, and Pietro Zanuttigh. Syndrone-multi-modal uav dataset for ur-ban scenarios. In Proceedings of the IEEE/CVF Interna-tional Conference on Computer Vision , pages 2210–2220, 2023. 3, 6 [32] Johannes Lutz Sch¨ onberger and Jan-Michael Frahm. Structure-from-motion revisited. In Conference on Com-puter Vision and Pattern Recognition (CVPR) , 2016. 2, 4, 7[33] Johannes Lutz Sch¨ onberger, Enliang Zheng, Marc Pollefeys, and Jan-Michael Frahm. Pixelwise view selection for un-structured multi-view stereo. In European Conference on Computer Vision (ECCV) , 2016. 2, 4 [34] Jie Shan, Zhixin Li, Damon Lercel, Kevan Tissue, Joseph Hupy, and Joshua Carpenter. Democratizing photogramme-try: an accuracy perspective. Geo-Spatial Information Sci-ence , 26(2):175–188, 2023. 1 [35] Rui Song, Chenwei Liang, Yan Xia, Walter Zimmer, Hu Cao, Holger Caesar, Andreas Festag, and Alois Knoll. Coda-4dgs: Dynamic gaussian splatting with context and deformation awareness for autonomous driving. In IEEE/CVF Interna-tional Conference on Computer Vision (ICCV) . IEEE/CVF, 2025. 2, 3, 6, 7 [36] Matthew Tancik, Vincent Casser, Xinchen Yan, Sabeek Prad-han, Ben Mildenhall, Pratul P Srinivasan, Jonathan T Barron, and Henrik Kretzschmar. Block-nerf: Scalable large scene neural view synthesis. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition , pages 8248–8258, 2022. 1 [37] Jiadong Tang, Yu Gao, Dianyi Yang, Liqi Yan, Yufeng Yue, and Yi Yang. Dronesplat: 3d gaussian splatting for robust 3d reconstruction from in-the-wild drone imagery. In Proceed-ings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 833–843, 2025. 1 [38] Edgar Tretschk, Ayush Tewari, Vladislav Golyanik, Michael Zollh¨ ofer, Christoph Lassner, and Christian Theobalt. Non-rigid neural radiance fields: Reconstruction and novel view synthesis of a dynamic scene from monocular video. In Pro-ceedings of the IEEE/CVF international conference on com-puter vision , pages 12959–12970, 2021. 3 [39] Haithem Turki, Deva Ramanan, and Mahadev Satya-narayanan. Mega-nerf: Scalable construction of large-scale nerfs for virtual fly-throughs. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 12922–12931, 2022. 2 [40] Jianyuan Wang, Minghao Chen, Nikita Karaev, Andrea Vedaldi, Christian Rupprecht, and David Novotny. Vggt: Visual geometry grounded transformer. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2025. 2, 3 [41] Rui Wang, Quentin Lohmeyer, Mirko Meboldt, and Siyu Tang. Degauss: Dynamic-static decomposition with gaus-sian splatting for distractor-free 3d reconstruction. In Pro-ceedings of the IEEE/CVF International Conference on Computer Vision , pages 6294–6303, 2025. 2, 3, 6, 7 [42] Shuzhe Wang, Vincent Leroy, Yohann Cabon, Boris Chidlovskii, and Jerome Revaud. Dust3r: Geometric 3d vi-sion made easy. In CVPR , 2024. 2, 3 [43] Sijie Wang, Siqi Li, Yawei Zhang, Shangshu Yu, Shenghai Yuan, Rui She, Quanjiang Guo, JinXuan Zheng, Ong Kang Howe, Leonrich Chandra, et al. Uavscenes: A multi-modal dataset for uavs. arXiv preprint arXiv:2507.22412 , 2025. 3 [44] Zhou Wang, Alan C Bovik, Hamid R Sheikh, and Eero P Si-moncelli. Image quality assessment: from error visibility to structural similarity. IEEE transactions on image processing ,13(4):600–612, 2004. 5, 6 [45] Guanjun Wu, Taoran Yi, Jiemin Fang, Lingxi Xie, Xiaopeng Zhang, Wei Wei, Wenyu Liu, Qi Tian, and Xinggang Wang. 4d gaussian splatting for real-time dynamic scene render-ing. In Proceedings of the IEEE/CVF Conference on Com-puter Vision and Pattern Recognition (CVPR) , pages 20310– 20320, 2024. 2, 3, 6, 7 [46] Yunzhi Yan, Haotong Lin, Chenxu Zhou, Weijie Wang, Haiyang Sun, Kun Zhan, Xianpeng Lang, Xiaowei Zhou, and Sida Peng. Street gaussians: Modeling dynamic urban scenes with gaussian splatting. In ECCV , 2024. 2 [47] Ziyi Yang, Xinyu Gao, Wen Zhou, Shaohui Jiao, Yuqing Zhang, and Xiaogang Jin. Deformable 3d gaussians for high-fidelity monocular dynamic scene reconstruction. arXiv preprint arXiv:2309.13101 , 2023. 2 [48] David Yifan Yao, Albert J Zhai, and Shenlong Wang. Uni4d: Unifying visual foundation models for 4d modeling from a single video. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 1116–1126, 2025. 2, 3[49] Hui Ye, Raj Sunderraman, and Shihao Ji. Uav3d: A large-scale 3d perception benchmark for unmanned aerial vehicles. In The 38th Conference on Neural Information Processing Systems (NeurIPS) , 2024. 3, 6, 7 [50] Richard Zhang, Phillip Isola, Alexei A Efros, Eli Shecht-man, and Oliver Wang. The unreasonable effectiveness of deep features as a perceptual metric. In Proceedings of the IEEE conference on computer vision and pattern recogni-tion , pages 586–595, 2018. 6 [51] Li Zhao, Haiyan Wang, Yi Zhu, and Mei Song. A review of 3d reconstruction from high-resolution urban satellite im-ages. International Journal of Remote Sensing , 44(2):713– 748, 2023. 2 [52] Hongyu Zhou, Jiahao Shao, Lu Xu, Dongfeng Bai, Weichao Qiu, Bingbing Liu, Yue Wang, Andreas Geiger, and Yiyi Liao. Hugs: Holistic urban 3d scene understanding via gaus-sian splatting. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 21336– 21345, 2024. 1

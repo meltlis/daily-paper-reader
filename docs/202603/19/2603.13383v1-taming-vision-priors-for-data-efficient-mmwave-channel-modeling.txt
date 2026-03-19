@@ -1,0 +1,638 @@
+Title: Taming Vision Priors for Data Efficient mmWave Channel Modeling
+
+URL Source: https://arxiv.org/pdf/2603.13383v1
+
+Published Time: Tue, 17 Mar 2026 00:16:58 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# Taming Vision Priors for Data Efficient mmWave Channel Modeling 
+
+Zhenlin An 1,2 , Longfei Shangguan 2, John Kaewell 3, Philip Pietraski 3
+
+Jelena Senic 4, Camillo Gentile 4, Nada Golmie 4, Kyle Jamieson 51University of Georgia 2University of Pittsburgh 3Interdigital 4NIST 5Princeton University 
+
+## Abstract 
+
+Accurately modeling millimeter-wave (mmWave) propaga-tion is essential for real-time AR and autonomous systems. Differentiable ray tracing offers a physics-grounded solution but still facing deployment challenges due to its over-reliance on exhaustive channel measurements or brittle, hand-tuned scene models for material properties. We present VisRFTwin ,a scalable and data-efficient digital-twin framework that in-tegrates vision-derived material priors with differentiable ray tracing. Multi-view images from commodity cameras are processed by a frozen Vision-Language Model to ex-tract dense semantic embeddings, which are translated into initial estimates of permittivity and conductivity for scene surfaces. These priors initialize a Sionna-based differentiable ray tracer, which rapidly calibrates material parameters via gradient descent with only a few dozen sparse channel sound-ings. Once calibrated, the association between vision features and material parameters is retained, enabling fast transfer to new scenarios without repeated calibration. Evaluations across three real-world scenarios, including office interiors, urban canyons, and dynamic public spaces show that Vis-RFTwin reduces channel measurement needs by up to 10 ×
+
+while achieving a 59% lower median delay spread error than pure data-driven deep learning methods. 
+
+## 1 Introduction 
+
+Millimeter-wave (mmWave) communication is a cornerstone of NextG wireless systems, promising multi-gigabit through-put and sub-millisecond latency [ 11 , 31 ]. These capabilities are critical for emerging applications such as AR/VR [ 31 ], autonomous driving [ 12 ], and dense IoT deployments [ 11 ]. Yet mmWave links remain fragile due to extreme free-space loss, sparse multipath, and sensitivity to blockage and mo-bility [ 18 , 20 ]. Reliable operation thus requires accurate and scalable channel modeling to manage directional beams and seamless handovers [30, 31]. Deep learning–based channel modeling solutions treat the radio environment as a black box, directly learning the map-ping from transceiver locations to channel responses [ 18 ]. While these methods show promise in small, controlled 
+
+> Certain commercial equipment, instruments, or materials are identified in this paper in order to specify the experimental procedure adequately. Such identification is not intended to imply recommendation or endorsement by National Institute of Standards and Technology (NIST), nor is it intended to imply that the materials or equipment identified are necessarily the best available for the purpose.
+
+Fig. 1: System Workflow. VisRFTwin leverages 3D scene reconstruction (NeRF) and pretrained vision–language mod-els to extract semantic material features from images. These vision priors are translated into electromagnetic parameters to bootstrap differentiable ray tracing, reducing the amount of channel measurements needed for channel modeling. testbeds, they demand thousands of site-specific channel measurements for model training (e.g., 2000 samples for a 200 m2 room [ 18 ], or 30k for a single city block in Lu-mos5G [ 20 ]), making them impractical at scale. Moreover, models such as PointNet -based solution [ 18 ] or the sequence-to-sequence regressors in Lumos5G [ 20 ] generalize poorly when the environment changes, forcing retraining in every new deployment. Recent years have witnessed the surge of physics-inspired deep learning for wireless channel modeling [ 4 , 24 , 34 ]. These approaches improves accuracy, interpretability, and data ef-ficiency of channel modeling by embedding the electromag-netic (EM) parameter priors into neural networks. Broadly, they fall into two categories (Table 1): (i) optical ray-marching methods, such as NeRF2 [ 34 ], which approximate radio prop-agation using optical volumetric rendering; and (ii) differen-tiable ray tracing, which explicitly models physical RF signal propagation paths and backpropagates to learn the EM pa-rameters, such as such as the conductivity and permittivity, of each individual objects in the environment [2, 8]. However, optical ray-marching methods fail to accurately characterizing RF signal propagation. They also cannot re-cover multipath delay profiles, which limits their practical use in wideband wireless communication and sensing sys-tems. While the differentiable ray tracing methods can accu-rately model the RF signal propagation, they require substan-tial amount of channel measurements (§2) to calibrate the EM parameters of the entire environment. Moreover, these methods cannot deal with environmental dynamics. 
+
+> arXiv:2603.13383v1 [cs.CV] 11 Mar 2026 Z. An, L. Shangguan, J. Kaewell, et al.
+
+Table 1: Comparison of channel modeling methods. Approach Model Physics Fidelity RF Data Needed Vision Modality Scene Dynamics Multipath Delay Scattering Physics                                                   
+
+> PointNet [18] e2e DL Low Dense ✗✗✓✗
+> Sionna [9] DiffRT (RF Prop.) High Medium ✗✗✓✓
+> RadioTwin [2] DiffRT (RF Prop.) High Dense ✗✗✓✓
+> NeRF2 [34] RM (Optical Prop.) Medium Dencs ✗✗✗✗
+> RF-3DGS [33] RM (Optical Prop.) Medium Medium ✓✗✗✗
+> RFCanvas [4] RM (Optical Prop.) Medium Sparse ✓✓✗✗
+> Ours DiffRT (RF Prop.) High Sparse ✓✓✓✓
+> Note: DL: Deep Learning, DiffRT: Differentiable Ray Tracing, RM: Ray Marching
+
+In this paper, we aim to retain the high physical fidelity of differentiable ray tracing method while eliminating its over-reliance on large amount channel measurements for calibration. Taking a step further, our goal is to empower differentiable ray tracing to accurately model multipath RF channel profile with only a handful of measurements. By drastically reducing the need for extensive site-specific chan-nel measurements, we believe our work would significantly improve the scalability of differentiable ray tracing, making it a major step toward practical deployment. Our work is motivated by two insights, one regarding a fundamental physical law and the other a notable research trend. (i) the ray–object surface interactions (e.g., reflection) are governed by an object’s electromagnetic parameters (e.g., conductivity, permittivity) which in turn are determined by its physical attributes such as texture and material composi-tion (e.g., wood, concrete) 1 and (ii) recent advances in com-puter vision enable open-vocabulary recognition of textures and materials via large vision–language models [ 21 , 32 ]. This leads to the question: can we exploit vision-derived priors to initialize electromagnetic coefficients of environmental objects in the differentiable ray-tracing framework, enabling rapid calibration with substantially fewer channel measurements? 
+
+We give an affirmative answer by presenting VisRFTwin :a data-efficient, vision-guided digital-twin framework. Vis-RFTwin works by identifying each environmental object’s fine-grained material properties in the 3D space, and corre-lating these material properties with their EM parameters based on wave-propagation physics. As sketched in Fig.1, VisRFTwin leverages multi-view RGB images to train a semantic NeRF , which predicts not only color and density, but also a high-dimensional feature grid whose voxel embeddings are forced to match CLIP (Con-trastive Language-Image Pre-Training) features extracted from every input view via a semantic loss. The resulting 3-D volume simultaneously provides centimeter-accurate geome-try and open-vocabulary material cues. A lightweight trans-lator is then proposed to convert each voxel’s learned fea-tures into continuous, frequency-dependent electromagnetic parameters that seed a differentiable Sionna ray tracer [ 9]modelling reflection, scattering, and diffraction. With only     
+
+> 1Surface-level reflection and diffuse scattering dominate mmWave propa-gation according to prior works [ 18 ,30 ,31 ]. Thus, visual surface texture is the primary cue needed for estimating the material’s EM properties.
+
+a few dozen sparse channel soundings, gradient back prop-agation jointly refines geometry and material parameters, producing an environment-specific twin without exhaustive retraining. To achieve this goal, there are multiple challenges: 
+
+• First, multi-view 2D RGB views must be “lifted” into a 3-D semantic map that retains both good geometry and rich semantic features that govern radio object interactions. Exist-ing pixel-level feature extractors, however, often blur infor-mation across views and discard fine-grained semantics. We address this by pairing a frozen vision–language backbone (CLIP) with a NeRF-based reconstruction loop and a pyra-mid feature-extraction strategy that processes multi-scale batches to compute per-pixel embeddings, enforcing view consistency while distilling radio-relevant semantics. 
+
+• Second, existing VLM based segmentation algorithms like Segment3D [ 3 , 10 ] can only extract an object’s semantic la-bel, such as wooden table, leather sofa, but not their EM parameters such as permittivity, conductivity, and surface-roughness. Hence they cannot be directly leveraged to model the ray-object interaction for RF channel modeling and pre-diction. To address this, prior works [13] hard-code a set of EM parameters for a given scene yet lack generalizability. We introduce a lightweight translator: a physics-regularized latent material prior that maps open-vocabulary object labels to frequency-dependent EM parameters. 
+
+• Third, our ambient environment changes over time, as real spaces evolve (e.g., people walking), yet both classical and differentiable ray tracers typically assume static meshes. Our twin maintains fidelity by incrementally updating the 3D map and re-optimizing local radio material. To further handle such dynamics, we localize changes to the affected regions and perform targeted refinements rather than re-optimizing the entire scene, ensuring both efficiency and adaptability. We evaluate VisRFTwin using a set of real-world dataset we collected from (1) a 20 m × 10 m lecture room [ 18 ] (4956 samples, LoS-dominated) furnished with tables and chairs; (2) a 20 m × 15 m lobby (5100 samples, including non-LoS paths) containing sofas, tables, walls, and glass panels [ 6]; and (3) an outdoor scenario illustrated in Figure 10c. The experimental results show that VisRFTwin reduces channel measurement requirements by up to 10 × while maintaining comparable accuracy, and achieves a 59% lower median delay spread error in the zero-shot setting compared to data-driven models trained on 20% of the dataset; maintains stable performance across LoS and NLoS regions; and, across office interiors, urban canyons, and dynamic public spaces. 
+
+Contribution. We make the following contributions. 
+
+• We propose a novel cross-modality digital-twin framework that explores the vision primitives to derive the environ-mental objects’ electromagnetic properties. Taming Vision Priors for Data Efficient mmWave Channel Modeling Interaction Points    
+
+> Rays
+> (a) Ray tracing process. NN
+> Interaction
+> Points
+> Radio
+> Materials
+> 𝜀 ,𝜎 ,𝑆 …
+> Differentiable
+> Channel
+> Computatio n
+> Predicted
+> Channel
+> Measured
+> Channel
+> Error
+> Traced Rays
+> (b) Differentiable ray tracing loop.
+
+Fig. 2: Differentiable ray tracing framework. (a) Real-world ray tracing visualization with rays, transmitters, re-ceivers, and interaction points. (b) End-to-end differentiable training loop using channel mismatch as gradient feedback. 
+
+• We integrate this vision priors into Sionna differentiable ray tracing framework, enabling rapid refinement with substantially fewer channel measurements. 
+
+• We evaluate the system across two indoor environment, one urban street, and one dynamic public space, and demon-strate the proposed system requires 10 × less channel mea-surements while achieving significantly higher multipath profile modelling error than baselines. Note that we are not the first work exploring visual cues for accurate channel modeling. Vision-guided ray-marching methods such as RF-3DGS [ 33 ] and RFCanvas [ 4 ] have al-ready leveraged multi-view RGB images to impose geometric or material reflection coefficient on RF signal propagation. These methods reconstruct a coarse 3-D scene representa-tion through 3D vision techniques, then march rays using an optical rendering surrogate . Although this substantially reduces the need for exhaustive RF measurements and yields strong environmental priors, the surrogate remains governed by optical, not electromagnetic physics. Consequently, it cannot accurately model material-dependent RF signal re-flections, diffraction, and scattering phenomenon, nor can it produce physically meaningful multipath delays. Thus, while vision-prior ray–marching improves data efficiency, it is fun-damentally incapable of recovering the full EM-consistent multipath required for accurate channel prediction. Table 1 summarizes the difference of VisRFTwin and these systems. 
+
+## 2 Primer: Differentiable Ray Tracing 
+
+Differentiable ray tracing is designed for calibrating wireless channel simulations to match physical reality [ 9 , 17 , 24 , 34 ]. The core idea is to construct the entire simulation pipeline (i.e., from scene geometry and material properties to wave propagation physics) in a way that is fully differentiable. As shown in Fig. 2, given the 3D mesh representation of a scene, the ray tracer shoots massive numbers of rays to find those signal paths to the receiver. The framework then uses a neural network called radio material neural network to map each ray-object interaction point to its specific EM parameters, like the conductivity 𝜎 , permittivity 𝜖 𝑟 of the wall reflector. This information, along with the identified paths, is used to compute the wireless channel [ 2 ]. To train the aforementioned neural network, a loss function is de-signed to quantify the error between this computed channel and the actual channel measurement. During training, the framework uses a large number of channel measurements to refine the neural network’s parameters via gradient descent. Unlike the "black box" approach of DNNs, differentiable ray tracing leverages fundamental RF propagation principles like reflection and scattering, which allows it to generalize better to new environments [ 24 , 34 ]. The optimized param-eters, such as material’s permittivity and conductivity, are also physically meaningful, providing higher interpretabil-ity and a deeper understanding of the environment, a key benefit that end-to-end deep learning models lack. 
+
+The Limitations of Differentiable Ray Tracing . Despite its interpretability, differentiable ray tracing framework re-mains heavily data-dependent. Since the EM properties of each individual environmental object are unknown a priori, the framework ought to learn them from scratch through gradient updates driven by significant amount of channel measurements. In our preliminary tests on the NIST’s lobby dataset, we observed that the channel estimation errors ex-ceeded 8 dB when using fewer than 50 channel measure-ments for calibration. This error converges to around 2 dB after several hundred measurements. Thus, while differen-tiable ray tracing scales better than end-to-end learning, its over-reliance on large site-specific channel measurement campaigns limits practicality in real deployments. 
+
+## 3 System Overview 
+
+Rather than learning EM parameters from scratch, we pro-pose using each object’s visual cues to provide a reasonable initial ’guess’. We believe this is feasible because the EM parameters are fundamentally determined by an object’s physical attributes, like texture and material composition (e.g., wood, concrete), which are inherently distinguishable through visual features. These initial “guessed” EM parame-ters are used to initialize the radio parameter neural network in the differentiable ray tracing framework and then refined gradually using significantly less amount of channel mea-surements, thereby boosting the material neural network’s training process while retaining physical interpretability. As shown in Fig. 1, VisRFTwin consists of three stages: (1) Semantic Feature Distillation . We begin by reconstruct-ing a 3D scene from multi-view images (e.g., through NeRF) Z. An, L. Shangguan, J. Kaewell, et al. 
+
+Fig. 3: Comparison of material understanding methods in indoor environments. (a) Input image of a complex in-door scene. (b) Classic material segmentation models strug-gle with generalization, producing coarse and inaccurate segmentation that fails to adapt to the diversity of real-world materials. (c) The Segment Anything Model (SAM) [ 3] of-fers high-quality instance boundaries but lacks the ability to differentiate materials, limiting its applicability for material-aware tasks. (d, e) Our vision-guided model extracts rich semantic features using CLIP and simultaneously predicts accurate depth maps, enabling projection onto 3D surfaces. and sampling points on every environmental surface. Since there is no pre-trained vision models that can directly output the EM parameters of each object based on its visual input, we thus leverage pre-trained vision-language models (e.g. CLIP) to first extract the visual-textual semantic embeddings that capture each object’s categories, textures, and spatial context on point-level granularity, without the need of any environment-dependent tuning. (2) Visual-to-EM Parameter Translator. We then design a lightweight translator that maps the per-point visual se-mantic embeddings into EM properties grounded in empir-ical models. It outputs the relative permittivity, conductiv-ity, and scattering coefficients, which are parameterized fol-lowing canonical electromagnetic relations (e.g., roughness-dependent scattering loss models [ 19 ]). By constraining the translator with these physics-informed equations, VisRFTwin 
+
+ensures that vision-derived material cues are converted into radio parameters consistent with established EM theory. (3) Differentiable Ray Tracing based Fine Tuning . Fi-nally, the reconstructed geometry and vision-initialized ma-terial maps are fed into a differentiable ray tracer to compute multipath channels. Using a few channel soundings as super-vision, the system backpropagates the errors to adjust EM properties, quickly improving accuracy with minimal data. 
+
+## 4 System Design 
+
+We elaborate on our system design in this section. Reprojection       
+
+> Feature Map Feature Map
+> Feature Map Feature Map
+> Views :
+> 1, 2, 3, 4
+> Averaged
+> features
+
+Fig. 4: Feature Re-projection. 
+
+## 4.1 Semantic Feature Distillation 
+
+At the heart of accurate wireless digital twins lies the need to know not only where surfaces are, but also what they are made of . Unfortunately, classic 2D-to-3D material seg-mentation pipelines do not generalize well to complex real-world scenes. As illustrated in Fig. 3(b), existing material segmentation networks produce coarse, vocabulary-limited masks that often misalign with geometry and fail to capture small objects—errors that quickly propagate in 3D and render such systems (e.g., mmSV [ 12 ]) ineffective for material-aware channel modeling. Recent advances like the Segment Any-thing Model (SAM) improve boundary quality (Fig. 3(c)) but still lack material awareness: they delineate instances but cannot distinguish wood from glass, or fabric from metal, which is crucial for electromagnetic modeling. To overcome these limitations, VisRFTwin leverages large vision–language models (VLMs) such as CLIP to extract open-vocabulary, fine-grained semantic features from raw RGB inputs (Fig. 3(d)). Unlike fixed-label segmenters, CLIP em-beddings are sensitive to subtle texture and appearance cues, enabling the system to capture material semantics even for uncommon or small-scale objects. Then, we jointly predict geometry cues (depth) alongside semantic features (Fig. 3(d, e)), allowing features to be accurately projected into 3D. 
+
+(1) Multi-View Semantic Embedding. A natural idea is to use existing pixel-level VLM models like OpenSeg [ 7 ]or LSeg [ 16 ] to extract per-pixel material labels and then project them to the 3D point cloud [ 5 , 25 ]. These models offer fine-grined scenario understanding. According to our study, they suffer from two key limitations: (1) limited la-bel diversity due to small, fixed training vocabularies, and (2) reduced sensitivity to fine-grained texture queries like materials. Our experiments reveal that such models are in-sufficient for predicting nuanced radio-material behavior. One might instead try to extract CLIP features directly for each 3D point. However, this method is still problematic – CLIP’s design for global image-level embeddings means that it does not provide the fine-grained, pixel-level detail needed. As a result, sampling from a projected 2D location usually yields noisy and spatially ambiguous data, a problem that is particularly acute for small objects [14]. Taming Vision Priors for Data Efficient mmWave Channel Modeling 
+
+Fig. 5: 3D Semantic Field. The colors encode semantic features, with different hues indicating distinct material cat-egories across the scene. We instead train a neural radiance field (NeRF) model E3𝐷 
+
+as our semantic lifting engine (Fig. 1). Unlike a standard NeRF that use a nerual network E3𝐷 to map 3D positions 
+
+(𝑥, 𝑦, 𝑧 ) and viewing directions (𝜃, 𝜙 ) to color and density for novel view synthesis, E3𝐷 is extended to also output a seman-tic feature vector at each voxel. During training, we render rays through E3𝐷 and jointly supervise the predicted color, density, and semantics. Semantic supervision is enforced by aligning the per-ray features with local CLIP embeddings ex-tracted from the corresponding 2D image views. Specifically, given a set of 𝑁 pose-calibrated RGB images I = {𝐼 𝑖 }𝑁 𝑖 =1, we first extract high-dimensional vision-language embeddings 
+
+E𝑖 ∈ R𝐶 from each image using pretrained vision language models E2𝐷 (CLIP [ 32 ] and DINOv2 [ 23 ]), where 𝐶 is the embedding channel dimension ( 𝐶 = 768 in CLIP Base and DI-NOv2 Base). In this way, every pixel in the training images is associated with a corresponding semantic embedding, which we treat as ground-truth supervision for the underlying 3D samples along its camera ray. To incorporate this into the NeRF architecture, we augment the MLP with an additional output head that predicts a semantic feature vector at each 3D location. During training, these per-sample features are accumulated via standard volume rendering along the ray to produce a rendered semantic embedding for each pixel. We then supervise this rendered embedding against the pixel-aligned CLIP ground truth using a cosine similarity loss. To further strengthen semantic supervision, we adopt the multi-scale strategy of LERF [ 14 ]. Instead of relying solely on single-pixel embeddings, we construct a feature pyramid by cropping each training image into overlapping windows at multiple scales and extracting CLIP features from each crop. For a given training ray passing through pixel (𝑢, 𝑣 ),we then interpolate within this pyramid to obtain a local CLIP embedding fCLIP  
+
+> 𝑗
+
+for the 3D point p𝑗 along the ray. This provides scale-aware supervision, allowing the NeRF to capture both coarse context and fine-grained cues , and ensures that the learned semantic field remains consistent across views and resolutions. 
+
+Fig. 6: Pipeline for radio material identification. (2) Lifting 2D Semantics to 3D. Having trained a NeRF-based semantic extractor with multi-scale CLIP supervision, the next step is to consolidate these per-ray predictions into a fine-grained 3D semantic field. Specifically, as shown in Fig. 4, for any 3D surface point 
+
+p𝑗 ∈ R3, we identify all camera views in which the point is visible. I ( p𝑗 ) = { 𝐼 𝑖 ∈ I | p𝑗 is visible in 𝐼 𝑖 }. For each such view, we project the 3D point into the image using the intrinsic and extrinsic parameters:         
+
+> (𝑢, 𝑣 )=𝜋 (𝐼 𝑖 , 𝐸 𝑖 ,p𝑗 ),(1)
+
+where 𝜋 is the camera projection function and (𝑢, 𝑣 ) is the pixel coordinate of the projected point. 𝐼 𝑖 and 𝐸 𝑖 are the cam-era intrinstic and extrinsic matrix. We then query the trained NeRF E3𝐷 and do volumetric rending along the ray corre-sponding to pixel (𝑢, 𝑣 ) in image 𝐼 𝑖 , obtaining the predicted semantic feature vector:         
+
+> e𝑖,𝑗 =E3𝐷 (p𝑗 |𝐼 𝑖 , 𝐸 𝑖 ).(2)
+
+This allows us to retrieve view-specific semantic predictions that capture both visual context and geometric consistency. To obtain a robust and view-invariant semantic representa-tion for p𝑗 , we average the predicted features across all 𝑁 
+
+views as below:     
+
+> ˆf3𝐷 𝑗 =1
+> 𝑁
+> 𝑁 ∑︁
+> 𝑖 =1
+> e𝑖,𝑗 .(3)
+
+This fused descriptor ˆf3𝐷 𝑗 represents an open-vocabulary, CLIP-aligned semantic embedding anchored at a 3D point. It reflects the radiance field’s interpretation of how that point appears from multiple perspectives, enriched with high-level material cues learned through CLIP supervision. The result-ing 3D semantic field supports electromagnetic property prediction, providing a dense, explainable, and generalizable material understanding of the scene as shown in Fig. 5. 
+
+## 4.2 Vision to EM Parameter Conversion 
+
+While the NeRF-predicted semantic features ˆf3𝐷 𝑗 encode rich visual and contextual cues and can be used for general mate-rial identification, they lack direct physical meaning in the electromagnetic (EM) domain. To bridge this semantic-to-physical gap, we translate these vision-language embeddings Z. An, L. Shangguan, J. Kaewell, et al. 
+
+Fig. 7: Lambertian scattering model. An incident ray striking a perfectly diffuse surface results in scattered rays distributed uniformly over the hemisphere into radio-relevant material properties—specifically, complex permittivity and conductivity, as shown in Fig. 6. 
+
+Step 1: Extracting Material Candidates with VLM. 
+
+Given raw images and 3D scene context, we first query a powerful pretrained vision–language model (e.g., ChatGPT-4o) with a structured prompt (Fig. 24). The model will out-put a concise JSON list of plausible material categories (e.g., 
+
+["wood","glass","metal","carpet"] ), which serves as the open-set search space for subsequent matching. 
+
+Step 2: Encoding Text Descriptions. Each candidate material name is encoded using the same vision–language embedding space (e.g., CLIP’s text encoder), producing a set of normalized textual embeddings: 
+
+T = {t1, t2, . . . , t𝑀 }, (4) where each t𝑚 corresponds to a material candidate. 
+
+Step 3: Feature Similarity Matching. For each 3D point 
+
+p𝑗 , we compute the cosine similarity between the predicted semantic feature ˆf3𝐷 𝑗 and all text embeddings t𝑚 :
+
+𝑠 𝑗,𝑚 = cos (ˆf3𝐷 𝑗 , t𝑚 ). (5) The material candidate with the highest similarity score is selected. To improve robustness, we represent each material using a set of synonymous or related word embeddings (e.g., “concrete,” “cement,” “pavement”), and select the candidate with the maximum aggregated similarity. 
+
+Step 4: Material Database Lookup. Finally, we query a curated electromagnetic material database using the selected label ˆ𝑚 𝑗 . This database maps textual material categories to their corresponding physical parameters, including relative permittivity 𝜖 𝑟 , conductivity 𝜎 . We initialize this database following the ITU standard material definitions [ 27 ], and extend it with additional entries as needed. For materials not present in the database, we leverage a large language model (e.g., GPT-5) to infer radio parameters based on the images, which are then refined through subsequent calibration. 
+
+Discussion. The VLM is essential to our design because it provides open-set, context-aware material reasoning that cannot be achieved by CLIP-similarity alone. It extracts point-level material categories and coarse surface attributes (e.g., wood, metal, glass, roughness), allowing us to assign plausi-ble permittivity, conductivity, and scattering priors through 
+
+Table 2: Scattering Coefficient of Typical Materials. We list a few examples for illustration.              
+
+> Material Ra ( μm) Scattering Coeff. 𝑆
+> Wall Plasterboard 2.309 0.07–0.1 Chipboard 2.695 0.1–0.2 Cardboard 3.252 0.1–0.2 Ceiling Plasterboard 11.85 0.2–0.4 Brick 14.68 0.3–0.5
+
+a curated EM database. Although these priors are not perfect, they offer a far stronger initialization than deep-learning baselines, enabling over a 10 × reduction in calibration mea-surements while preserving multipath accuracy. Moreover, as a large pretrained model with open-vocabulary recogni-tion, the VLM reliably re-identifies materials across different environments, making cross-scene reuse and rapid adapta-tion possible and positioning it as a critical component of 
+
+VisRFTwin .
+
+## 4.3 Vision to Scattering Modeling 
+
+According to previous research [ 18 ], scattering rays con-tribute about 30 % for the whole mmwave channel. To ac-curately characterize diffuse scattering in mmWave envi-ronments, we begin with a general scattering model, which distinguishes between specular and diffuse reflections. The scattering coefficient 𝑆 ∈ [ 0, 1] quantifies the proportion of energy that is diffusely scattered, with the remaining energy being specularly reflected. This relationship is expressed through the reflection reduction factor 𝑅 = √1 − 𝑆 2. To cap-ture the spatial directivity of diffuse reflections, we adopt the Lambertian scattering model [ 9 ] as shown in Fig. 7, which assumes energy is scattered with a cosine-weighted distri-bution centered around the surface normal. Mathematically, this behavior is described by the bidirectional scattering dis-tribution function (BSDF) for Lambertian surfaces as: 
+
+𝑓 Lambert s
+
+ ˆki, ˆks, ˆn
+
+
+
+= ˆnT ˆks
+
+𝜋 = cos (𝜃 𝑠 )
+
+𝜋 (6) Here, ˆki and ˆks denote the unit incident and scattering di-rections, respectively, and ˆn is the unit surface normal. The function depends only on the angle 𝜃 𝑠 between the surface normal and the scattered direction, emphasizing the physi-cally realistic notion that light is more likely to scatter close to the normal direction than tangentially. To estimate the scattering coefficient 𝑆 of indoor materials in our vision-based radio twin system, we leverage prior empirical measurements from mmWave channel studies (Ta-ble 2). These studies demonstrate a clear correlation between material roughness—quantified using the measured aver-age arithmetic roughness parameter 𝑅𝑎 —and the associated diffuse scattering behavior under the Lambertian model. No-tably, smoother materials like wall plasterboard exhibit lower scattering coefficients (e.g., 𝑆 = 0.07 − 0.1), whereas rougher Taming Vision Priors for Data Efficient mmWave Channel Modeling 
+
+Fig. 8: Scattering coefficient prediction using vision-language similarity. Vision features extracted from mate-rial images are compared with text embeddings of roughness-related prompts to infer scattering levels. surfaces like brick show higher values (up to 𝑆 = 0.5). In practice, directly global CLIP matching (Fig. 8) which may struggle with fine textures. We first decompose the material surface into local patches. We then leverage a VLM (e.g., GPT-4o) to perform zero-shot classification on these patches using the discrete scattering level prompt and then use the corresponding entry in the table to obtain the scattering-coefficient prior. Fig. 25 shows examples of indoor surfaces with increasing roughness—plasterboard, cardboard, and brick—where the visual texture correlates with 𝑅𝑎 roughness values. By lever-aging vision–language models, we can readily distinguish such texture levels and map them to scattering coefficients, providing a practical basis for perceptually aware wireless digital twins in mmWave signal modeling. This motivates our approach: by using pre-trained vision-language models, we extract visual features from images of materials to infer surface roughness levels in Table. 2. These inferred rough-ness categories can then be directly mapped to scattering coefficient intervals, enabling vision-guided estimation of diffuse scattering properties for enhanced spatial modeling in our mmWave radio twin system. 
+
+## 4.4 Few-Shot Calibration 
+
+As shown in Fig. 9, the vision pipeline provides reliable scene geometry and material priors , but some mismatch is inevitable. For example, surface color can mislead semantic classification, roughness can only be inferred indirectly, and centimetre-scale drift may persist in the reconstructed NeRF mesh. To close these gaps, we introduce a few-shot calibra-tion step that uses differentiable ray tracing and requires few channel soundings per scene. 
+
+• Differentiable ray-tracing core. We build on Sionna RT [ 9 ], which can render the complex channel impulse re-sponse ˆh(p; 𝛀 ) for a transmitter–receiver pair at position p,where Ω is the learned radio environment. Importantly, the renderer also exposes analytic gradients ∇𝛀 ˆh with respect to a parameter vector 𝛀 . In our case, 𝛀 contains trainable material parameters for each surface patch: conductivity 
+
+𝜎 , relative permittivity 𝜀 𝑟 , scattering coefficient 𝑆 .To ensure stable optimization and physically valid values, we represent each surface 𝑜 with a learnable embedding 
+
+v(𝑜 ) ∈ R𝐿 . Four linear projections convert this embedding Radio        
+
+> VLM 3D Map
+> Vision guided radio digital twin
+> 1. Initialized
+> Material
+> NN
+> Interaction
+> Points
+> Radio
+> Materials
+> 𝜀 ,𝜎 ,𝑆 …
+> Differentiable
+> Channel
+> Computatio nPredicted
+> Channel
+> Error
+> Channel
+> Soundin g
+> Differentiable Ray Tracer
+> 4. Measured
+> Channel
+> 3.Traced
+> Rays
+> 2. Calibrated
+> Material
+
+Fig. 9: Few - Shot Vision - Guided Radio Digital - Twin Training. After running the vision based radio twin, a few channel sounding probes anchor this twin, and differentiable path tracing compares predicted channel with measurements. The loss is back -propagated to calibrate the object material. into physical parameters, enforced through exponential or sigmoid transforms: 
+
+𝜎 = exp  v(𝑜 )⊤ w1
+
+, (7) 
+
+𝜀 𝑟 = 1 + exp  v(𝑜 )⊤ w2
+
+, (8) 
+
+𝑆 = sigmoid  v(𝑜 )⊤ w3
+
+ (9) These parameterizations guarantee 𝜎 > 0, 𝜀 𝑟 ≥ 1, and 𝑆 ∈[0, 1]. Embeddings are initialized from the vision-estimated materials and then refined by gradient descent. 
+
+• Initialization from vision priors. Before calibration, each surface patch must be assigned a reasonable starting point for its material parameters. We leverage the estimates provided by the vision-guided pipeline: the VLM supplies a candidate material label (e.g., wood, glass, concrete), which is then mapped to a table of nominal radio parameters (𝜎 0, 𝜀 𝑟 0, 𝑆 0)
+
+drawn from standard EM property databases. These values serve as prior “guesses” for the calibration process. To encode them into our trainable embeddings, we solve the inverse of the parameterization equations. In this way, each embedding 
+
+v(𝑜 ) is initialized such that its read-out exactly reproduces the vision-estimated parameters at iteration zero. Subsequent gradient descent then fine-tunes these values toward the measured channel responses. This warm start avoids poor local minima and ensures that the few-shot calibration acts as a refinement of physically meaningful priors rather than a blind search. 
+
+• Measurement features and loss. Each mmWave sound-ing snapshot provides a measured impulse response h𝑑 . In-stead of aligning raw CIR samples, we extract two robust, time-offset agnostic features: the received power 
+
+𝑃 𝑑 = Íℓ |ℎ𝑑 [ℓ]| 2, where ℎ𝑑 is the path strength and the delay spread            
+
+> 𝜏 𝑑 =√︄∑︁
+> ℓ
+> ℓ−¯𝜏 𝑑
+> 𝑊
+> 2|ℎ𝑑 [ℓ]| 2
+> 𝑃 𝑑 (10) Z. An, L. Shangguan, J. Kaewell, et al.
+> (a) Indoor: Conference Room (b) Indoor: Lobby (c) Outdoor Scenarios. TX
+> Multipath Clusters (d) Multipath Profile
+
+Fig. 10: Evaluation Scenarios. (a) Indoor conference room with tables and chairs; (b) Indoor lobby space with sofas, tables, and glass partitions used for millimeter-wave measurements; (c) Outdoor scenario besides a parking lot; (d) Measured multipath profile depicting received power across individual paths. where ¯𝜏 𝑑 is the mean delay and 𝑊 the sample rate. The tracer produces corresponding predictions ˆ𝑃 𝑑 , ˆ𝜏 𝑑 . Cal-ibration minimizes the batch-averaged symmetric mean ab-solute percentage error (SMAPE):              
+
+> L=1
+> 𝐵
+> 𝐵 ∑︁
+> 𝑑 =1
+> h
+> 𝜆 𝑃
+> |𝑃 𝑑 −ˆ𝑃 𝑑 |
+> 𝑃 𝑑 +ˆ𝑃 𝑑
+> +𝜆 𝜏
+> |𝜏 𝑑 −ˆ𝜏 𝑑 |
+> 𝜏 𝑑 +ˆ𝜏 𝑑
+> i
+> (11)
+
+where 𝜆 𝑃 , 𝜆 𝜏 balance the power and delay-spread terms. An exponential moving average scale factor compensates for the unknown absolute power reference of the channel sounder. In short, this calibration loop leverages differentiable physics to fine-tune vision-derived material priors with only a few probe soundings, ensuring the digital twin remains accurate with minimal data collection. 
+
+## 4.5 Building 3D Map and Ray Tracing 
+
+To support ray tracing and channel modelling, we derive a mesh-based 3D map by querying the NeRF model with virtual camera rays to obtain per-pixel depth estimates, which are back-projected into a dense point cloud. We then construct a clean mesh by applying standard point-cloud filtering and Poisson surface reconstruction. The full processing pipeline is described in Appendix A.1. The impact of geometry error is summarized in Appendix A.2. We then import the 3D mesh into the ray tracer and use shoot and bounding method to identify the propogation paths. For each transmitter–receiver path set P, we compute per-path gain 
+
+𝐺 𝑝 (𝑓 ) =
+
+Ö 
+
+> 𝑗 ∈𝑝
+
+𝑀 (𝜎 𝑗 , 𝜀 𝑗 , 𝑠 𝑗 ; 𝑓 ),
+
+where 𝑀 (·) models reflection and transmission at point 𝑗 .Summing over 𝑝 produces the channel response 
+
+ˆℎ(𝑓 ) =∑︁  
+
+> 𝑝 ∈ P
+
+𝐺 𝑝 (𝑓 ),
+
+Once we get a hitting point, we can query the NeRF neural network to get the vision features and get the radio parame-ters using the pipeline discussed in the Section 4.2. 
+
+## 4.6 Dealing with Dynamics 
+
+Environmental dynamics—such as moving pedestrians, ve-hicles, or shifting furniture—pose a fundamental challenge to accurate wireless channel modelling, as mmWave links are highly sensitive to transient blockages and mobility that can cause severe throughput fluctuations [ 12 ]. To address this, our system continuously fuses visual sensing with light-weight radio calibration: pervasive cameras (e.g., CCTV or AR glasses) detect and localize dynamic objects in real time, and vision-based tracking updates only the affected regions of the 3D mesh, after which the differentiable ray tracer recomputes altered multipath paths. For example, when a person walks through a link, a structure-from-motion tracker inserts a proxy mesh of the moving body with an embedding initialized from the latest camera frame. In this way, the sys-tem incrementally adapts to dynamics, achieving resilience to transient obstructions without requiring full retraining or dense site-specific surveys. 
+
+## 5 Implementation 
+
+In this section, we describe the evaluation dataset (§5.1) and model training (§5.2). 
+
+## 5.1 Dataset Preparation 
+
+We evaluate VisRFTwin using a series of context-aware datasets collected with a channel sounder [ 6 ], which inte-grates a 60.5 GHz RF transceiver (2 GHz bandwidth) with an 8-horn Tx and 16-horn Rx antenna array, an iSTAR Pulsar panoramic camera (11000 × 5500 spherical images, NCTech), and an OSO-128 LiDAR (0.17 ◦ azimuth resolution, Ouster). The Tx, mounted at a height of 2.5 m, transmits a 2047-bit PN sequence, while the Rx—mounted on a mobile robot moving at (0.2-0.3) m/s—collects multipath profiles every (10–15) cm. The demo multipath profile measurement is listed in Appen-dix A.5.As shown in Fig. 10, measurements were conducted in (1) a 20 m × 10 m lecture room [ 18 ] (4956 samples, Line of Sight (LoS)-dominated) furnished with tables and chairs; (2) a 20 m × 15 m lobby (5100 samples, including non-LoS (NLoS) paths as shown in Fig. 13) containing sofas, tables, walls, and glass panels [ 6 ]; and (3) an outdoor scenario il-lustrated in Fig. 10c. Data synchronization was maintained using Rubidium clocks and control markers. For each mul-tipath component, we record the AoA and AoD (azimuth and elevation), delay, and path loss, as shown in Fig. 10d. To Taming Vision Priors for Data Efficient mmWave Channel Modeling 0 100 200 300 400 500 
+
+> Sample Index
+> 5
+> 10
+> 15
+> 20
+> 25
+> 30
+> 35
+> 40
+> DS [ns]
+> Ground Truth
+> Fine Tuning
+> Zero-shot
+
+(a) 𝜏 RMS 0 100 200 300 400 500  
+
+> Sample Index
+> 5
+> 0
+> 5
+> 10
+> 15
+> K [dB]
+> Ground Truth
+> Fine Tuning
+> Zero-shot
+
+(b) K factor 0 100 200 300 400 500  
+
+> Sample Index
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> AS [deg]
+> Ground Truth
+> Fine Tuning
+> Zero-shot
+
+(c) Angular Spread 0 100 200 300 400 500    
+
+> Sample Index (#)
+> 75
+> 80
+> 85
+> 90
+> 95
+> Path Loss (dB)
+> GT Prediction 3GPP InH-Office
+
+(d) Path Loss 4 6 8 10 12 14    
+
+> Distance (m)
+> 75
+> 80
+> 85
+> 90
+> 95
+> Path Loss (dB)
+> Prediction GT 3GPP InH-Office
+
+(e) Path Loss v.s. Distance 
+
+Fig. 11: Snapshot-level performance of the proposed model on the four canonical channel-metrics. 
+
+evaluate the impact of human motion, we use the dataset shown in [ 19 ] where a human subject moves in between a Tx and an Rx. To obtain accurate camera poses and train NeRF-based vision models, we process raw images and Li-DAR point clouds in Agisoft Metashape to reconstruct the scene, calibrate camera poses, and then export Nerfstudio-compatible datasets. For outdoor scenarios, we use Google Earth Studio to generate virtual views at specified camera poses and then construct Nerfstudio-compatible datasets. 
+
+## 5.2 Model Training 
+
+We implement our model based on nerfstudio [ 28 ] and use around 100 panoramic images as input for reconstructing each scene. The model runs on a server equipped with an NVIDIA A6000 GPU. We launch ray tracing based on Sionna ray tracer v0.19.2 [ 9 ]. In each ray tracing, we launch 4e6 rays and the maximum depth for one ray is 5. The probability with which a scattered path is kept is set to 1e-3. To ensure alignment between the path strength in ray tracer and the measured path strength, we introduce a global scaling factor. This factor is calibrated per scenario by matching the mean predicted LoS path strength to the corresponding measured LoS magnitude. 
+
+## 6 Evaluation 
+
+We evaluate VisRFTwin across indoor and outdoor scenes to assess channel estimation accuracy, data efficiency, and adaptability. Specifically, we examine its performance against baselines on standard channel metrics, study the benefits of vision-guided initialization and few-shot calibration, and analyze its robustness under dynamic scene changes. 
+
+## 6.1 Metrics and Baselines 
+
+We define a snapshot as a single channel measurement at a fixed transmitter–receiver configuration, capturing all mul-tipath components (MPCs) for that link. To obtain a fine-grained view of estimation accuracy, we consider two com-plementary groups of metrics. Snapshot-level metrics (M1 – M4) quantify the aggregate behaviour across all MPCs in a snapshot. Cluster-level metrics (C1–C2) further analyze the internal multipath structure of a snapshot by grouping MPCs into delay–angle clusters and measuring how well each predicted cluster matches its ground-truth counterpart. 
+
+• Snapshot-level metrics (M1–M4) . We use four stan-dard metrics to capture large-scale and small-scale behavior 
+
+Fig. 12: Compared with SoTA Solution. Delay Spread. within each snapshot as shown in Table 3. Path Loss (PL) 
+
+quantifies the total received signal attenuation across all multipath components (MPCs). RMS Delay Spread mea-sures the temporal dispersion of the channel, indicating how much multipath broadens the received signal in time. Angu-lar Spread (AS) captures the spatial dispersion of multipath in the azimuth domain, reflecting the diversity of arrival directions. Finally, the Rician K-factor characterizes the power ratio between the line-of-sight path and the aggregate of all scattered MPCs, describing the dominance of deter-ministic versus diffuse components. These metrics provide a holistic view of channel per snapshot, while the cluster-level metrics give fine-grained insight into how well the model localizes and weights individual multipath clusters. 
+
+• Baselines. We compare VisRFTwin against three repre-sentative approaches: (i) the 3GPP path loss model [ 1] as a standard empirical baseline, (ii) the PointNet-based deep learning predictor [ 20 ], which learns channel characteristics directly from extensive site-specific RF measurements. (iii) RF-3DGS [ 33 ], a vision-based neural ray tracing that relies solely on visual geometry priors and lacks any physics-based propagation modeling. 
+
+## 6.2 Overall Channel Modelling Accuracy 
+
+We first evaluate snapshot-level delay–spread model accu-racy on the conference room test scenes described in Section 5. Each snapshot corresponds to a fixed transmitter–receiver 
+
+Table 3: Snapshot-level metrics (M1–M4). 
+
+Metric Definition 
+
+Path Loss (PL) PL = −10 log 10 
+
+Í𝑁 𝑖 =1 𝑃 𝑖 
+
+
+
+RMS Delay Spread ( 𝜏 RMS ) 𝜏 RMS =√︂      
+
+> Í𝑖 𝑃 𝑖 𝜏 2
+> 𝑖 Í𝑖 𝑃 𝑖
+
+−
+
+ Í𝑖 𝑃 𝑖 𝜏 𝑖 Í𝑖 𝑃 𝑖 
+
+2
+
+Angular Spread (AS) AS =√︂ −2 ln      
+
+> Í𝑖 𝑃 𝑖 𝑒 𝑗𝜙 𝑖
+> Í𝑖 𝑃 𝑖
+
+[◦ ]
+
+Rician 𝐾 -factor 𝐾 = 10 log 10 
+
+ 𝑃 LoS Í𝑖 ≠LoS 𝑃 𝑖 
+
+
+
+𝑃 𝑖 : received power of MPC 𝑖 ; 𝜏 𝑖 : excess delay of MPC 𝑖 ;
+
+𝜙 𝑖 : azimuth of MPC 𝑖 ; 𝑃 LoS : LoS path power. Z. An, L. Shangguan, J. Kaewell, et al. 
+
+Fig. 13: Spatial Distribution of RMS delay estimation 
+
+pair, and ground-truth RMS delay spread is computed from measured MPCs. We compare three classes of methods: (i) 
+
+VisRFTwin , evaluated in two settings— zero-shot , where ma-terial properties are inferred solely from vision priors, and 
+
+few-shot , where 20% RF samples are used to calibrate ma-terial embeddings via differentiable optimization; (ii) deep learning baselines , represented by PointNet [ 18 ] trained with 100% and 20% of the dataset; and (iii) RF3DGS [ 33 ]. We adapt the render to output delays and power per direction. To enable comparison on delay–spread metrics, we modify its output head to predict a per-direction delay value. Fig. 12 reports the median and 75th-percentile RMS delay-spread errors for all methods. The median error of RF-3DGS, Point-Net (20%), PointNet (100%), our zero-shot model, and our 10% fine-tuned model is 11.8 ns, 3.8 ns, 1.5 ns, 2.5 ns, and 1.8 ns, respectively. The comparison reveals several trends. (1) Even in the zero-shot, VisRFTwin a 34% error reduction over PointNet, demonstrating that vision-derived material priors already impose meaningful physical structure for ray-based infer-ence. (2), with only 10% data, few-shot VisRFTwin substan-tially reduces errors by 59%, narrowing the gap to the fully supervised PointNet model and highlighting the data effi-ciency enabled by differentiable calibration. (3), RF3DGS exhibits significantly higher errors. This is because it relies on an optical ray-marching formulation that lacks a physi-cal model for wireless multipath interactions—its radiance field can only fit per-direction intensity patterns, but cannot track the sequence of reflections and path lengths required to recover accurate multipath delay. Besides, as shown in Fig.26 and Fig.10d, our measurements exhibit a sparse multi-path profile, which poses a substantial challenge for optical-based radiance-field methods to coverage effectively. Overall, 
+
+VisRFTwin offers accuracy competitive with deep learning while requiring orders of magnitude fewer channel samples. Fig. 13 further visualizes the spatial distribution of RMS delay spread model errors across the conference room. The heatmap shows that our system not only maintains accuracy in the direct LoS region near the transmitter but also gener-alizes well in non-LoS areas behind obstructions such as the central pillar. 
+
+Fig. 14: Multipath Profile Estimation. Power profile and delay profile comparison under zero shot estimation. 
+
+## 6.3 Snap-Shot Level Analysis 
+
+We next analyze accuracy across the four canonical metrics in the conference room test scene, as shown in Fig. 11. We have the following observations: 
+
+(1) Delay spread : As shown in Fig. 11a, Both our zero-shot and fine-tuning models successfully track the overall trend of the ground-truth RMS delay spread, while fine-tuning further suppresses overestimation in rich-scattering regions and yields closer alignment with the true multipath dispersion. 
+
+(2) K-factor : the per-snapshot curves in Fig. 11b show that our predictions capture the ground-truth envelope well, with fine-tuning further reducing local deviations. The CDFs in Fig. 15 a quantify this gain: for K-factor, the median error drops from about 4 dB in the zero-shot case to 2 dB after fine-tuning, showing that calibration effectively corrects the LoS-to-NLoS power balance. 
+
+(3) Angular spread . Fig. 11c shows that zero-shot model track the diversity of multipath arrivals but occasionally exaggerate dispersion; fine-tuning sharpens the estimates and improves alignment with cluster structure. 
+
+(4) Path loss . As shown in Fig. 11d and 11e, our model not only captures the short-term variations across samples but also recovers the long-term attenuation trend with distance, substantially outperforming the 3GPP InH-Office baseline, which consistently underestimates the slope. Together, these results demonstrate that VisRFTwin produces physically plausible zero-shot estimations across all metrics, while fine-tuning most benefits parameters sensitive to LoS dominance such as the K-factor. 
+
+## 6.4 Per-Path and Cluster-Level Analysis 
+
+To obtain a fine-grained view of channel reconstruction, we examine per-path estimation in the angular domain. Fig. 14 plots the spatial spectrum of measurement, RF-3DGS and our estimation, color-coded by path loss. RF-3DGS captures the LoS path reasonably well but fails to reconstruct the remain-ing multipath structure. Because it relies purely on optical ray marching and is trained on sparse RF measurements, RF-3DGS cannot consistently track multipath components across viewpoints, leading to missing clusters and unstable predictions. VisRFTwin accurately recovers both the dom-inant LoS path and surrounding multipath clusters, with strong alignment in angle and power between estimation and measurement. The close correspondence indicates that our approach not only estimates aggregate metrics correctly Taming Vision Priors for Data Efficient mmWave Channel Modeling 0 2 4 6 8 10 
+
+> K-Factor Error (dB)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> CDF
+> Fine Tuning
+> Zero-shot
+
+Fig. 15: Fine Tuning. Fig. 16: Across scenarios. Fig. 17: Mobility. 0.0 0.5 1.0 1.5 2.0  
+
+> Throughput (Gbps)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> CDF
+> Ours
+> RF-3DGS
+
+Fig. 18: Case Study. 
+
+but also resolves the underlying set and structure of multi-path clusters, reducing false positives and missed paths in complex indoor scattering environments. 
+
+## 6.5 Scenario Diversity 
+
+To evaluate zero-shot cross-environment robustness, we perform a zero-shot test: no model is trained on the tar-get scene. Each baseline operates only on its native inputs (RGB+LiDAR for VisRFTwin , geometry and standard ITU radio material parameters), and we measure the change in RMS delay-spread error when moving from indoor to out-door deployments. Fig. 16 shows the median absolute 𝜏 RMS 
+
+estimation error for the Lobby, Conference-room, and Out-door test scenes, with whiskers denoting the 90th percentile. Errors remain low indoors ( 6.1 ns in the Lobby and 2.3 ns in the Conference-room) and increase moderately to 12 ns outdoors, reflecting the higher scattering complexity and less constrained geometry. Compared to differentiable ray tracing and PointNet-DL, which suffer substantially larger degra-dation across environments, VisRFTwin maintains signifi-cantly lower error spread, demonstrating that vision-guided initialization enables strong generalization to unseen scenar-ios without retraining. 
+
+## 6.6 Evaluation under Mobility 
+
+To evaluate performance in dynamic environments, we con-sider the Dynamic-Human scenario where a person walks at 1.2 m/s across the LoS between a transmitter (TX) and receiver (RX) separated by 4 m (Fig. 19). Every second, our system (i) captures a new camera frame, (ii) updates the lo-cal mesh to reflect the moving human, and (iii) re-traces propagation paths. We focus on shadow loss, 
+
+𝑆𝐿 dB = 20 log 
+
+> 10
+
+ |𝐸 LoS ||𝐸 Rx |
+
+
+
+,
+
+where 𝐸 LoS denotes the received field strength along the unobstructed LoS path and 𝐸 Rx is the total received field during blockage. This ratio captures the relative attenuation caused by the human body crossing the link. Fig. 17 plots the measured (red) and predicted (blue) shadow-loss traces over 60 walking steps. As the subject enters the link, both traces remain close to 0 dB until step ∼20, where the body begins to obstruct part of the LoS. A sharp deep fade of nearly −35 dB occurs at step 30 when the subject fully 
+
+Fig. 19: Dynamic Evlauation. (left) Lab measurement scene with a transmitter (TX) and receiver (RX) placed along a 4 m LoS while a human subject walks through the link. (right) Ray-tracing results. blocks the link, after which the channel gradually recovers as the person continues walking. Our estimations not only reproduce the location and depth of this fade but also follow the fine-grained fluctuations before and after the blockage. 
+
+## 6.7 Runtime 
+
+A practical digital twin must support fast per-link inference. Once the geometry and material priors are constructed, the dominant runtime cost in VisRFTwin is a single forward pass of the ray tracer. Averaged over 500 transmitter–receiver pairs, the median end-to-end inference time is 0.33 seconds per link using the incremental ray tracing tricks in [ 2 ], com-parable to neural ray tracing NeRF 2 (0.35s). This sub-second latency enables near–real-time channel estimation in quasi-static or slowly varying environments. When a local scene update occurs (e.g., a moving human), only the affected re-gion is re-traced, still requiring sub-second latency. Thus, 
+
+VisRFTwin supports rapid channel updates without retrain-ing or rebuilding the digital twin. 
+
+## 6.8 Case Study: mmWave Beam Selection 
+
+To show how our vision-guided radio digital twin translates into real world gains, we conduct a case study following the beam selection procedure of SpaceBeam [ 31 ]. For each Tx–Rx snapshot, both the naive geometry-only ray tracer and our system generate a set of MPCs (AoD, AoA, delay, and per-path path loss). We then select the best beam over all estimation: for each candidate beam, we compute the effec-tive channel gain, derive the received power and SNR using the standard 2.16 GHz noise model and receiver noise figure, and map SNR to an 802.11ad MCS index using SNR thresh-olds. The resulting PHY rate is further scaled by MAC-layer Z. An, L. Shangguan, J. Kaewell, et al. 
+
+efficiency to obtain end-to-end throughput. This pipeline is identical for both ray tracers; the only difference is the under-lying propagation model that produced the MPCs. As shown in Fig. 18, our method consistently achieves higher through-put across the scene. RF-3DGS frequently underestimates multipath power and mispredicts the dominant beam direc-tion, particularly in NLoS settings. In contrast, our approach enables more accurate beam selection and stronger effective channel gains by preserving the underlying multipath struc-ture. Overall, our system improves the median throughput by 30%, confirming that accurate multipath reconstruction boosts mmWave performance. 
+
+## 7 Related Work 
+
+We review two major lines of research relevant to data-driven wireless channel modeling. 
+
+## 7.1 Channel Modeling and Prediction 
+
+Prior research on channel prediction and ray tracing can be grouped into three main threads: (1) End-to-End Deep Learning for Channel Prediction. Early work [ 15 , 18 , 20 ]employs classic neural networks to directly regress channel responses from raw inputs. While these models achieve high accuracy within their training domains, they typically over-fit to environment-specific datasets and offer limited inter-pretability, as they do not explicitly disentangle the roles of scene geometry or material properties in radio propagation. 
+
+(2) Differentiable Ray Tracing with Physics Priors. Re-cent advances (e.g., NeRF 2 [ 34 ], WiNeRT [ 24 ], NeWRF [ 17 ], RF-3DGS [ 33 ]) have introduced differentiable ray-tracing frameworks that embed physical priors into neural archi-tectures, augmenting learned predictors with explicit geo-metric and electromagnetic constraints. While such methods improve physical fidelity and support gradient-based opti-mization, they are based on optical ray marching and do not have accurate radio physical model. They still require substantial per-environment training and generally achieve only limited transferability, even when incorporating vision-based cues. (3) Vision-Based Material Segmentation for Ray Tracing. Systems like mmSV [ 12 ] and the NIST Digital Twin [ 6] leverage computer vision to assign surface material labels for classical or hybrid ray-tracing simulation. How-ever, these pipelines depend on narrow, closed-set material classifiers and produce coarse-grained labels as shown in the Fig. 3, lacking integration with differentiable tracers. As a result, they are unable to support end-to-end optimization, zero-shot adaptation, or principled uncertainty quantifica-tion. To reduce the overhead of channel measurement, recent work has injected visual cues into the modelling loop. Sys-tems such as mmSV [ 12 ] and NIST’s context-aware twin [ 6]segment materials in individual camera views, project the masks onto LiDAR point clouds, and then ray-trace the an-notated mesh, demonstrating that even coarse imagery can reduce sounding budgets. Yet their view-by-view processing propagates 2-D errors into 3-D, and their fixed, limited vo-cabularies overlook subtle but radio-relevant details such as surface roughness or gloss. In summary, while these research threads have advanced the state-of-the-art in data efficiency, physical realism, and material-aware simulation, each suffers from critical limita-tions: poor generalization, a need for extensive environment-specific retraining, or reliance on coarse, out-of-domain ma-terial annotations. Our proposed approach addresses these gaps by decoupling geometry, material properties, and prop-agation physics. Furthermore, our appropach leverages large pre-trained vision–language models for open-vocabulary, zero-shot semantic material segmentation—enabling fine-grained, explainable, and transferable channel prediction in arbitrary, dynamic scenes. 
+
+## 7.2 Vision-Language Models 
+
+Recent progress in large vision–language models (VLMs) such as Contrastive Language–Image Pre-training (CLIP) [ 22 ]and Generative Pre-trained Transformer (GPT)-4o [ 22 ] has enabled powerful open-vocabulary scene understanding and multimodal reasoning [ 5, 14 , 25 , 26 ], but these capabilities have been largely confined to traditional vision or language applications, leaving the integration of VLMs into wireless ray-tracing for channel modeling largely unexplored. Pio-neer work OpenScene [ 25 ] and Segment3D [ 10 ] utilizes VLM-driven segmentation to annotate 3D scene reconstructions represented as sampled point clouds, but its performance is inherently constrained by mesh resolution, limiting its ability to capture fine-scale structures and materials—crucial for accurate electromagnetic modeling. To the best of our knowledge, our work is the first to integrate large VLMs with differentiable ray tracing for wireless propagation modeling, treating radio as a novel modality within a vision–language foundation. By bridging these domains, our system enables VLMs to inform physics-driven simulation, delivering inter-pretable, zero-shot channel prediction in complex, dynamic environments. 
+
+## 8 Conclusion 
+
+In this work, we envision a new generation of wireless dig-ital twins that are data-efficient, explainable, and adaptive to real-world dynamics. We introduce VisRFTwin , a zero-shot, vision-guided mmWave channel prediction system that combines pretrained vision–language models and physics-informed ray tracing. By translating rich visual semantics into radio-relevant parameters, our method delivers accu-rate, real-time channel prediction in arbitrary environments without the need for RF measurements or retraining. This approach paves the way for scalable, intelligent wireless sys-tems and sets a foundation for future integration of vision and radio sensing. Taming Vision Priors for Data Efficient mmWave Channel Modeling 
+
+## 9 Acknowledgment 
+
+This work is supported by National Science Foundation un-der Grant Nos. CNS-2433914, and CNS-2433915. The Prince-ton Advanced Wireless Systems research group gratefully acknowledges a gift from InterDigital Corporation. 
+
+## References 
+
+[1] 3GPP. 2022. 3GPP Enhancement of 3GPP support for V2X Scenarios. https://www.3gpp.org/ftp/Specs/archive/22_series/22.186/ [2] Zhenlin An, Longfei Shangguan, John Kaewell, Philip Pietraski, and Kyle Jamieson. 2025. RadioTwin: A Digital Building Material Twin for Wideband, Cross-link, Cross-band Wireless Channel Prediction. In 
+
+IEEE International Symposium on Dynamic Spectrum Access (DySPAN) .IEEE, London, UK. [3] Jiazhong Cen, Jiemin Fang, Zanwei Zhou, Chen Yang, Lingxi Xie, Xi-aopeng Zhang, Wei Shen, and Qi Tian. 2024. Segment Anything in 3D with Radiance Fields. doi:10.48550/arXiv.2304.12308 arXiv:2304.12308 [cs]. [4] Xingyu Chen, Zihao Feng, Ke Sun, Kun Qian, and Xinyu Zhang. 2024. RFCanvas: Modeling RF Channel by Fusing Visual Priors and Few-shot RF Measurements. In Proceedings of the 22nd ACM Conference on Embedded Networked Sensor Systems . ACM, Hangzhou China, 464–477. doi:10.1145/3666025.3699351 [5] Francis Engelmann, Fabian Manhardt, Michael Niemeyer, Keisuke Tateno, Marc Pollefeys, and Federico Tombari. 2024. OPENNERF: OPEN SET 3D NEURAL SCENE SEGMEN- TATION WITH PIXEL-WISE FEATURES AND RENDERED NOVEL VIEWS. (2024). [6] Camillo Gentile, Jelena Senic, Anuraag Bodi, Samuel Berweger, Raied Caromi, and Nada Golmie. 2024. Context-Aware Channel Sounder for AI-Assisted Radio-Frequency Channel Modeling. In 2024 18th European Conference on Antennas and Propagation (EuCAP) . 1–5. doi:10.23919/ EuCAP60739.2024.10501217 [7] Golnaz Ghiasi, Xiuye Gu, Yin Cui, and Tsung-Yi Lin. 2022. Scal-ing Open-Vocabulary Image Segmentation with Image-Level Labels. doi:10.48550/arXiv.2112.12143 arXiv:2112.12143 [cs]. [8] Jakob Hoydis, Fayçal Aït Aoudia, Sebastian Cammerer, Florian Euch-ner, Merlin Nimier-David, Stephan Ten Brink, and Alexander Keller. 2024. Learning Radio Environments by Differentiable Ray Tracing. 
+
+IEEE Transactions on Machine Learning in Communications and Net-working 2 (2024), 1527–1539. doi:10.1109/TMLCN.2024.3474639 [9] Jakob Hoydis, Faycal Ait Aoudia, Sebastian Cammerer, Merlin Nimier-David, Nikolaus Binder, Guillermo Marcus, and Alexander Keller. 2023. Sionna RT: Differentiable Ray Tracing for Radio Propagation Modeling. In 2023 IEEE Globecom Workshops (GC Wkshps) . 317–321. doi:10.1109/ GCWkshps58843.2023.10465179 [10] Rui Huang, Songyou Peng, Ayca Takmaz, Federico Tombari, Marc Pollefeys, Shiji Song, Gao Huang, and Francis Engelmann. 2024. Seg-ment3d: Learning fine-grained class-agnostic 3d segmentation without manual labels. In European Conference on Computer Vision . Springer, 278–295. [11] Ish Kumar Jain, Raghav Subbaraman, and Dinesh Bharadia. 2021. Two beams are better than one: towards reliable and high throughput mmWave links. In Proceedings of the 2021 ACM SIGCOMM 2021 Confer-ence . ACM, Virtual Event USA, 488–502. doi:10.1145/3452296.3472924 [12] Ahmad Kamari, Yoon Chae, and Parth Pathak. 2023. mmSV: mmWave Vehicular Networking using Street View Imagery in Urban Environ-ments. In Proceedings of the 29th Annual International Conference on Mobile Computing and Networking . ACM, Madrid Spain, 1–16. doi:10.1145/3570361.3613291 [13] O. Kanhere and T. S. Rappaport. 2023. Calibration of NYURay, a 3D mmWave and sub-THz Ray Tracer using Indoor, Outdoor, and Factory Channel Measurements. doi:10.48550/arXiv.2302.12380 arXiv:2302.12380 [cs]. [14] Justin Kerr, Chung Min Kim, Ken Goldberg, Angjoo Kanazawa, and Matthew Tancik. 2023. LERF: Language Embedded Radiance Fields. In 2023 IEEE/CVF International Conference on Computer Vision (ICCV) .IEEE, Paris, France, 19672–19682. doi:10.1109/ICCV51070.2023.01807 [15] Ju-Hyung Lee, Omer Gokalp Serbetci, Dheeraj Panneer Selvam, and Andreas F. Molisch. 2023. PMNet: Robust Pathloss Map Prediction via Supervised Learning. In GLOBECOM 2023 - 2023 IEEE Global Commu-nications Conference . 4601–4606. doi:10.1109/GLOBECOM54140.2023. 10437562 ISSN: 2576-6813. [16] Boyi Li, Kilian Q. Weinberger, Serge Belongie, Vladlen Koltun, and René Ranftl. 2022. Language-driven Semantic Segmentation. doi:10. 48550/arXiv.2201.03546 arXiv:2201.03546 [cs]. [17] Haofan Lu, Christopher Vattheuer, Baharan Mirzasoleiman, and Omid Abari. 2024. NeWRF: A Deep Learning Framework for Wireless Ra-diation Field Reconstruction and Channel Prediction. doi:10.48550/ arXiv.2403.03241 arXiv:2403.03241 [cs]. [18] Hang Mi, Bo Ai, Ruisi He, Anuraag Bodi, Raied Caromi, Jian Wang, Je-lena Senic, Camillo Gentile, and Yang Miao. 2024. Measurement-Based Prediction of mmWave Channel Parameters Using Deep Learning and Point Cloud. IEEE Open Journal of Vehicular Technology 5 (2024), 1059–1072. doi:10.1109/OJVT.2024.3436857 [19] Swagato Mukherjee, Gregory Skidmore, Tarun Chawla, Anmol Bhard-waj, Camillo Gentile, and Jelena Senic. 2022. Scalable Modeling of Human Blockage at Millimeter-Wave: A Comparative Analysis of Knife-Edge Diffraction, the Uniform Theory of Diffraction, and Phys-ical Optics Against 60 GHz Channel Measurements. IEEE Access 10 (2022), 133643–133654. doi:10.1109/ACCESS.2022.3231812 [20] Arvind Narayanan, Eman Ramadan, Rishabh Mehta, Xinyue Hu, Qingxu Liu, Rostand A. K. Fezeu, Udhaya Kumar Dayalan, Saurabh Verma, Peiqi Ji, Tao Li, Feng Qian, and Zhi-Li Zhang. 2020. Lumos5G: Mapping and Predicting Commercial mmWave 5G Throughput. In 
+
+Proceedings of the ACM Internet Measurement Conference . ACM, Virtual Event USA, 176–193. doi:10.1145/3419394.3423629 [21] OpenAI. 2023. GPT4 technical report. arXiv preprint arXiv:2303.08774 
+
+(2023). [22] OpenAI. 2024. Hello GPT-4o. https://openai.com/index/hello-gpt-4o/ [23] Maxime Oquab, Timothée Darcet, Théo Moutakanni, Huy Vo, Marc Szafraniec, Vasil Khalidov, Pierre Fernandez, Daniel Haziza, Francisco Massa, Alaaeldin El-Nouby, Mahmoud Assran, Nicolas Ballas, Woj-ciech Galuba, Russell Howes, Po-Yao Huang, Shang-Wen Li, Ishan Misra, Michael Rabbat, Vasu Sharma, Gabriel Synnaeve, Hu Xu, Hervé Jegou, Julien Mairal, Patrick Labatut, Armand Joulin, and Piotr Bo-janowski. 2024. DINOv2: Learning Robust Visual Features without Supervision. doi:10.48550/arXiv.2304.07193 arXiv:2304.07193 [cs]. [24] Tribhuvanesh Orekondy, Pratik Kumar, Shreya Kadambi, Hao Ye, Joseph Soriaga, and Arash Behboodi. 2022. WiNeRT: Towards Neu-ral Ray Tracing for Wireless Channel Modelling and Differentiable Simulations. In The Eleventh International Conference on Learning Rep-resentations .[25] Songyou Peng, Kyle Genova, Chiyu Jiang, Andrea Tagliasacchi, Marc Pollefeys, and Thomas Funkhouser. 2023. OpenScene: 3D Scene Un-derstanding with Open Vocabularies. In 2023 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . IEEE, Vancouver, BC, Canada, 815–824. doi:10.1109/CVPR52729.2023.00085 [26] Ri-Zhao Qiu, Ge Yang, Weijia Zeng, and Xiaolong Wang. 2024. Fea-ture Splatting: Language-Driven Physics-Based Scene Synthesis and Editing. doi:10.48550/arXiv.2404.01223 arXiv:2404.01223 [cs]. [27] P Series. 2015. Effects of building materials and structures on ra-diowave propagation above about 100 MHz. recommendation itu-r 
+
+(2015), 2040–1. Z. An, L. Shangguan, J. Kaewell, et al.            
+
+> [28] Matthew Tancik, Ethan Weber, Evonne Ng, Ruilong Li, Brent Yi, Ter-rance Wang, Alexander Kristoffersen, Jake Austin, Kamyar Salahi, Abhik Ahuja, David Mcallister, Justin Kerr, and Angjoo Kanazawa. 2023. Nerfstudio: A Modular Framework for Neural Radiance Field Development. In Special Interest Group on Computer Graphics and Interactive Techniques Conference Conference Proceedings . ACM, Los Angeles CA USA, 1–12. doi:10.1145/3588432.3591516 [29] Visual Computing Lab - ISTI - CNR. 2008. MeshLab: an open-source mesh processing tool. https://www.meshlab.net/. Accessed: 2025-06-11. [30] Song Wang, Jingqi Huang, and Xinyu Zhang. 2020. Demystifying millimeter-wave V2X: towards robust and efficient directional connec-tivity under high mobility. In Proceedings of the 26th Annual Interna-tional Conference on Mobile Computing and Networking . ACM, London United Kingdom, 1–14. doi:10.1145/3372224.3419208 [31] Timothy Woodford, Xinyu Zhang, Eugene Chai, Karthikeyan Sundare-san, and Amir Khojastepour. 2021. SpaceBeam: LiDAR-driven one-shot mmWave beam management. In Proceedings of the 19th Annual In-ternational Conference on Mobile Systems, Applications, and Services .ACM, Virtual Event Wisconsin, 389–401. doi:10.1145/3458864.3466864 [32] Chenyun Wu and Subhransu Maji. 2022. How well does CLIP un-derstand texture? doi:10.48550/arXiv.2203.11449 arXiv:2203.11449 [cs]. [33] Lihao Zhang, Haijian Sun, Samuel Berweger, Camillo Gentile, and Rose Qingyang Hu. 2025. RF-3DGS: Wireless Channel Modeling with Radio Radiance Field and 3D Gaussian Splatting. doi:10.48550/arXiv. 2411.19420 arXiv:2411.19420 [cs]. [34] Xiaopeng Zhao, Zhenlin An, Qingrui Pan, and Lei Yang. 2023. NeRF2: Neural Radio-Frequency Radiance Fields. In Proceedings of the 29th Annual International Conference on Mobile Computing and Networking (ACM MobiCom ’23) . Association for Computing Machinery, New York, NY, USA, 1–15. doi:10.1145/3570361.3592527
+
+## A Appendix 
+
+This appendix provides additional implementation details, intermediate results, and visualizations that complement the main paper. We present (i) the full point-cloud processing pipeline used to obtain meshes for ray tracing, (ii) geometry-reconstruction accuracy benchmarks, (iii) our outdoor-scene reconstruction method using Google Earth Studio, (iv) the LLM-based material proposal process, and (v) the measured mmWave multipath profiles used as supervisory signals. These extended materials provide deeper insight into the engineering workflow behind VisRFTwin and validate the robustness of each module beyond what can be included in the main sections. 
+
+## A.1 Point Cloud Processing Pipeline 
+
+To construct an accurate and watertight 3D mesh for ray tracing, we process NeRF-derived point clouds through a multi-stage pipeline. We first query the NeRF model along a sequence of virtual camera poses; at each viewpoint, the model predicts depth for every pixel, which is then back-projected into 3D to form a dense but noisy point cloud. As raw NeRF depth renders often contain floating points, holes, and view-dependent artifacts, we apply a filtering pipeline using MeshLab [ 29 ], including statistical outlier removal and voxel-grid downsampling. The cleaned point cloud is then converted into a water-tight mesh via Poisson surface reconstruction, followed by Laplacian smoothing to improve surface continuity. This fi-nal mesh serves as the geometric foundation for precise ray-tracing simulations in our digital twin. Fig. 20 illustrates this progressive refinement process: (a) raw NeRF point cloud, (b) filtered point cloud, and (c) final mesh suitable for high-fidelity propagation modeling. 
+
+Fig. 20: Progressive refinement of NeRF-derived point clouds. (1) raw point cloud generated by querying NeRF with virtual camera depth rendering, (2) filtered and down-sampled point cloud, and (3) final mesh obtained through Possion surface reconstruction. 
+
+## A.2 Geometry Error Analysis 
+
+A reliable radio–digital twin hinges on two pillars: (i) geo-metric accuracy, which governs time delay, and (ii) material identification accuracy, which controls reflection, transmis-sion, and attenuation coefficients. We therefore report both metrics separately. Fig. 22 (left) visualizes the per-vertex Euclidean distance between our mesh and the LiDAR ground truth, while Fig. 22 (right) plots the corresponding histogram. Overall, 81% of vertices lie within 7 cm of the LiDAR surface. 
+
+Discussion: Most large residuals appear at distant room corners and ceiling light fixtures—regions where the cam-era observes the surface from far or oblique angles, caus-ing depth-estimation drift. These areas are far from the transceiver and contribute minimally to mmWave propa-gation; conversely, the primary reflectors (walls, large furni-ture, glass partitions) exhibit errors below 4 cm . According to prior analysis (e.g., RFCanvas [ 4], Fig. 16), geometry devia-tions of this magnitude introduce less than 1 dB channel error ,implying negligible impact on multipath prediction. Such corner drift can also be mitigated by repositioning cameras during data capture. 
+
+## A.3 Outdoor environment reconstruction 
+
+For large outdoor scenes, capturing dense multi-view im-ages is difficult due to lighting variations, limited access, and Taming Vision Priors for Data Efficient mmWave Channel Modeling Camera 
+
+(a) Camera trajectory (b) Reconstructed scene 
+
+Fig. 21: Illustration of two reconstructed indoor scenes shown within a single column. (a) a second view empha-sizing spatial layout and camera placement (b) A first-person reconstruction highlighting interior structures. 
+
+Fig. 22: Vertex-wise geometry error of the mesh with respect to the LiDAR ground truth. left—spatial error map; right: mesh to mesh distance histogram. the lack of stable camera poses. To address this, we virtu-ally take photographs in Google Earth Studio. We import the trajectory into Google Earth Studio and place a virtual camera. Google Earth Studio then renders a sequence of high-resolution frames together with accurate intrinsic and extrinsic parameters. These synthetically captured “virtual photos” provide consistent, well-posed multi-view supervi-sion, enabling NeRF reconstruction and semantic feature extraction even in outdoor areas where physical image col-lection would be impractical. 
+
+Fig. 23: Outdoor dataset Reconstruction 
+
+## A.4 LLM based Material Proposal 
+
+To obtain an initial set of plausible material categories for each scene, we query a large vision–language model (ChatGPT-4o) using the structured prompt shown in Fig. 24. The model analyzes the input RGB images and returns a concise list of underlying material types (e.g., "wood" , "glass" , "metal" ,
+
+"plasterboard" ), avoiding object-level labels. These LLM-proposed materials form an open vocabulary from which we later identify point-wise material types via CLIP similar-ity matching. This step is crucial because it constrains the search space to realistic materials present in the scene while allowing generalization to unseen environments through the LLM’s broad world knowledge. System: You are given one or more indoor scene images. Identify  
+
+> the candidate material types present in the scene, focusing on
+> surfaces and objects relevant for electromagnetic wave propagation
+> (walls, floors, ceilings, windows, furniture). Do not output object
+> names (e.g., ‘chair’, ‘table’); instead, map each to its underlying
+> material (e.g., wood, metal, fabric ).
+> Format Requirement :{"materials": ["wood", "glass"]}
+
+Fig. 24: Material proposal prompt for GPT-4o. 
+
+Fig. 25: Appearance of materials with different rough-ness. As roughness increases, visual cues become more pro-nounced, enabling vision-based inference of surface rough-ness and corresponding scattering coefficients. 
+
+## A.5 Multipath Profile Measurement 
+
+The ground-truth channel data was collected using the mmWave array channel sounder described in [ 6 ]. At each measure-ment snapshot, the sounder resolves individual multipath components (MPCs) by jointly estimating their delay, az-imuth/elevation angles, and path-loss, yielding a high-resolution directional multipath profile (Fig. 26). These MPCs provide the supervision for evaluating our channel-prediction accu-racy and serve as the calibration targets used during differ-entiable ray-tracing refinement. 
+
+Fig. 26: Measured Multipath Profile
