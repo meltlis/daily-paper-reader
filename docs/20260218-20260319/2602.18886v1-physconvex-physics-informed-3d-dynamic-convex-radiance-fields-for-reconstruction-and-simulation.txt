@@ -1,0 +1,378 @@
+Title: PhysConvex: Physics-Informed 3D Dynamic Convex Radiance Fields for Reconstruction and Simulation
+
+URL Source: https://arxiv.org/pdf/2602.18886v1
+
+Published Time: Tue, 24 Feb 2026 01:48:18 GMT
+
+Number of Pages: 11
+
+Markdown Content:
+# PhysConvex: Physics-Informed 3D Dynamic Convex Radiance Fields for Reconstruction and Simulation 
+
+## Dan Wang 1 Xinrui Cui 2 Serge Belongie 3 Ravi Ramamoorthi 11University of California, San Diego 2Univesity of North Texas 3Copenhagen University 
+
+{danwang, ravir }@ucsd.edu, xinrui.cui@unt.edu, s.belongie@di.ku.dk 
+
+Figure 1. PhysConvex introduces boundary-driven dynamic convex fields integrated with reduced-order convex simulation for unified 3D reconstruction and dynamics. It recovers appearance, geometry, and physics from multi-view videos, enabling mesh-free, physically consistent, visually realistic simulation. 
+
+## Abstract 
+
+Reconstructing and simulating dynamic 3D scenes with both visual realism and physical consistency remains a fun-damental challenge. Existing neural representations, such as NeRFs and 3DGS, excel in appearance reconstruction but struggle to capture complex material deformation and dynamics. We propose PhysConvex, a Physics-informed 3D Dynamic Convex Radiance Field that unifies visual render-ing and physical simulation. PhysConvex represents de-formable radiance fields using physically grounded convex primitives governed by continuum mechanics. We intro-duce a boundary-driven dynamic convex representation that models deformation through vertex and surface dynamics, capturing spatially adaptive, non-uniform deformation, and evolving boundaries. To efficiently simulate complex ge-ometries and heterogeneous materials, we further develop a reduced-order convex simulation that advects dynamic convex fields using neural skinning eigenmodes as shape-and material-aware deformation bases with time-varying reduced DOFs under Newtonian dynamics. Convex dynam-ics also offers compact, gap-free volumetric coverage, en-hancing both geometric efficiency and simulation fidelity. Experiments demonstrate that PhysConvex achieves high-fidelity reconstruction of geometry, appearance, and physi-cal properties from videos, outperforming existing methods. 
+
+## 1. Introduction 
+
+Reconstructing the appearance, geometry, and physical properties of objects directly from visual observations is a fundamental yet challenging goal in computer vision. Tra-ditional physics-based simulation methods [3, 14, 27, 38, 50] typically rely on the known geometry, limiting their applicability to real-world scenarios. Alternatively, purely neural approaches [6, 16–18, 29, 30, 35–37, 41, 44, 47, 48] directly model dynamics via learned networks from data. While effective for rendering, these approaches tightly cou-ple extrinsic geometric attributes with intrinsic physical mo-tion, disregarding underlying physical laws and thereby limiting generalization and interpretability. Recent advances [9, 23, 28, 45, 51] have sought to bridge this gap by integrating radiance field representations, such as NeRF [32, 39] and Gaussians [24, 44, 46, 48], with dif-ferentiable physical simulators. These physics-informed frameworks jointly optimize geometry, appearance, and physical parameters, offering a unified approach to recon-struction and simulation. However, existing dynamic prim-itives (e.g., voxels in NeRF [28], ellipsoids in 3DGS [7, 9, 1 
+
+> arXiv:2602.18886v1 [cs.CV] 21 Feb 2026 Figure 2. Center-driven Gaussian dynamics have limited flexibility for non-uniform deformation and evolving boundaries, while boundary-driven convex dynamics enable spatially adaptive vertex advection, explicit sur-face evolution, and polyhedral structural refinement.
+
+51]) are primarily designed for rendering efficiency rather than physically consistent deformation, leading to several limitations (Fig. 2): First, in hybrid Eulerian-Lagrangian frameworks, center-driven dynamics update primitives us-ing central particles or pooled neighbors, lacking spatial sensitivity to non-uniform deformation. Second, predefined particle-primitive bindings neglect material and geometric variation, resulting in inaccurate coupling. Third, mesh-free approaches using grid-based MPM simulation [22] with NeRFs and Gaussians struggle to represent sharp or evolv-ing boundaries, hindering physically meaningful surface deformation. Finally, fixed ellipsoidal kernels, constrained by splatting efficiency, limit anisotropic or nonlinear mate-rial modeling and produce poor spatial coverage near pla-nar or angular regions. In essence, rendering and simula-tion demand different properties on dynamic 3D primitives: compact appearance encoding versus geometric and physi-cal expressiveness, which existing methods fail to reconcile. To tackle these challenges, we propose Physics-informed 3D dynamic Convex radiance fields (PhysCon-vex), a unified framework for visual rendering and physi-cal simulation (Fig. 1). PhysConvex represents deformable radiance fields using 3D dynamic convexes governed by continuum mechanics, extending static 3D convex primi-tives [19] to dynamic, physically consistent scenarios. We introduce a boundary-driven dynamic convex rep-resentation (Sec. 4.1) that enables flexible, spatially adap-tive, and physically consistent deformation (Fig. 2). We represent convex boundary deformation explicitly as vertex dynamics of convex hulls, or implicitly as the surface dy-namics of half-space support functions. (a) Vertex dynamics 
+
+advect individual convex vertices under Newtonian motion, providing spatial sensitivity and flexibility to non-uniform deformation; (b) Surface dynamics capture evolving edges and boundaries, allowing physically meaningful surface de-formation; (c) Convex dynamics enable polyhedral struc-tural modification, refinement, and simplification, enhanc-ing geometric expressiveness and adaptability for simulat-ing anisotropic materials. Moreover, deformable convexes approximate complex dynamic geometries with a compact set of primitives, achieving dense volumetric coverage and efficient, high-fidelity physical simulation. To integrate convex primitives into physics-based dy-namics, we develop a reduced-order convex simulation 
+
+(Sec. 4.2) that captures rich deformation behaviors of com-plex geometries and heterogeneous materials without ex-plicit meshes/grids or predefined bindings. Dynamic con-vex fields are advected under continuum mechanics, using spatially varying neural skinning eigenmodes as a physics-informed, shape- and material-aware deformation basis, with time-varying reduced degrees of freedom under New-tonian dynamics [33]. Finally, appearance, geometry, and physical parameters are jointly optimized through differen-tiable simulation and rendering (Sec. 4.3). In summary, our main contributions are: • We propose PhysConvex that integrates physical dynam-ics with deformable 3D convex radiance fields for video-based reconstruction and simulation. • We introduce a boundary-driven dynamic convex repre-sentation that combines vertex-/surface-level flexibility for spatially adaptive and physical coherent deformation. • We present a reduced-order convex simulation that ad-vects dynamic convex fields via neural skinning eigen-modes as physics-informed deformation bases for shape-and material-aware dynamics. • Extensive experiments demonstrate that PhysConvex achieves high accuracy and efficiency in recovering ge-ometry, appearance, and physical properties from videos, outperforming existing methods. 
+
+## 2. Related Work 
+
+Physics-Based Simulation. Classical physics simulation relies on mesh-based finite element methods (FEM) [2, 5, 11, 38], which require explicit meshing and linear shape functions, making them inflexible for complex or evolving geometries. Mesh-free methods such as the Material Point Method (MPM) [21, 22, 25, 49] and Smoothed Particle Hydrodynamics (SPH) [13, 26, 34] alleviate meshing but still depend on background grids or neighborhood connec-tivity, limiting efficiency and stability for highly nonlinear dynamics. Recent efforts, such as Spring-Gauss [51] em-ploy mass-spring systems for elastic behavior, but remain restricted in generalizing to diverse materials. Model Order Reduction (MOR) approaches [3, 8, 10, 33, 50] offer effi-cient, mesh-free alternatives by learning reduced-order sub-spaces that enable accurate, real-time simulation of com-plex deformations. Inspired by these advances, our method develops a reduced-order convex simulation model that in-tegrates vertex- and surface-based dynamics with differen-2tiable MOR simulation and rendering for geometry, appear-ance, and physical properties. 
+
+Video-based Physical Reconstruction and Simulation. 
+
+Integrating physical simulation with neural 3D reconstruc-tion has gained traction in works [9, 23, 28, 45, 51], in-tegrating mesh-free simulation with NeRF or 3D Gaussian Splatting. However, most existing frameworks rely on neu-ral primitives, such as voxels in NeRF [28] or ellipsoids in 3D Gaussian Splatting [23, 45, 51], combined with physics-based simulation. However, these primitives are primarily optimized for efficient rendering rather than modeling phys-ically consistent deformation, resulting in several key limi-tations: lack of spatial deformation flexibility within prim-itives; difficulty modeling sharp or evolving boundaries; restricted shape expressiveness due to fixed-shape Gaus-sian or voxel kernels; and inaccurate binding between Eu-lerian rendering primitives and Lagrangian dynamics par-ticles. To address this gap, we introduce PhysConvex, a unified framework for visual rendering and physical sim-ulation. Inspired by 3DCS [19], PhysConvex presents a physical dynamic convex representation to reconstruct and simulate radiance fields governed by continuum mechanics. 
+
+## 3. Preliminaries 
+
+Continuum Mechanics. Continuum mechanics describes the motion of deformable objects through a time-dependent deformation map x = ϕ(X, t ), which maps material coor-dinates X in the undeformed reference domain Ω0 to world coordinates x in the deformed configuration Ωt at time t.The evolution of ϕ is governed by the conservation of mass and momentum: 
+
+Z
+
+> Ωt
+
+ρ(x, t ) ≡
+
+Z
+
+> Ω0
+
+ρ(ϕ−1(x, t ), 0) ,ρ(x, t ) ˙ v(x, t ) = ∇ · σ(x, t ) + f ext ,
+
+(1) where ρ(x, t ) is the density field, ˙v(x, t ) = ∂2ϕ 
+
+> ∂t 2
+
+is the ac-celeration, and f ext denotes external forces. The internal force is given by the Cauchy stress tensor σ(x, t ), which encodes local deformation behavior. The Jacobian of the deformation map, F(X, t ) = ∇Xϕ(X, t ), is the deforma-tion gradient, representing local stretch, rotation, and shear, and is central to elasticity. The constitutive model defines the relationship between F, the strain energy density func-tion Ψ( F), and the stress tensor σ, parameterized by physi-cal parameters Young’s modulus E and Poisson’s ratio ν.
+
+Model Order Reduction. Model order reduction (MOR) provides a compact, mesh-free alternative with efficient nu-merical integration and accurate modeling of nonlinear de-formation. In MOR, the deformation map is parameter-ized as x = ϕ(X, z(t)) , where z(t) is a time-varying low-dimensional vector of reduced degrees of freedom (DOFs). Using implicit time integration, the simulation is formulated as an optimization problem: 
+
+zt+1 = arg min 
+
+> z
+
+12 ∥z − ˜zt∥2 
+
+> M
+
++ ∆ t2Epotential (z), (2) where Epotential (z) denotes the total potential energy of the simulated object from internal and external forces, ∆t is the timestep, ˜zt is the first-order predictor, and ∥ · ∥ 2 
+
+> M
+
+is the mass-matrix-weighted norm. 
+
+3D Convex Splatting. 3D Convex Splatting (3DCS) [19] represents radiance fields using smooth convex primitives, offering greater geometric expressiveness than Gaussians and enabling efficient modeling of scenes with sharp edges and dense volumes using fewer elements. A 3D convex is defined as the convex hull of a point set K = {xk}Kk=1 ,where the points {xk} define the hull of the shape, but are not necessarily explicit polyhedral vertices. Aconvex radiance field consists of N convex polytopes 
+
+C = {K n, cn, σ n, α n, β n}Nn=1 , where cn and σn denote color and opacity, and αn and βn control smoothness and sharpness, respectively. Here, α governs the softness of vertices and edges, and β modulates the radiance transition from diffuse to dense regions. 
+
+## 4. Method 
+
+Given a set of posed multi-view videos of a dynamic scene, our goal is to jointly recover the appearance and geometric representation, and the underlying physical properties (e.g., Young’s modulus, Poisson’s ratio) of the dynamic object. 
+
+Method Overview. PhysConvex introduces boundary-driven dynamic convex radiance fields (Sec. 4.1) integrated with physical reduced-order convex simulation (Sec. 4.2) to achieve differentiable physically-consistent 3D recon-struction and dynamic modeling (Sec. 4.3). PhysCon-vex is trained by enforcing rendered pixels to match the observed video in two stages (Fig. 3): (1) An unde-formed convex field is reconstructed over the first multi-view frame; (2) The reduced-order convex simulation ad-vects our boundary-driven dynamic convex radiance field under continuum mechanics, and physical properties can be optimized through joint differential simulation and render-ing using single-view video supervision. 
+
+4.1. Boundary-driven Dynamic Convex Fields 
+
+A dynamic object can be approximated as a collection of time-varying convex polytopes, forming a piecewise repre-sentation of dynamic geometry. By extending with an addi-tional time variable t ∈ R+, we parameterize our dynamic convex radiance field as a set of time-dependent N convex polytopes (convexes): 
+
+C(t) = {K n(t), cn, σ n, α n, β n}Nn=1 ,
+
+3Figure 3. PhysConvex jointly reconstructs the geometry, appearance, and physical properties of dynamic objects by integrating boundary-driven dynamic convex field, differentiable reduced-order convex simulation, and rendering. Training proceeds in two stages: (1) reconstructing an undeformed convex field from the first multi-view frame, and (2) advecting the boundary-driven convex field via reduced-order simulation while jointly optimizing physical properties via differentiable simulation and rendering under single-view video supervision. 
+
+where Kn(t) denotes the n-th dynamic convex at time t,and {cn, σ n, α n, β n} are its time-invariant color, opacity, smoothness, and sharpness parameters. We represent boundary-driven convex deformation ex-plicitly as vertex dynamics of convex hulls, or implicitly as surface dynamics of half-space support functions, enabling spatially adaptive vertex deformation, physically meaning-ful surface evolution, and geometry modification through polyhedral structures (Fig. 2). Explicit vertex dynamics nat-urally support physical simulation, while implicit surface dynamics enable differentiable rendering. 
+
+4.2. Physical Reduced-order Convex Simulation 
+
+Convex Vertex Dynamics. A dynamic convex is defined as a 3D time-varying point set K(t) = {xk(t)}Kk=1 rep-resenting the convex hull. During simulation, these points evolve under physical dynamics, enabling spatial flexibil-ity and non-uniform shape deformation. The undeformed convex hull is denoted as K(t = 0) = {Xk}Kk=1 .To advect dynamic convex radiance fields, inspired by reduced-order simulation [33], we model the vertex dy-namics xk(t) using spatially varying neural skinning eigen-modes W θ as reduced deformation bases, 
+
+ϕ(Xk, Z(t), W θ ) = Xk +
+
+> M
+
+X
+
+> m=1
+
+W θm(Xk)Zm(t)[ Xk, 1] T ,
+
+(3) where skinning eigenmodes W θ (X) ∈ R3 → RM rep-resent physics-informed deformation bases encoding both shape and material awareness, and M is the number of re-duced DOFs. The reduced bases W θ (X) are represented as a small MLP-based neural field parameterized by θ, en-abling smooth, mesh-free discretization for complex ge-ometries and heterogeneous materials. The neural skinning field W θ (X) is trained to learn physically significant mo-tions by minimizing deformation energy: 
+
+θ∗ =arg min θ λelastic 
+
+Z
+
+> R3
+
+φ(X)Ψ( ϕ(X, z, W θ )) + λortho 
+
+> M
+
+X
+
+> i=1
+> M
+
+X
+
+> j=1
+
+Z
+
+> R3
+
+φ(X)( W θi W θj − δij )2 dX,
+
+(4) where φ(X) is a density function, Ψ( ·) is the strain energy density function, and δij is the Kronecker delta. This train-ing encourages W θ (X) to encode low-dimensional, phys-ically consistent deformation behaviors that are material-and shape-aware, achieving mesh-free model reduction. 
+
+Z(t) ∈ R3×4×M represents time-varying reduced DOFs as handle transformation matrices, which are flattened into 
+
+z(t) = flat (Z(t)) ∈ R12 ×M . During the simulation, z(t)
+
+is initialized to zero to ensure that xk(0) = Xk. At each discrete time step, z(t) is updated via implicit time inte-gration using the incremental potential formulation (Eq. 2) and solved through a standard Newton-based solver [4, 27]. This process advances the dynamic convex field under phys-ically consistent reduced-order dynamics. 
+
+Convex Surface Dynamics. Given a dynamic convex point set, the convex hull can equivalently be expressed by 
+
+H time-varying planes H(t) = {(nh(t), d h(t)) }Hh=1 , where 
+
+nh(t) and dh(t) denote the normal and offset of the h-th plane, respectively. The signed distance of a point x to the 
+
+h-th time-dependent plane is defined as: 
+
+fh(x, t ) = nh(t)·x + dh(t). (5) 4Following the static indicator formulation in CvxNet [12], we define O(x, t ) : R3 → [0 , 1] as the time-dependent oc-cupancy function for each dynamic convex: 
+
+O(x, t ) = Sigmoid (−β φ (x, t )) ,φ(x, t ) = log 
+
+> H
+
+X
+
+> h=1
+
+exp( αf h(x, t )) 
+
+!
+
+, (6) where α and β control convex smoothness and sharpness, respectively, and φ(x, t ) approximates the signed distance function of a dynamic convex hull. To render deformed convex kernels, we extend the splat-ting from 3DCS [19] to handle dynamic scenes. PhysCon-vex projects 3D time-varying points to 2D, constructs their dynamic convex hulls, and rasterizes them using α-blending. Given camera pose and N dynamic convexes, the time-varying pixel color at location q and time t is: 
+
+C(q, t ) = 
+
+> N
+
+X
+
+> i=1
+
+ciσiOi(q, t )
+
+> i−1
+
+Y
+
+> j=1
+
+ 1 − σj Oj (q, t ), (7) where ci and σi denote the color and opacity of the i-th dynamic convex, respectively. 
+
+4.3. Differentiable Rendering and Simulation 
+
+Given posed multi-view videos of a dynamic scene, we re-construct the dynamic object’s appearance, geometry, and physical properties through a joint differentiable simulation and rendering (Fig. 3). 
+
+Appearance and Geometry Optimization. To recover the undeformed convex radiance field C(0) , we optimize from the first multi-view frames of the input videos by min-imizing: 
+
+C∗(0) = arg min  
+
+> {K n(0) ,cn,σ n,α n,β n}
+
+L,
+
+L = (1 − λ)L1 + λLD-SSIM + βLm,
+
+(8) where L1 and LD-SSIM are image reconstruction losses, and 
+
+Lm regularizes the number of convexes following [19]. This optimization yields the undeformed convex radiance field 
+
+C∗(0) = {K ∗
+
+> n
+
+(0) , c∗
+
+> n
+
+, σ ∗
+
+> n
+
+, α ∗
+
+> n
+
+, β ∗
+
+> n
+
+}Nn=1 in material space Ω0.
+
+Physical Model Optimization. To recover physi-cal properties, we jointly optimize the elastic parameters 
+
+{E, ν } and the neural skinning field W θ with a single front-view video supervision: 
+
+E∗, ν ∗, θ ∗ = arg min  
+
+> E,ν,θ
+
+Lsim ,
+
+Lsim = 1
+
+SP 
+
+> P
+
+X
+
+> p=1
+> S
+
+X
+
+> s=1
+
+∥C(qp, t s) − Cgt (qp, t s)∥22,
+
+(9) where C and Cgt denote the rendered and ground-truth pixel colors at each time step. Since both simulation and rendering are differentiable, physical and material parame-ters can be optimized end-to-end from video observations. To equip our model with generalizable physical under-standing, we adopt a feed-forward physical system identi-fication framework inspired by [9]. Given a single front-view video, a pretrained video Vision Transformer [42] ex-tracts motion cues and prior physical knowledge from large-scale video data. Small MLP regression heads then esti-mate {E, ν, θ }, providing an initial coarse prediction that is subsequently refined through differentiable simulation to better match reference videos. In summary, PhysCon-vex jointly reconstructs geometry, appearance, and physi-cal properties of deformable objects by unifying physical boundary-driven dynamic convex representation, differen-tiable reduced-order convex simulation, and rendering. 
+
+## 5. Results 
+
+In this section, we evaluate PhysConvex on four tasks: physical system identification (Sec. 5.1), dynamic recon-struction (Sec. 5.2), future state prediction (Sec. 5.3), and physical generalization capability (Sec. 5.4). 
+
+Baselines. (1) PAC-NeRF [28] jointly reconstructed dy-namic NeRFs and a simulatable model using MPM [22]. (2) 
+
+Spring-GS [51] models elastic objects with spring-mass 3D Gaussians and learnable spring stiffness parameters, lim-ited to elastic dynamics. (3) GIC [7] integrates 3D Gaus-sians with MPM simulation, enhancing shape reconstruc-tion via a motion-factorized network and coarse-to-fine fill-ing strategy. (4) Vid2Sim [9] is a feed-forward Gaussian-based model with reduced-order simulation by utilizing pre-trained VideoMAE [42] and Large Multi-view Gaussian Model (LGM) [40] as backbones for reconstructing phys-ical parameters and 3D Gaussians. 
+
+Metrics. For physical parameters estimation , we report Mean Absolute Error (MAE) of log( E) and ν under Neo-Hookean model (excluding Spring-GS). For dynamic re-construction and future prediction , we measure PSNR[20], SSIM[43], and video perceptual loss (FoVVDP) [31]. 
+
+Dataset. Following [9], we use 12 high-quality 3D meshes from Google Scanned Objects (GSO) [15], featur-ing complex geometries and detailed textures. Objects are simulated using FEM to obtain physically accurate refer-ence dynamics. The animations are rendered from 12 view-points at a resolution of 448 ×448 for 24 frames. The first 16 frames are used as observations, and the remaining 8 frames serve as ground-truth references for future state prediction. 
+
+Physical Generalization Capability. We test general-ization to varied materials, novel force, and boundary con-ditions, demonstrating consistent performance (Sec. 5.4). 
+
+Implementation details. Each convex shape is initial-ized with K = 6 points and spherical harmonics of de-5Table 1. Quantitative Comparison of Mean Absolute Error (MAE) on Physical System Identification.                                                                                                                       
+
+> methods backpack bell blocks bus cream elephant grandpa leather lion mario sofa turtle Mean Error ↓
+> log( E)
+> PAC-NeRF 3.28 1.08 4.02 3.30 3.22 3.05 2.99 1.20 2.34 3.37 0.20 1.94 2.50 GIC 1.16 2.87 2.12 1.93 2.13 1.53 0.42 3.45 2.85 1.82 0.65 3.18 2.01 Vid2Sim 0.69 0.15 0.54 0.26 0.95 0.18 1.07 0.73 0.48 0.50 0.18 0.44 0.51
+> Ours 0.32 0.34 0.10 0.28 0.34 0.60 0.97 0.18 0.23 0.54 0.01 0.56 0.37
+> ν
+> PAC-NeRF 0.21 0.23 0.33 0.16 0.12 0.06 0.36 0.26 0.14 0.33 0.30 0.01 0.21 GIC 0.11 0.24 0.29 0.18 0.08 0.24 0.26 0.02 0.14 0.22 0.01 0.08 0.16 Vid2Sim 0.10 0.10 0.07 0.06 0.11 0.05 0.02 0.06 0.05 0.06 0.08 0.02 0.06
+> Ours 0.06 0.09 0.02 0.02 0.05 0.08 0.03 0.02 0.03 0.12 0.02 0.01 0.04
+
+Table 2. Quantitative Comparison on Dynamic Reconstruction.                                                                                                                                                                                                                 
+
+> backpack bell blocks bus cream elephant grandpa leather lion mario sofa turtle Mean ↑
+> PSNR  ↑ PAC-NeRF 19.37 25.00 23.36 20.72 23.24 22.27 21.63 20.85 22.66 21.01 22.49 22.19 22.06 Spring-Gaus 17.42 20.49 22.78 20.06 23.58 21.30 21.64 18.29 21.95 20.23 21.89 21.23 20.91 GIC 18.94 19.55 18.78 20.84 23.81 21.86 20.50 21.00 19.33 21.28 24.16 22.09 21.01 Vid2Sim w/o LGM 26.87 26.59 32.57 26.53 34.82 26.99 24.45 31.21 27.62 24.83 30.01 30.33 28.57
+> Ours 28.09 29.67 32.65 27.97 34.62 29.17 27.67 33.50 27.58 27.46 30.15 31.49 30.00
+> SSIM  ↑ PAC-NeRF 0.887 0.956 0.940 0.908 0.893 0.922 0.939 0.932 0.936 0.921 0.926 0.923 0.924 Spring-Gaus 0.867 0.941 0.941 0.903 0.912 0.919 0.948 0.917 0.937 0.920 0.921 0.920 0.920 GIC 0.903 0.945 0.930 0.925 0.922 0.936 0.948 0.949 0.934 0.938 0.942 0.936 0.934 Vid2Sim w/o LGM 0.931 0.959 0.973 0.937 0.955 0.942 0.944 0.973 0.954 0.936 0.952 0.963 0.952
+> Ours 0.950 0.972 0.975 0.948 0.960 0.957 0.964 0.980 0.958 0.954 0.955 0.971 0.962
+> FoVVDP  ↑ PAC-NeRF 6.043 7.473 7.001 6.540 5.991 6.791 6.626 6.485 7.006 6.876 6.543 6.711 6.674 Spring-Gaus 5.455 6.862 6.890 6.377 5.899 6.524 6.998 5.988 6.902 6.153 6.300 6.569 6.410 GIC 6.130 6.230 6.062 6.552 5.889 6.907 6.855 6.737 6.331 6.985 7.069 6.782 6.544 Vid2Sim w/o LGM 7.778 6.884 8.792 7.622 9.117 7.468 6.246 8.949 7.681 6.325 8.034 8.628 7.794
+> Ours 8.403 7.843 8.783 8.005 8.708 8.178 7.752 9.153 7.617 7.792 7.925 8.801 8.247
+
+Table 3. Quantitative Comparison on Future State Prediction.                      
+
+> PAC-NeRF Spring-Gaus GIC Vid2Sim Ours
+> PSNR ↑20.11 18.32 19.20 25.07 25.71
+> SSIM ↑0.913 0.905 0.916 0.945 0.948
+> FoVVDP ↑5.948 5.443 5.702 7.770 7.683
+
+gree 3 (69 parameters per convex shape). We first train 3D convexes for the undeformed space following the origi-nal 3DCS [19] and train the neural skinning network using the data-free method from [33]. We then jointly optimize 
+
+E, ν, θ for 400 iterations using the Adam optimizer [1], with learning rates 5 × 10 −3, 1 × 10 −3, 5 × 10 −7. Simulation uses M = 10 control handles as reduced DOFs. The av-erage training time cost per scene is about 6 min on a single Nvidia RTX A6000 (Details in Sec. 5.6). Additional results for varying K and M appear in Sec. 5.5. 
+
+5.1. Physical System Identification 
+
+Following [7, 9, 28], we assessed our method and all base-lines on physical system identification against 12 GSO test cases. As shown in Tab. 1, PhysConvex achieves the low-est error in most cases and remains competitive in the rest, validating its accuracy in recovering physical properties. 
+
+5.2. Dynamic Reconstruction 
+
+Our method and baselines for dynamic reconstruction were evaluated using a set of 12 GSO test cases following [7, 9, 28, 51]. For fair comparison, we use Vid2Sim’s vari-ant that trains 3D Gaussians from scratch without initializ-ing 3D Gaussians from pre-trained Large Multi-view Gaus-sian Model (LGM) [40] predictions. As shown in Tab. 2 and Fig. 4, PhysConvex achieves superior reconstruction qual-ity and physical realism. Prior methods that optimize voxels in NeRF or ellipsoids in 3DGS often produce blurred tex-tures or inaccurate dynamics, whereas our reduced-order, boundary-driven convex fields preserve sharp details and dynamic fidelity. Moreover, unlike grid-based MPM or spring-mass elastic dynamics, which are susceptible to nu-merical artifacts and oscillations in large-scale elastody-namics of complex geometries, our mesh- and grid-free reduced-space solver yields efficient, accurate dynamics. 
+
+5.3. Future State Prediction 
+
+We further evaluate temporal generalization following [51]. After reconstructing the first 16 frames, all methods pre-dict the subsequent 8 frames. Average results across all test cases (Tab. 3 and Fig. 4) show that PhysConvex maintains the top accuracy, demonstrating improved physical consis-tency in temporal evolution. 
+
+5.4. Generalization Capability 
+
+We further demonstrate the generalization of our method to novel materials, forces, and boundary conditions, showing consistent performance. 
+
+Generalization to Different Materials. PhysConvex generalizes naturally to different material behaviors and 6Dynamic Reconstruction Future State  
+
+> Reference PAC-NeRF Spring-GS Vid2Sim Ours GIC
+> Reference PAC-NeRF Spring-GS Vid2Sim Ours GIC
+> Dynamic Reconstruction Future State
+
+Figure 4. Comparison with baseline [7, 9, 28, 51] on dynamic reconstruction and future state prediction. Our method preserves high-quality geometry and appearance while producing physically plausible dynamics. 
+
+Figure 5. Generalization to novel materials. Elastic (stiff): E=10 7, ν=0 .49 . Elastic (soft): E = 8000 , ν = 0 .4. Plasticine: τY =500 . Sand: θf =10 ◦.
+
+their constitutive models. We demonstrate this by sim-ulating Elastic , Plasticine , and Sand materials following [7, 28]. As shown in Fig. 5, our method accurately captures the distinct material responses, utilizing corresponding en-ergy densities derived for each model. 
+
+Generalization to Complex Boundary and Force Conditions. PhysConvex is robust to varying environmen-tal dynamics, seamlessly integrating into dynamic scenes with novel forces and complex boundary interactions. As shown in Fig. 6, our method reliably produces stable, high-7Figure 6. Generalization to novel force and complex boundary conditions. Force: A continuous external force pushing the falling object toward the left. Boundary: An object falls and is subjected to sliding motion on a continuously moving floor. 
+
+Table 4. Ablation of the Number K of Convex Points ( M = 10 ) ( Best , Second , Third ).                                                                                 
+
+> Dynamic Reconstruction Future State Prediction System Identification Primitives Training Time
+> KPSNR ↑SSIM ↑FoVVDP ↑PSNR ↑SSIM ↑FoVVDP ↑log ( E)νNum. Average K=3 24.90 0.939 6.957 19.63 0.919 6.139 0.74 0.05 11827 5min 20s K=4 29.56 0.960 8.151 24.50 0.944 7.500 0.38 0.04 14405 5min 36s K=5 29.88 0.961 8.235 25.09 0.946 7.688 0.36 0.04 18773 6min 5s K=6 30.00 0.962 8.247 25.71 0.948 7.683 0.37 0.04 23681 6min 14s K=7 30.01 0.962 8.235 24.95 0.945 7.664 0.38 0.05 29646 6min 39s K=8 30.19 0.962 8.290 25.38 0.948 7.760 0.47 0.04 35320 7min 5s
+
+Table 5. Ablation of the Number M of Reduced DOFs.( Best , Second , Third )                                                                          
+
+> Dynamic Reconstruction Future State Prediction System Identification Primitives KMPSNR ↑SSIM ↑FoVVDP ↑PSNR ↑SSIM ↑FoVVDP ↑log ( E)νNum. K=4 M=8 29.47 0.959 8.152 24.55 0.944 7.605 0.351 0.053 14392 M=10 29.56 0.960 8.151 24.50 0.944 7.500 0.376 0.044 14405 M=12 29.60 0.960 8.206 24.47 0.943 7.558 0.510 0.043 14180 K=6 M=8 29.96 0.962 8.214 25.05 0.946 7.635 0.330 0.048 23832 M=10 30.00 0.962 8.247 25.71 0.948 7.683 0.371 0.044 23681 M=12 29.88 0.961 8.210 24.76 0.944 7.601 0.321 0.048 23736
+
+Table 6. Comparison on total training time and primitives number.               
+
+> PAC-NeRF GIC Spring-GS Vid2Sim Ours
+> Avg. Training Time 51 min 69 min 32 min 8 min 6 min
+> Primitives Num. --22882 31363 23681
+
+quality reconstructions and physically consistent anima-tions even under diverse constraints. 
+
+5.5. Ablation Study 
+
+Ablation studies validate two key components: the num-ber of 3D points K per convex hull in our boundary-driven convex dynamics (Tab. 4) and the number of degrees of freedom (skinning handles) M in our reduced-order con-vex simulation (Tab. 5). Increasing K enhances the flexi-bility of convex shape representation and improves recon-struction quality, though it introduces higher computational cost and longer training time. However, gains saturate be-yond K = 6 . Similarly, increasing M boosts deformation expressivity but is bounded by the capacity of the neural skinning network. Despite the added complexity, our con-vex representation remains highly efficient, requiring fewer primitives and shorter training time than Gaussian-based methods (see Tab. 6), owing to compact convex coverage and reduced-order simulation. 
+
+5.6. Efficiency Comparison 
+
+We report the average total training time and the aver-age number of primitives required for different methods using their default settings (excluding the primitives from network-based models, PAC-NeRF and GIC). As shown in Tab. 6, our method is notably more efficient, achieving shorter training time and requiring fewer primitives com-pared to even highly efficient baselines like Spring-Gaus and Vid2Sim. This superior efficiency stems from the com-pact representation achieved by our convex primitives and the inherent performance gains of our reduced-order simu-lation combined with an implicit Euler solver. All tests were executed on a single NVIDIA-RTX A6000 GPU. 
+
+## 6. Conclusions and Future Work 
+
+In this work, we introduced PhysConvex, a physics-informed dynamic convex radiance field that unifies vi-sual rendering and physical simulation. By representing deformable radiance fields with boundary-driven convex primitives and reduced-order convex dynamics, PhysCon-8vex captures spatially adaptive, physically consistent defor-mation and evolving boundaries with high efficiency. Ex-periments show that PhysConvex achieves superior recon-struction of geometry, appearance, and dynamics, advanc-ing the goal of physically grounded 3D dynamics. In future work, We aim to further strengthen our dynamics model by integrating geometry-aware 3D reconstruction. We also plan to develop more intuitive user interaction mechanisms, potentially enabled by recent advances in large text-to-3D generation models. 
+
+## References 
+
+[1] Kingma DP Ba J Adam et al. A method for stochastic op-timization. arXiv preprint arXiv:1412.6980 , 1412(6), 2014. 6[2] Adam W Bargteil, Chris Wojtan, Jessica K Hodgins, and Greg Turk. A finite element method for animating large vis-coplastic flow. ACM transactions on graphics (TOG) , 26(3): 16–es, 2007. 2 [3] Otman Benchekroun, Jiayi Eris Zhang, Siddhartha Chaud-huri, Eitan Grinspun, Yi Zhou, and Alec Jacobson. Fast complementary dynamics via skinning eigenmodes. ACM Transactions on Graphics , 2023. 1, 2 [4] J Fr´ ed´ eric Bonnans, J Charles Gilbert, Claude Lemar´ echal, and Claudia A Sagastiz´ abal. Numerical optimization: theo-retical and practical aspects . Springer, 2006. 4 [5] Sofien Bouaziz, Sebastian Martin, Tiantian Liu, Ladislav Ka-van, and Mark Pauly. Projective dynamics: Fusing constraint projections for fast simulation. In Seminal Graphics Papers: Pushing the Boundaries, Volume 2 , pages 787–797. 2023. 2 [6] Tim Brooks, Bill Peebles, Connor Holmes, Will DePue, Yufei Guo, Li Jing, David Schnurr, Joe Taylor, Troy Luh-man, Eric Luhman, et al. Video generation models as world simulators. OpenAI Blog , 1(8):1, 2024. 1 [7] Junhao Cai, Yuji Yang, Weihao Yuan, Yisheng He, Zilong Dong, Liefeng Bo, Hui Cheng, and Qifeng Chen. Gic: Gaussian-informed continuum for physical property identifi-cation and simulation. Advances in Neural Information Pro-cessing Systems , 37:75035–75063, 2024. 1, 5, 6, 7 [8] Yue Chang, Peter Yichen Chen, Zhecheng Wang, Maur-izio M Chiaramonte, Kevin Carlberg, and Eitan Grinspun. Licrom: Linear-subspace continuous reduced order model-ing with neural fields. In SIGGRAPH Asia 2023 Conference Papers , pages 1–12, 2023. 2 [9] Chuhao Chen, Zhiyang Dou, Chen Wang, Yiming Huang, Anjun Chen, Qiao Feng, Jiatao Gu, and Lingjie Liu. Vid2sim: Generalizable, video-based reconstruction of ap-pearance, geometry and physics for mesh-free simulation. 
+
+IEEE Conference on Computer Vision and Pattern Recog-nition (CVPR) , 2025. 1, 3, 5, 6, 7 [10] Peter Yichen Chen, Jinxu Xiang, Dong Heon Cho, Yue Chang, GA Pershing, Henrique Teles Maia, Maurizio M Chiaramonte, Kevin Carlberg, and Eitan Grinspun. Crom: Continuous reduced-order modeling of pdes using implicit neural representations. arXiv preprint arXiv:2206.02607 ,2022. 2 [11] Barbara Cutler, Julie Dorsey, Leonard McMillan, Matthias M¨ uller, and Robert Jagnow. A procedural approach to authoring solid models. ACM Transactions on Graphics (TOG) , 21(3):302–311, 2002. 2 [12] Boyang Deng, Kyle Genova, Soroosh Yazdani, Sofien Bouaziz, Geoffrey Hinton, and Andrea Tagliasacchi. Cvxnet: Learnable convex decomposition. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 31–44, 2020. 5 [13] Mathieu Desbrun and Marie-Paule Gascuel. Smoothed parti-cles: A new paradigm for animating highly deformable bod-ies. In Computer Animation and Simulation’96: Proceedings of the Eurographics Workshop in Poitiers, France, August 31–September 1, 1996 , pages 61–76. Springer, 1996. 2 [14] Lorenzo Diazzi, Daniele Panozzo, Amir Vaxman, and Marco Attene. Constrained delaunay tetrahedrization: A robust and practical approach. ACM Transactions on Graphics (TOG) ,42(6):1–15, 2023. 1 [15] Laura Downs, Anthony Francis, Nate Koenig, Brandon Kin-man, Ryan Hickman, Krista Reymann, Thomas B McHugh, and Vincent Vanhoucke. Google scanned objects: A high-quality dataset of 3d scanned household items. In 2022 In-ternational Conference on Robotics and Automation (ICRA) ,pages 2553–2560. IEEE, 2022. 5 [16] Yuanxing Duan, Fangyin Wei, Qiyu Dai, Yuhang He, Wen-zheng Chen, and Baoquan Chen. 4d-rotor gaussian splatting: towards efficient novel view synthesis for dynamic scenes. In ACM SIGGRAPH 2024 Conference Papers , pages 1–11, 2024. 1 [17] Chen Gao, Ayush Saraf, Johannes Kopf, and Jia-Bin Huang. Dynamic view synthesis from dynamic monocular video. In 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 5712–5721, 2021. [18] Shanyan Guan, Huayu Deng, Yunbo Wang, and Xiaokang Yang. Neurofluid: Fluid dynamics grounding with particle-driven neural radiance fields. In ICML , 2022. 1 [19] Jan Held, Renaud Vandeghen, Abdullah Hamdi, Adrien Deliege, Anthony Cioppa, Silvio Giancola, Andrea Vedaldi, Bernard Ghanem, and Marc Van Droogenbroeck. 3D con-vex splatting: Radiance field rendering with 3D smooth con-vexes. In Proceedings of the IEEE/CVF Conference on Com-puter Vision and Pattern Recognition (CVPR) , 2025. 2, 3, 5, 6[20] Alain Hore and Djemel Ziou. Image quality metrics: Psnr vs. ssim. In 2010 20th international conference on pattern recognition , pages 2366–2369. IEEE, 2010. 5 [21] Yuanming Hu, Luke Anderson, Tzu-Mao Li, Qi Sun, Nathan Carr, Jonathan Ragan-Kelley, and Fr´ edo Durand. Difftaichi: Differentiable programming for physical simulation. arXiv preprint arXiv:1910.00935 , 2019. 2 [22] Chenfanfu Jiang, Craig Schroeder, Joseph Teran, Alexey Stomakhin, and Andrew Selle. The material point method for simulating continuum materials. In ACM SIGGRAPH 2016 Courses , New York, NY, USA, 2016. Association for Computing Machinery. 2, 5 [23] Hanxiao Jiang, Hao-Yu Hsu, Kaifeng Zhang, Hsin-Ni Yu, Shenlong Wang, and Yunzhu Li. Phystwin: Physics-
+
+9informed reconstruction and simulation of deformable ob-jects from videos. ICCV , 2025. 1, 3 [24] Bernhard Kerbl, Georgios Kopanas, Thomas Leimk¨ uhler, and George Drettakis. 3d gaussian splatting for real-time radiance field rendering. ACM Transactions on Graphics , 42 (4), 2023. 1 [25] Gergely Kl´ ar, Theodore Gast, Andre Pradhana, Chuyuan Fu, Craig Schroeder, Chenfanfu Jiang, and Joseph Teran. Drucker-prager elastoplasticity for sand animation. ACM Transactions on Graphics (TOG) , 35(4):1–12, 2016. 2 [26] Tassilo Kugelstadt, Jan Bender, Jos´ e Antonio Fern´ andez-Fern´ andez, Stefan Rhys Jeske, Fabian L¨ oschner, and An-dreas Longva. Fast corotated elastic sph solids with implicit zero-energy mode control. Proceedings of the ACM on Com-puter Graphics and Interactive Techniques , 4(3):1–21, 2021. 2[27] Minchen Li, Zachary Ferguson, Teseo Schneider, Timo-thy R Langlois, Denis Zorin, Daniele Panozzo, Chenfanfu Jiang, and Danny M Kaufman. Incremental potential con-tact: intersection-and inversion-free, large-deformation dy-namics. ACM Trans. Graph. , 39(4):49, 2020. 1, 4 [28] Xuan Li, Yi-Ling Qiao, Peter Yichen Chen, Krishna Murthy Jatavallabhula, Ming Lin, Chenfanfu Jiang, and Chuang Gan. Pac-nerf: Physics augmented continuum neural ra-diance fields for geometry-agnostic system identification. 
+
+arXiv preprint arXiv:2303.05512 , 2023. 1, 3, 5, 6, 7 [29] Youtian Lin, Zuozhuo Dai, Siyu Zhu, and Yao Yao. Gaussian-flow: 4d reconstruction with dynamic 3d gaus-sian particle. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 21136– 21145, 2024. 1 [30] Jonathon Luiten, Georgios Kopanas, Bastian Leibe, and Deva Ramanan. Dynamic 3d gaussians: Tracking by per-sistent dynamic view synthesis. In 2024 International Con-ference on 3D Vision (3DV) , pages 800–809. IEEE, 2024. 1 [31] Rafał K Mantiuk, Gyorgy Denes, Alexandre Chapiro, Anton Kaplanyan, Gizem Rufo, Romain Bachy, Trisha Lian, and Anjul Patney. Fovvideovdp: A visible difference predictor for wide field-of-view video. ACM Transactions on Graphics (TOG) , 40(4):1–19, 2021. 5 [32] Ben Mildenhall, Pratul P. Srinivasan, Matthew Tancik, Jonathan T. Barron, Ravi Ramamoorthi, and Ren Ng. Nerf: Representing scenes as neural radiance fields for view syn-thesis. In ECCV , 2020. 1 [33] Vismay Modi, Nicholar Sharp, Or Perel, David I. W. Levin, and Shinjiro Sueda. Simplicits: Mesh-free, geometry-agnostic, elastic simulation. arXiv preprint , 2024. 2, 4, 6 [34] Andreas Peer, Christoph Gissler, Stefan Band, and Matthias Teschner. An implicit sph formulation for incompressible linearly elastic solids. In Computer Graphics Forum , pages 135–148. Wiley Online Library, 2018. 2 [35] Albert Pumarola, Enric Corona, Gerard Pons-Moll, and Francesc Moreno-Noguer. D-nerf: Neural radiance fields for dynamic scenes. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition , pages 10318–10327, 2021. 1 [36] Jiawei Ren, Liang Pan, Jiaxiang Tang, Chi Zhang, Ang Cao, Gang Zeng, and Ziwei Liu. Dreamgaussian4d: Genera-tive 4d gaussian splatting. arXiv preprint arXiv:2312.17142 ,2023. [37] Alvaro Sanchez-Gonzalez, Jonathan Godwin, Tobias Pfaff, Rex Ying, Jure Leskovec, and Peter Battaglia. Learning to simulate complex physics with graph networks. In Interna-tional conference on machine learning , pages 8459–8468. PMLR, 2020. 1 [38] Teseo Schneider, J´ er´ emie Dumas, Xifeng Gao, Mario Botsch, Daniele Panozzo, and Denis Zorin. Poly-spline finite-element method. ACM Transactions on Graphics (TOG) , 38(3):1–16, 2019. 1, 2 [39] Cheng Sun, Min Sun, and Hwann-Tzong Chen. Direct voxel grid optimization: Super-fast convergence for radiance fields reconstruction. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 5459– 5469, 2022. 1 [40] Jiaxiang Tang, Zhaoxi Chen, Xiaokang Chen, Tengfei Wang, Gang Zeng, and Ziwei Liu. Lgm: Large multi-view gaussian model for high-resolution 3d content creation. In European Conference on Computer Vision , pages 1–18. Springer, 2024. 5, 6 [41] Keyu Tian, Yi Jiang, Zehuan Yuan, Bingyue Peng, and Li-wei Wang. Visual autoregressive modeling: Scalable image generation via next-scale prediction. Advances in neural in-formation processing systems , 37:84839–84865, 2024. 1 [42] Zhan Tong, Yibing Song, Jue Wang, and Limin Wang. Videomae: Masked autoencoders are data-efficient learners for self-supervised video pre-training. Advances in neural information processing systems , 35:10078–10093, 2022. 5 [43] Zhou Wang, Alan C Bovik, Hamid R Sheikh, and Eero P Si-moncelli. Image quality assessment: from error visibility to structural similarity. IEEE transactions on image processing ,13(4):600–612, 2004. 5 [44] Guanjun Wu, Taoran Yi, Jiemin Fang, Lingxi Xie, Xiaopeng Zhang, Wei Wei, Wenyu Liu, Qi Tian, and Xinggang Wang. 4d gaussian splatting for real-time dynamic scene rendering. In Proceedings of the IEEE/CVF conference on computer vi-sion and pattern recognition , pages 20310–20320, 2024. 1 [45] Tianyi Xie, Zeshun Zong, Yuxing Qiu, Xuan Li, Yutao Feng, Yin Yang, and Chenfanfu Jiang. Physgaussian: Physics-integrated 3d gaussians for generative dynamics. arXiv preprint arXiv:2311.12198 , 2023. 1, 3 [46] Yinghao Xu, Zifan Shi, Wang Yifan, Hansheng Chen, Ceyuan Yang, Sida Peng, Yujun Shen, and Gordon Wet-zstein. Grm: Large gaussian reconstruction model for ef-ficient 3d reconstruction and generation. In European Con-ference on Computer Vision , pages 1–20. Springer, 2024. 1 [47] Zeyu Yang, Hongye Yang, Zijie Pan, and Li Zhang. Real-time photorealistic dynamic scene representation and rendering with 4d gaussian splatting. arXiv preprint arXiv:2310.10642 , 2023. 1 [48] Ziyi Yang, Xinyu Gao, Wen Zhou, Shaohui Jiao, Yuqing Zhang, and Xiaogang Jin. Deformable 3d gaussians for high-fidelity monocular dynamic scene reconstruction. In Pro-ceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 20331–20341, 2024. 1 
+
+10 [49] Yonghao Yue, Breannan Smith, Christopher Batty, Changxi Zheng, and Eitan Grinspun. Continuum foam: A material point method for shear-dependent flows. ACM Transactions on Graphics (TOG) , 34(5):1–20, 2015. 2 [50] Jiayi Eris Zhang, Seungbae Bang, David I.W. Levin, and Alec Jacobson. Complementary dynamics. ACM Transac-tions on Graphics , 2020. 1, 2 [51] Licheng Zhong, Hong-Xing Yu, Jiajun Wu, and Yunzhu Li. Reconstruction and simulation of elastic objects with spring-mass 3d gaussians. European Conference on Computer Vi-sion (ECCV) , 2024. 1, 2, 3, 5, 6, 7 
+
+11

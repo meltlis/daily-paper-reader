@@ -1,0 +1,384 @@
+Title: Ref-DGS: Reflective Dual Gaussian Splatting
+
+URL Source: https://arxiv.org/pdf/2603.07664v2
+
+Published Time: Mon, 16 Mar 2026 01:23:46 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# Ref-DGS: Reflective Dual Gaussian Splatting 
+
+# NINGJING FAN, Chongqing University, China 
+
+# YIQUN WANG ∗, Chongqing University, China 
+
+# DONGMING YAN, Institute of Automation, Chinese Academy of Sciences, China 
+
+# PETER WONKA, King Abdullah University of Science and Technology (KAUST), Saudi Arabia 
+
+Selected Input Image Ref-GS Ours 72.58 min 17.40 min GT Ref-GS Ours Ref-GS Rendering Ours Rendering 
+
+Fig. 1. Left: Surface reconstruction results on the RefReal dataset for two challenging scenes, gardenspheres (top) and toycar (bottom), both with strong near-field specular reflections. The bottom row reports the average training time. Right: Results on the GlossyReal dataset for the vase scene, showing surface reconstruction and rendering quality. Our method produces more accurate geometry and higher-quality reflections, as highlighted in the close-up regions. 
+
+Reflective appearance, especially strong and typically near-field specular reflections, poses a fundamental challenge for accurate surface reconstruc-tion and novel view synthesis. Existing Gaussian splatting methods either fail to model near-field specular reflections or rely on explicit ray trac-ing at substantial computational cost. We present Ref-DGS , a reflective dual Gaussian splatting framework that addresses this trade-off by decou-pling surface reconstruction from specular reflection within an efficient rasterization-based pipeline. Ref-DGS introduces a dual Gaussian scene rep-resentation consisting of geometry Gaussians and complementary local reflection Gaussians that capture near-field specular interactions without explicit ray tracing, along with a global environment reflection field for mod-eling far-field specular reflections. To predict specular radiance, we further propose a lightweight, physically-aware adaptive mixing shader that fuses global and local reflection features. Experiments demonstrate that Ref-DGS achieves state-of-the-art performance on reflective scenes while training substantially faster than ray-based Gaussian methods. CCS Concepts: • Computing methodologies → Computer vision ; Arti-ficial intelligence ; Computer graphics .Additional Key Words and Phrases: Gaussian Splatting, Reflective Appear-ance, Surface Reconstruction, Novel View Synthesis 
+
+> Authors’ Contact Information: Ningjing Fan, Chongqing University, China; Yiqun Wang ∗, Chongqing University, China; Dongming Yan, Institute of Automation, Chinese Academy of Sciences, China; Peter Wonka, King Abdullah University of Science and Technology (KAUST), Saudi Arabia.
+
+1 Introduction 
+
+Scenes with reflective materials pose significant challenges for sur-face reconstruction and novel view synthesis, as view-dependent specular and indirect effects violate the multi-view appearance consistency assumptions commonly used for geometry recovery and rendering. While recent neural rendering methods achieve im-pressive results for predominantly diffuse scenes, faithfully han-dling specular reflections and view-dependent effects under com-plex lighting remains difficult, especially when high visual quality and practical training efficiency are both required. NeRF-based ap-proaches address view-dependent appearance through volumetric radiance fields and physically inspired shading [Mildenhall et al .2020], but their reliance on dense ray sampling and volumetric integration leads to high computational cost and limited scalabil-ity. In contrast, 3D Gaussian Splatting (3DGS) has emerged as an efficient alternative, enabling fast novel view synthesis via differen-tiable rasterization [Kerbl et al . 2023]. However, extending Gaussian-based representations to jointly support accurate surface reconstruc-tion and faithful modeling of reflective effects within an efficient rasterization-based framework remains an open problem. At the core of this difficulty lies a mismatch between the physical nature of specular reflection and the representations used in existing Gaussian-based methods. A large body of work [Chen et al . 2024; Guédon et al . 2025; Huang et al . 2024a; Yu et al . 2024b] focuses on   
+
+> arXiv:2603.07664v2 [cs.CV] 13 Mar 2026 2•Fan et al.
+
+improving surface reconstruction quality, achieving accurate and stable geometry but without explicitly modeling specular reflection. In reflective scenes, view-dependent specular effects are therefore absorbed into the geometry during optimization, leading to sur-face shrinkage, local dents, and the loss of high-frequency details. Other approaches introduce explicit specular modeling within a Gaussian splatting framework [Jiang et al . 2024; Yang et al . 2024; Ye et al . 2024; Zhang et al . 2025a], typically by querying environment illumination or using single-bounce reflection models. While effec-tive for far-field reflections, these models fail to capture near-field specular reflections, such as self-reflections and geometry-induced inter-reflections, which are often prominent on glossy surfaces. More recent methods [Gao et al . 2024; Xie et al . 2025; Yao et al .2025; Zhang et al . 2025c; Zhu et al . 2025] address this limitation by incorporating ray tracing to model near-field inter-reflections. Although physically accurate, this strategy incurs substantial com-putational overhead and significantly slows training, eroding the efficiency advantages that make Gaussian splatting attractive. Fun-damentally, these limitations stem from attempting to encode both view-invariant geometry and complex view-dependent specular reflection within a single representation, forcing incompatible phe-nomena to be explained by the same parameters. In this paper, we present Ref-DGS , a reflective dual Gaussian splatting framework that addresses two fundamental limitations of existing Gaussian-based rendering methods. First, we show that reflective appearance should not be treated as a geometric prop-erty: forcing view-dependent specular effects into surface-aligned Gaussians leads to unstable geometry and degraded surface recon-struction. Second, we demonstrate that explicitly separating spec-ular reflection from geometry does not require costly ray tracing to model near-field inter-reflections within objects, which signifi-cantly undermines the efficiency advantages of Gaussian splatting. To resolve these issues, Ref-DGS introduces a dual Gaussian scene representation that assigns geometry and near-field specular re-flections to two complementary sets of Gaussians, enabling reflec-tive appearance modeling within an efficient rasterization-based pipeline. Far-field global reflections are handled via environment-based illumination, while near-field local reflections are captured using rasterization-friendly local reflection features and integrated through a lightweight, physically-aware adaptive mixing shader. This design preserves the efficiency and stability of Gaussian splat-ting while enabling faithful reflective appearance modeling, achiev-ing state-of-the-art performance in both surface reconstruction and novel view synthesis, with substantially faster training than ray-based Gaussian methods. In summary, our contributions are: 
+
+• A reflective dual Gaussian splatting framework that intro-duces a dual Gaussian scene representation to explicitly disen-tangle near-field specular reflections from surface geometry, assigning local reflective interactions to a dedicated set of local reflection Gaussians and enabling efficient reflective appearance modeling without explicit ray tracing. 
+
+• A global–local reflection representation that models specular appearance using two complementary components: global reflection features capturing far-field environment illumina-tion, and local reflection features extracted from the local reflection Gaussians to represent near-field inter-reflections. 
+
+• A lightweight physically-aware adaptive mixing shader that fuses global and local reflection features conditioned on material roughness and geometric angular factors, enabling fast convergence and state-of-the-art performance in both surface reconstruction and novel view synthesis. 
+
+2 Related Work 
+
+We review prior work on novel view synthesis and surface recon-struction, with a focus on neural and Gaussian-based scene repre-sentations and their treatment of reflective appearance. 
+
+2.1 Novel View Synthesis 
+
+Novel view synthesis aims to render photorealistic images from un-seen viewpoints. NeRF-based approaches [Barron et al. 2021, 2022; Guo et al . 2022; Mildenhall et al . 2020; Verbin et al . 2024] achieve high-quality view synthesis but incur high training and rendering costs due to volumetric ray marching. To improve efficiency, factor-ized or explicit scene representations have been proposed, including Plenoxels [Fridovich-Keil et al . 2022], TensoRF [Chen et al . 2022], and Instant-NGP [Müller et al. 2022]. 3D Gaussian Splatting (3DGS) [Kerbl et al . 2023] further improves efficiency by representing scenes with explicit Gaussian primitives and enabling fast rasterization-based rendering. Building upon this framework, subsequent works extend Gaussian splatting to better handle reflective appearance and complex illumination in novel view synthesis, by incorporating view-dependent components, near-field illumination modeling, deferred shading, or explicit reflective trans-port [Gao et al . 2024; Jiang et al . 2024; Liang et al . 2024; Xie et al . 2025; Yang et al . 2024; Yao et al . 2025; Ye et al . 2024; Zhang et al . 2025c,a]. These approaches improve visual fidelity under challenging light-ing conditions, at the cost of increased computational complexity. In addition, many surface reconstruction works reviewed in the following subsection also support reflective novel view synthesis. 
+
+2.2 Surface Reconstruction 
+
+Volumetric surface reconstruction with neural fields. Surface re-construction is a core problem in neural rendering. NeRF-based methods and implicit signed distance field (SDF) formulations rep-resent scenes as continuous volumetric fields and have been widely adopted for accurate geometry reconstruction [Mildenhall et al .2020; Wang et al . 2021, 2022]. Several extensions incorporate re-flective appearance and view-dependent effects through physically inspired shading or radiance decomposition [Fan et al . 2025; Ge et al .2023; Li et al . 2024; Liang et al . 2023; Liu et al . 2023; Verbin et al . 2022; Wang et al . 2024]. Despite their high reconstruction quality, these methods rely on dense ray sampling and volumetric integration, resulting in high computational cost and limited scalability. 
+
+Gaussian-based surface reconstruction in predominantly diffuse scenes. Gaussian-based representations provide an efficient alterna-tive to volumetric formulations for surface reconstruction. SuGaR [Gué-don and Lepetit 2024], PGSR [Chen et al . 2024], and GOF [Yu et al .2024b] improve geometric fidelity within the Gaussian framework Ref-DGS: Reflective Dual Gaussian Splatting • 3
+
+through enhanced depth estimation and geometric regularization. Other approaches, such as NeuSG [Chen et al . 2023], GSDF [Yu et al .2024a], and 3DGSR [Lyu et al . 2024], integrate Gaussian representa-tions with signed distance fields to enable explicit surface reconstruc-tion. In parallel, surface-aware Gaussian formulations progressively enhance geometric expressiveness, where 2D Gaussian Splatting (2DGS) [Huang et al . 2024a] introduces local surface parameteriza-tion, and Quadratic Gaussian Splatting (QGS) [Zhang et al . 2025b] further extends this formulation with deformable quadric primitives and geometry-aware density modeling to better capture complex surface curvature. In a different direction, MILo [Guédon et al . 2025] jointly optimizes Gaussians and an explicitly extracted mesh by en-forcing bidirectional consistency between the two representations, enabling synchronized geometry refinement without introducing an additional SDF representation. 
+
+Gaussian-based surface reconstruction in reflective scenes. Surface reconstruction becomes more challenging in the presence of reflec-tive appearance, as view-dependent specular and indirect effects violate appearance consistency assumptions commonly used for geometry recovery. To address this, several works extend Gaussian splatting to better account for reflective effects during reconstruc-tion and rendering. GaussianShader [Jiang et al . 2024] and Spec-Gaussian [Yang et al . 2024] introduce explicit specular components within the Gaussian framework, primarily targeting far-field or di-rect reflections. Deferred rendering formulations further decouple geometry and shading to improve reconstruction robustness under complex illumination, as explored in 3DGS-DR [Ye et al . 2024] and Ref-GS [Zhang et al . 2025a]. To capture near-field inter-reflections, GS-IR [Liang et al . 2024] represents reflective transport using spher-ical harmonic features, while Ref-Gaussian [Yao et al . 2025], En-vGS [Xie et al . 2025], and MaterialRefGS [Zhang et al . 2025c] incor-porate explicit ray tracing to model near-field reflective interactions, at the cost of increased computational overhead. GS-ROR 2 further addresses surface reconstruction in reflective scenes by bidirection-ally coupling 3D Gaussian splatting with signed distance fields, leveraging mutual depth and normal supervision to jointly enable efficient relighting and high-quality geometry reconstruction. Over-all, these approaches explore different trade-offs between geometric fidelity, reflective expressiveness, and computational efficiency. 
+
+3 Method 
+
+This section presents the proposed reflective dual Gaussian splatting framework. We first review 2D Gaussian splatting as the foundation of our approach (Sec. 3.1). We then describe the dual Gaussian splat-ting framework, including the dual Gaussian scene representation (Sec. 3.2.1), the construction of global and local specular features (Sec. 3.2.2), and a physically-aware specular adaptive mixing shader (Sec. 3.2.3). 
+
+3.1 Gaussian Splatting 
+
+Our method builds upon 2D Gaussian Splatting (2DGS) [Huang et al . 2024b], which represents a scene as a collection of planar Gaussian surface primitives and renders them using a fast, fully differentiable splatting rasterizer. Compared to vanilla 3DGS [Kerbl et al . 2023], 2DGS constrains each primitive to a local tangent disk, yielding a surface-aligned representation that is better suited for thin structures and for producing reliable geometric information such as depth and surface normals. Each surface primitive is parameterized by a 3D center p𝑘 ∈
+
+R3, an opacity 𝛼 𝑘 ∈ ( 0, 1), and a local planar Gaussian defined by a rotation matrix R𝑘 = [t𝑢,𝑘 , t𝑣,𝑘 , t𝑤,𝑘 ], where t𝑢,𝑘 and t𝑣,𝑘 are orthogonal tangential directions and t𝑤,𝑘 = t𝑢,𝑘 ×t𝑣,𝑘 , and a diagonal scaling matrix S𝑘 = diag (𝑠 𝑢,𝑘 , 𝑠 𝑣,𝑘 , 0). A point on the local tangent disk is expressed in local coordinates as 
+
+P𝑘 (𝑢, 𝑣 ) = p𝑘 + 𝑠 𝑢,𝑘 t𝑢,𝑘 𝑢 + 𝑠 𝑣,𝑘 t𝑣,𝑘 𝑣, (1) where (𝑢, 𝑣 ) denote normalized local coordinates on the disk. The corresponding Gaussian weight is defined as a unit-variance isotropic Gaussian in the local parameter space, 
+
+G( 𝑢, 𝑣 ) = exp 
+
+
+
+−𝑢 2 + 𝑣 2
+
+2
+
+
+
+. (2) Following the standard splatting formulation [Huang et al . 2024b; Kerbl et al . 2023], each planar Gaussian projects to an anisotropic ellipse in screen space through perspective projection and local lin-earization. The ellipse is evaluated within a conservative bounding box and organized into screen-space tiles for efficient rasterization. Primitives are depth-sorted by their centers and composited in a front-to-back order using alpha compositing: 
+
+c(q) =
+
+> 𝐾
+
+∑︁ 
+
+> 𝑘 =1
+
+c𝑘 𝛼 𝑘 ˆG𝑘 (q) 
+
+> 𝑘 −1
+
+Ö
+
+> 𝑗 =1
+
+
+
+1 − 𝛼 𝑗 ˆG𝑗 (q)
+
+
+
+, (3) where ˆG𝑘 (q) denotes the projected 2D Gaussian kernel evaluated at pixel q, and c𝑘 represents a per-primitive attribute such as color or a learnable feature. Rendering terminates early once the accumulated opacity saturates, and the entire process is fully differentiable with respect to both geometric parameters and per-primitive attributes. 
+
+3.2 Dual Gaussian Splatting 
+
+We propose a dual Gaussian splatting framework that combines far-field environment reflections obtained by querying a learnable spherical feature map using the spherical mipmap (Sph-Mip) en-coding with near-field specular effects captured by an auxiliary set of Gaussian particles. The global and local specular features are subsequently fused by a physically-aware shader to predict specular radiance. An overview of ours framework is shown in Fig. 2. 
+
+3.2.1 Dual Gaussian Scene Representation. Building on the 2D Gauss-ian splatting (Sec. 3.1), we introduce a dual Gaussian scene repre-sentation that decomposes the scene into two complementary sets of Gaussians with distinct roles: the geometry Gaussians Ggeo and the local reflection Gaussians Glocal .
+
+Geometry Gaussians Ggeo . The geometry Gaussians are designed to capture view-independent scene structure and to provide sta-ble geometric information for rendering and surface reconstruc-tion. Each primitive in Ggeo follows the 2DGS formulation and is augmented with material-related attributes, including diffuse color and surface roughness, which are treated as view-invariant proper-ties tied to the underlying geometry. When splatted, Ggeo produces screen-space attribute maps such as diffuse color Cdiff (p) and rough-ness 𝜌 (p), together with geometric information including depth and 4 • Fan et al. Geo -GS 
+
+Local -GS   
+
+> Rasterizer 2
+> Diffuse Roughness Normal
+
+𝜌 , cos 𝑁𝑉 
+
+Sph -Mip 
+
+𝐱 (𝐫 )
+
+> Rasterizer 1
+> Specular
+> Final Color
+
+𝐅 global 
+
+𝑓 Θ
+
+𝐅 local 
+
+> Fig. 2. An overview of our Ref-DGS framework.
+
+surface normals. These maps are used as inputs to the subsequent shading stages and reflection modeling. 
+
+Local reflection Gaussians Glocal . The local reflection Gaussians are introduced to model local, view-dependent specular reflection effects arising from nearby geometry. Each primitive in Glocal stores a learnable local reflection feature f ∈ R𝑑 . Splatting Glocal produces the corresponding screen-space feature map Flocal (p). Intuitively, 
+
+Flocal provides a compact implicit representation of self-reflections and inter-reflections, enabling efficient modeling of near-field spec-ular reflections within a rasterization-based and fully differentiable framework. It is important that these Gaussians do not influence and thereby distort the surface reconstruction, which is handled solely by the geometry Gaussians. 
+
+3.2.2 Global–Local Specular Features. For each pixel p, we con-struct specular features by combining (i) far-field global reflection features obtained by querying a learnable spherical feature map using the spherical mipmap (Sph-Mip) encoding, and (ii) near-field local reflection features rendered from the local reflection Gaussians 
+
+Glocal .
+
+Far-field global specular reflection via Sph-Mip. Following Ref-GS [Zhang et al . 2025a], we represent far-field specular reflections using a learnable spherical feature map M. Far-field global reflection features are obtained by applying the Sph-Mip encoding, which queries M conditioned on the reflection direction and surface rough-ness. For each pixel, we compute the specular reflection direction 
+
+r from the estimated surface normal and view direction, convert it to spherical coordinates x(r) ∈ [ 0, 1]2, and select a roughness-dependent mipmap level: 
+
+Fglobal (p) = Sph -Mip (x(r), ℓ (𝜌 (p)) , M) , (4) where Fglobal (p) ∈ R𝑑 , and ℓ (·) maps surface roughness to a con-tinuous mipmap level to approximate prefiltered far-field specular reflections from the environment. real           
+
+> od id
+> surface
+> virtual
+> n
+> Fig. 3. Left: Input image. Middle: Normal map of the local reflection Gaus-sians Glocal .Right: Illustration of specular reflection, where the surface normal nis perpendicular to the surface, and the image distance ( id ) equals the object distance ( od ).
+
+Near-field local specular reflection from Glocal . We render the local reflection Gaussians Glocal to obtain per-pixel local specular features 
+
+Flocal (p) ∈ R𝑑 , (5) which captures near-field specular reflection effects that are difficult to represent using a global environment model alone. The global and local specular features are subsequently fused by the specular shader described in Sec. 3.2.3. 
+
+Discussion. We justify the necessity of the proposed local reflec-tion Gaussians by analyzing the physical properties of specular reflections. Attempting to encode local specular features directly into the geometry Gaussians Ggeo is problematic due to the depth discrepancy between the physical surface and the mirror-induced virtual image on a glossy surface. As illustrated in Fig. 3 (right), according to the law of specular reflection for a planar mirror, the image distance ( id ) equals the object distance ( od ), implying that the virtual image lies "behind" the reflective surface. This effect is visualized in Fig. 3, where the normal map of the local reflec-tion Gaussians Glocal exhibits a concave structure extending inward from the physical surface, explicitly modeling the virtual reflection geometry. Without such decoupling, the geometry representation Ref-DGS: Reflective Dual Gaussian Splatting • 5                                                                                                       
+
+> ball car coffee helmet teapot toaster mean time ↓
+> Ref-NeRF 1.55 14.93 12.24 29.48 9.23 42.87 18.38 –ENVIDR 0.74 7.10 9.23 1.66 2.47 6.45 4.61 –UniSDF 0.45 6.88 8.00 1.72 2.80 6.45 8.71 –PGSR 66.93 4.62 2.91 6.01 1.01 15.31 16.13 27.5m MILo 61.30 4.47 2.36 4.87 0.62 16.49 15.02 18.9m GaussianShader 7.03 14.05 14.93 9.33 7.17 13.08 10.93 1.10h 3DGS-DR 0.85 2.32 2.21 1.67 0.53 6.99 2.43 26.5m Ref-Gaussian 0.71 1.91 2.34 1.85 0.48 5.70 2.17 35.9m Ref-GS 1.05 2.02 3.61 1.99 0.69 3.92 2.21 23.5m GS-ROR 20.47 2.06 5.47 1.82 0.52 5.52 2.64 1.34h MaterialRefGS 0.63 1.86 1.79 1.46 0.44 7.02 2.20 2.42h Ours 0.61 1.72 1.86 1.35 0.58 2.43 1.43 12.6m
+
+Table 1. Quantitative surface reconstruction comparison on the ShinySyn-thetic dataset (normal MAE and training time). Best results are highlighted in red and second-best in yellow. 
+
+would be forced to collapse inward to match the virtual depth in order to reproduce specular appearance, leading to degraded surface reconstruction. By separating local reflection from geometry, our approach preserves surface correctness while enabling high-fidelity specular rendering. Moreover, by avoiding explicit ray tracing, our approach maintains fast training speed and enables robust novel view synthesis, since mirror-induced virtual images are explicitly modeled as local Gaussians located behind the physical surface and shift naturally across the image as the camera viewpoint changes. 
+
+3.2.3 Physically-Aware Specular Adaptive Mixing Shader. We pre-dict specular radiance using a neural shader that combines two key ingredients: an adaptive mixing mechanism that balances global and local specular features, and physically-aware conditioning that enforces view-dependent reflectance behavior. 
+
+Adaptive mixing of global and local features. We provide the shader with two complementary specular features that characterize specular reflection at different spatial scales. The global specular fea-tures Fglobal (p) capture far-field environment reflections, while the local specular features Flocal (p) account for near-field effects such as self-reflections and geometry-induced inter-reflections. Since their relative importance varies spatially and across viewpoints (e.g., open regions are dominated by environmental reflections, whereas con-cavities and self-occluding areas rely more on local reflections), the shader learns a view- and material-dependent mixing strategy eval-uated per pixel. This adaptive mixing is learned implicitly through the joint utilization of Fglobal (p) and Flocal (p) in the final specular prediction. 
+
+Physically-aware conditioning. We take physically motivated geo-metric and material terms as explicit conditioning inputs, as they capture the key factors governing view-dependent reflection. Specif-ically, we use the surface roughness 𝜌 (p) and the cosine between the surface normal n and the view direction v,
+
+cos 𝑁𝑉 = max (n · v, 0), (6) which are concatenated with the specular features to guide the shading process. 
+
+Specular shading. The final specular radiance is predicted by a single MLP that takes as input the global and local specular features together with the physically-aware conditioning terms: 
+
+Cspec (p) = 𝑓 Θ
+
+ Fglobal (p), Flocal (p), 𝜌 (p), cos 𝑁𝑉 
+
+. (7)                                                                                                                                                                  
+
+> angel bell cat horse luyu potion tbell teapot mean
+> CD ↓
+> PGSR 0.77 3.08 3.39 0.90 1.16 3.99 4.59 4.57 2.81 MILo 0.77 16.52 2.84 1.02 44.64 3.39 5.08 4.40 9.83 GaussianShader 0.85 1.10 2.56 0.73 1.07 4.74 5.74 3.40 2.53 Ref-Gaussian 0.45 0.70 1.68 0.64 0.88 0.81 0.59 1.01 0.95 Ref-GS 0.41 0.74 1.73 0.47 0.89 1.05 0.52 0.88 0.84 GS-ROR 20.52 0.32 1.66 0.46 0.92 0.86 0.58 0.66 0.75 MaterialRefGS 0.53 0.70 1.97 0.47 0.96 0.62 0.55 1.02 0.85 Ours 0.38 0.65 0.93 0.42 0.64 0.66 0.52 0.79 0.62 MAE ↓
+> PGSR 4.90 6.39 8.43 5.97 5.91 11.12 12.62 6.28 7.70 MILo 4.61 11.52 5.55 6.52 5.97 10.45 13.16 7.09 8.11 GaussianShader 2.90 1.60 4.33 3.27 4.56 9.52 5.60 3.01 4.35 3DGS-DR 4.46 4.53 4.64 6.59 5.65 4.44 5.39 3.38 4.89 Ref-Gaussian 1.79 1.16 3.15 4.03 3.15 3.04 2.02 1.20 2.44 Ref-GS 1.99 0.92 2.93 3.18 2.82 3.64 1.87 1.18 2.32 GS-ROR 22.09 0.86 3.37 2.85 3.15 4.04 2.64 1.04 2.51 MaterialRefGS 1.81 0.86 2.42 3.16 3.07 2.68 1.77 1.18 2.12 Ours 2.05 0.71 1.37 3.44 2.30 2.48 1.84 0.86 1.88
+
+Table 2. Quantitative surface reconstruction comparison on the GlossySyn-thetic dataset (CD ×10 2 and normal MAE). Best results are highlighted in red and second-best in yellow. 
+
+Given calibrated multi-view images {I𝑣 } and known camera pa-rameters, the pipeline renders a diffuse (base) component from the geometry Gaussians Ggeo and a specular component predicted by the shader. The final linear color at pixel p is given by 
+
+C(p) = Cdiff (p) + Cspec (p). (8) For visualization, the linear RGB output is converted to sRGB by clamping to [0, 1] followed by the standard transfer function: 
+
+Crgb (p) = sRGB (clamp (C(p), 0, 1)) , (9) where sRGB (·) denotes the canonical linear-to-sRGB conversion. 
+
+4 Experiments 4.1 Implementation Details 
+
+We jointly optimize the two sets of Gaussian primitives with asso-ciated features, following the same optimization and densification strategy as 2D Gaussian splatting (2DGS) [Huang et al . 2024b]. The Sph-Mip encoding uses a base level M with resolution 𝐻 M = 512 ,
+
+𝑊 M = 1024 , and feature dimension 𝐶 = 4, with 𝑁 = 9 mipmap levels. The local reflection Gaussians Glocal are associated with a local reflection feature f ∈ R4. The physically-aware specular adap-tive mixing shader is implemented as a lightweight MLP 𝑓 Θ with 3 hidden layers of width 64. All experiments are conducted on a single NVIDIA RTX 4090 GPU with 24 GB of memory. 
+
+4.2 Datasets, Baselines and Metrics 
+
+Datasets. We evaluate our method on two synthetic and two real-world datasets featuring glossy materials and complex specular transport. For synthetic experiments, we use ShinySynthetic [Verbin et al . 2022] and GlossySynthetic [Liu et al . 2023], which feature pro-nounced view-dependent reflections, high-frequency highlights, and strong near-field interactions, including self-reflections and inter-reflections. We additionally report results on the RefReal [Verbin et al . 2022] and GlossyReal [Liu et al . 2023] datasets to assess per-formance on real captures of reflective objects and scenes. For the RefReal dataset, we utilize 1/4 resolution for the gardenspheres 6 • Fan et al.                                                                                                                        
+
+> Datasets ShinySynthetic GlossySynthetic Ref-Real
+> PSNR ↑SSIM ↑LPIPS ↓PSNR ↑SSIM ↑LPIPS ↓PSNR ↑SSIM ↑LPIPS ↓
+> Ref-NeRF 33.32 0.956 0.110 25.65 0.905 0.112 23.62 0.646 0.239 ENVIDR 32.88 0.969 0.072 29.06 0.947 0.060 23.80 0.606 0.332 PGSR 26.82 0.921 0.119 25.59 0.913 0.091 24.43 0.696 0.220 MILo 27.28 0.921 0.124 25.69 0.914 0.096 23.87 0.643 0.291 GaussianShader 30.42 0.951 0.082 27.11 0.922 0.082 23.46 0.647 0.257 3DGS-DR 33.94 0.971 0.059 29.36 0.951 0.055 23.80 0.659 0.236 EnvGS 33.26 0.968 0.063 28.17 0.938 0.067 24.55 0.671 0.243 Ref-Gaussian 34.92 0.973 0.056 29.61 0.954 0.054 23.95 0.661 0.280 Ref-GS 34.80 0.973 0.056 30.37 0.960 0.048 23.93 0.655 0.267 GS-ROR 232.16 0.963 0.069 28.96 0.952 0.056 –––MaterialRefGS 34.16 0.972 0.058 30.74 0.961 0.047 –––Ours 35.21 0.975 0.053 30.63 0.958 0.052 24.89 0.697 0.224
+
+Table 3. Quantitative NVS comparison. Best results are highlighted in red and second-best in yellow. 
+
+and toycar scenes, and 1/8 resolution for the sedan scene. For the GlossyReal dataset, all experiments are conducted at 1/4 resolution. Overall, these benchmarks present specular effects that are difficult to account for with a purely far-field environment model, making them well-suited for evaluating our global–local specular model. 
+
+Baselines. We compare our method against state-of-the-art base-lines from both neural volume rendering and 3D Gaussian splatting (3DGS). For neural volume rendering, we include Ref-NeRF [Verbin et al . 2022], ENVIDR [Liang et al . 2023], and UniSDF [Wang et al .2024]. For 3DGS-based methods, we evaluate PGSR [Chen et al .2024], MILo [Guédon et al . 2025], GaussianShader [Jiang et al . 2024], 3DGS-DR [Ye et al . 2024], EnvGS [Xie et al . 2025], Ref-Gaussian [Yao et al . 2025], Ref-GS [Zhang et al . 2025a], GS-ROR 2 [Zhu et al . 2025], and MaterialRefGS [Zhang et al . 2025c]. MaterialRefGS [Zhang et al .2025c] is included as a baseline, reproducing results strictly from the publicly available code at the time of submission. 
+
+Metrics. We assess geometric accuracy using the mean angular error (MAE) of surface normals and the chamfer distance (CD) between reconstructed and reference surfaces, and evaluate novel view synthesis quality using PSNR, SSIM, and LPIPS. For geometry evaluation, we report only normal MAE on ShinySyn-thetic [Verbin et al . 2022] and both CD and normal MAE on GlossySyn-thetic [Liu et al . 2023]. As discussed in Ref-NeuS [Ge et al . 2023], the ground-truth meshes of ShinySynthetic contain two surface layers, while only the outer layer is visible in the input images, making completeness-based metrics such as CD unreliable due to dominant errors from invisible inner surfaces. For GlossySynthetic, since ground-truth surface normals are not provided, normal MAE is computed using normals derived from the ground-truth depth. Since the official implementation of GS-ROR 2 [Zhu et al . 2025] does not include geometry evaluation code, we apply a unified evaluation pipeline across all methods. Normal MAE and CD are computed following our procedure; for TSDF-based mesh extraction, we use a voxel size of 0.002 when computing CD. 
+
+4.3 Comparisons 
+
+Surface Reconstruction. We evaluate surface reconstruction qual-ity on all datasets. Table 1 reports the normal MAE and training time on the ShinySynthetic [Verbin et al . 2022] dataset. Our method achieves the lowest reconstruction error while also exhibiting the fastest training time. Table 2 presents the CD and normal MAE on the GlossySynthetic [Liu et al . 2023] dataset, where our method also outperforms competing approaches. Fig. 6 shows qualitative surface reconstruction results on both ShinySynthetic [Verbin et al .2022] and GlossySynthetic [Liu et al . 2023] datasets. Our method reconstructs sharp and well-defined boundaries on thin structures, such as the edges of the spoon, and avoids the common failure of merging the coffee cup with its base caused by occlusions and cast shadows. In the toaster scene, which contains large front-facing sur-faces dominated by near-field inter-reflections, our method produces smooth and coherent geometry without the surface indentations observed in competing methods. Similarly, in the cat scene, our approach prevents incorrect depth and normal estimation induced by inter-object light transport, successfully separating the object from the base while faithfully reconstructing fine structures such as the cat’s thin whiskers. Fig. 1 and Fig. 7 present qualitative sur-face reconstruction results on the RefReal [Verbin et al . 2022] and GlossyReal [Liu et al . 2023] datasets, respectively. In these real-world scenes with complex illumination and strong specular effects, our method reconstructs clean and consistent surfaces, preserving fine geometric details while avoiding spurious artifacts and surface distortions observed in competing methods. A key challenge in the GlossyReal scenes, particularly the vase scene, is large specular reflections of nearby moving objects (e.g., the camera operator) observed on object surfaces. As these reflections vary across viewpoints, the effective far-field illumination changes dynamically with view. Existing methods often misinterpret such view-dependent specular reflections as geometric cues, leading to spurious surface deformations, such as indentations aligned with reflected silhouettes, even though the underlying illumination orig-inates from the far field. In contrast, our method remains robust under these conditions and reconstructs reliable surfaces. This ro-bustness can be attributed to our local reflection Gaussians Glocal 
+
+and their associated local specular features, which, beyond model-ing near-field reflections, also adapt to complex, view-dependent variations in the environment illumination, preventing such effects from being incorrectly absorbed into the geometry. 
+
+Novel View Synthesis. We evaluate novel view synthesis perfor-mance on all datasets. Quantitative results are reported in Tab. 3, where our method consistently outperforms competing approaches. Fig. 8 shows qualitative results. In scenes containing strong near-field reflections, competing methods fail to reproduce view-consistent appearance, leading to blurred or distorted regions, while our method preserves coherent appearance under novel viewpoints. We do not report novel view synthesis results of GS-ROR 2 [Zhu et al . 2025] and MaterialRefGS [Zhang et al . 2025c] on the RefReal [Verbin et al . 2022] dataset, as GS-ROR 2 does not provide runnable code for this dataset, and the released implementation of MaterialRefGS is incomplete at the time of submission. 
+
+4.4 Ablation Studies 
+
+We conduct ablation studies on the ShinySynthetic [Verbin et al .2022] and GlossySynthetic [Liu et al . 2023] datasets to validate the effectiveness of individual components. Quantitative ablation results are reported in Tab. 4. Qualitative results for surface reconstruction and novel view synthesis are shown in Fig. 9 and Fig. 10, respectively. Ref-DGS: Reflective Dual Gaussian Splatting • 7                                       
+
+> PSNR ↑SSIM ↑LPIPS ↓MAE ↓CD ↓MAE ↓
+> w/o Flocal w/o Glocal 34.36 0.971 0.057 1.53 0.82 1.99 w/o Glocal 34.70 0.973 0.057 1.46 0.73 1.93 w/o Adap Mix 34.98 0.974 0.054 1.46 0.64 1.92 w/o Phy-Aware 35.02 0.975 0.053 1.45 0.62 1.90 Full model 35.21 0.975 0.053 1.43 0.62 1.88
+
+Table 4. Ablation study on the ShinySynthetic (PSNR, SSIM, LPIPS, and normal MAE) and GlossySynthetic (CD ×10 2 and normal MAE) datasets. 
+
+w/o Flocal w/o Glocal w/o Glocal Full model 3.00 2.63 2.43 
+
+Fig. 4. Ablation on surface normal estimation. Angular error maps (red: high, blue: low) show that the full model significantly reduces geometric artifacts compared to ablated variants. Chamfer distances (CD) are reported at the bottom. Full model abdual ablocal 
+
+w/o Flocal w/o Glocal w/o Glocal Full model 
+
+Fig. 5. Ablation study on the diffuse leakage issue, visualizing the predicted diffuse color. 
+
+Local Features. We ablate the local specular features by removing 
+
+Flocal (p) and modeling specular appearance using only the global specular features Fglobal (p). Accordingly, the local reflection Gaus-sians Glocal are removed in this setting. This ablation evaluates the contribution of explicit near-field local reflection beyond far-field global reflection. As shown in Tab. 4, Fig. 4, Fig. 5, Fig. 9, and Fig. 10, when comparing w/o Flocal w/o Glocal and w/o Glocal , removing the local specular features causes near-field specular reflections to be absorbed into the diffuse component, resulting in degraded geome-try reconstruction and less accurate modeling of near-field specular effects. 
+
+Dual Gaussians. We ablate the dual Gaussian decomposition by removing the local reflection Gaussians Glocal and instead deriv-ing the local specular features Flocal (p) directly from the geometry Gaussians Ggeo . This setting uses a single set of Gaussians to repre-sent both geometry and near-field reflections, without the explicit decoupling between geometry and local reflections. As shown in Tab. 4, Fig. 9, Fig. 4, Fig. 10 and Fig. 5, this variant exhibits increased near-field specular leakage, degraded geometry reconstruction, and reduced fidelity in modeling near-field reflections compared to the variant with two separate sets of Gaussians, which we attribute to optimization conflicts between geometric representation and local specular reflection when modeled within a single set. 
+
+Adaptive Mixing. We ablate the adaptive mixing mechanism in the specular shader by removing the learned global–local balancing and instead combining the global and local specular features by direct summation: Fsum (p) = Fglobal (p) + Flocal (p). Specular radiance is then predicted from Fsum (p) together with the physical conditioning terms, Cspec (p) = 𝑓 Θ
+
+ Fsum (p), 𝜌 (p), cos 𝑁𝑉 
+
+. As shown in Fig. 10, direct feature summation yields unstable view-dependent specular responses. This is because, for a given view, specular appearance is typically dominated by either far-field or near-field reflections, depending on visibility, rather than an equal contribution of both. Moreover, the relative importance of these components varies across viewpoints. Without adaptive mixing, direct summation fails to model this view-dependent effect, leading to reduced generalization to novel views. 
+
+Physically-Aware Conditioning. We ablate the physically-aware conditioning of the specular shader by removing all explicit physical terms from its inputs. Specifically, the roughness 𝜌 (p) and angu-lar cosine term cos 𝑁𝑉 are discarded, and specular radiance is pre-dicted solely from the global and local specular features: Cspec (p) =
+
+𝑓 Θ
+
+ Fglobal (p), Flocal (p). As shown in Tab. 4 and Fig. 10, removing physical conditioning results in unstable and less plausible view-dependent specular behavior, indicating that explicit physical terms help regularize optimization and improve generalization to novel views. The improvement is relatively modest, likely because the expressive shader MLP and high-dimensional specular features can implicitly encode some view-dependent and roughness-related in-formation through multi-view Gaussian splatting. 
+
+5 Conclusion 
+
+We have presented Ref-DGS , a reflective dual Gaussian splatting framework that enables efficient and high-quality modeling of re-flective appearance without explicit ray tracing. The key insight of Ref-DGS is to decouple near-field specular reflection from sur-face geometry via a dual Gaussian scene representation, assigning local reflective interactions to a dedicated set of local reflection Gaussians while preserving stable and accurate surface reconstruc-tion. By representing specular appearance using complementary global and local reflection features and predicting specular radiance with a lightweight, physically-aware adaptive mixing shader, Ref-DGS captures both far-field and near-field reflective effects within a rasterization-based pipeline. Ref-DGS achieves state-of-the-art performance on reflective scenes in both surface reconstruction and novel view synthesis, while training substantially faster than ray-based Gaussian methods. Be-yond improved visual/geometric quality and efficiency, our model demonstrates that explicitly separating near-field specular reflec-tion from surface geometry is critical for stable and accurate model-ing of complex view-dependent appearance. We believe this dual-representation perspective provides a useful insight for future ex-tensions of Gaussian splatting toward more expressive modeling of view-dependent appearance. 8 • Fan et al. 
+
+References 
+
+Jonathan T. Barron, Ben Mildenhall, Matthew Tancik, Peter Hedman, Ricardo Martin-Brualla, and Pratul P. Srinivasan. 2021. Mip-NeRF: A Multiscale Representation for Anti-Aliasing Neural Radiance Fields. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) . 5855–5864. Jonathan T. Barron, Ben Mildenhall, Dor Verbin, Pratul P. Srinivasan, and Peter Hedman. 2022. Mip-NeRF 360: Unbounded Anti-Aliased Neural Radiance Fields. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 5470– 5479. Anpei Chen, Zexiang Xu, Andreas Geiger, Jingyi Yu, and Hao Su. 2022. Tensorf: Tensorial radiance fields. In European conference on computer vision . Springer, 333– 350. Danpeng Chen, Hai Li, Weicai Ye, Yifan Wang, Weijian Xie, Shangjin Zhai, Nan Wang, Haomin Liu, Hujun Bao, and Guofeng Zhang. 2024. Pgsr: Planar-based gaussian splatting for efficient and high-fidelity surface reconstruction. IEEE Transactions on Visualization and Computer Graphics (2024). Hanlin Chen, Chen Li, Yunsong Wang, and Gim Hee Lee. 2023. Neusg: Neural im-plicit surface reconstruction with 3d gaussian splatting guidance. arXiv preprint arXiv:2312.00846 (2023). Yue Fan, Ningjing Fan, Ivan Skorokhodov, Oleg Voynov, Savva Ignatyev, Evgeny Bur-naev, Peter Wonka, and Yiqun Wang. 2025. Factored-neus: Reconstructing surfaces, illumination, and materials of possibly glossy objects. In Proceedings of the Computer Vision and Pattern Recognition Conference . 21317–21327. Sara Fridovich-Keil, Alex Yu, Matthew Tancik, Qinhong Chen, Benjamin Recht, and Angjoo Kanazawa. 2022. Plenoxels: Radiance Fields Without Neural Networks. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 5501–5510. Jian Gao, Chun Gu, Youtian Lin, Zhihao Li, Hao Zhu, Xun Cao, Li Zhang, and Yao Yao. 2024. Relightable 3d gaussians: Realistic point cloud relighting with brdf decomposition and ray tracing. In European Conference on Computer Vision . Springer, 73–89. Wenhang Ge, Tao Hu, Haoyu Zhao, Shu Liu, and Ying-Cong Chen. 2023. Ref-neus: Ambiguity-reduced neural implicit surface learning for multi-view reconstruction with reflection. In Proceedings of the IEEE/CVF International Conference on Computer Vision . 4251–4260. Antoine Guédon, Diego Gomez, Nissim Maruani, Bingchen Gong, George Drettakis, and Maks Ovsjanikov. 2025. Milo: Mesh-in-the-loop gaussian splatting for detailed and efficient surface reconstruction. ACM Transactions on Graphics (TOG) 44, 6 (2025), 1–15. Antoine Guédon and Vincent Lepetit. 2024. SuGaR: Surface-Aligned Gaussian Splat-ting for Efficient 3D Mesh Reconstruction and High-Quality Mesh Rendering. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 5354–5363. Yuan-Chen Guo, Di Kang, Linchao Bao, Yu He, and Song-Hai Zhang. 2022. Nerfren: Neural radiance fields with reflections. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 18409–18418. Binbin Huang, Zehao Yu, Anpei Chen, Andreas Geiger, and Shenghua Gao. 2024a. 2D Gaussian Splatting for Geometrically Accurate Radiance Fields. In SIGGRAPH 2024 Conference Papers . Association for Computing Machinery. doi:10.1145/3641519. 3657428 Binbin Huang, Zehao Yu, Anpei Chen, Andreas Geiger, and Shenghua Gao. 2024b. 2d gaussian splatting for geometrically accurate radiance fields. In ACM SIGGRAPH 2024 conference papers . 1–11. Yingwenqi Jiang, Jiadong Tu, Yuan Liu, Xifeng Gao, Xiaoxiao Long, Wenping Wang, and Yuexin Ma. 2024. GaussianShader: 3D Gaussian Splatting with Shading Functions for Reflective Surfaces. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 5322–5332. Bernhard Kerbl, Georgios Kopanas, Thomas Leimkühler, and George Drettakis. 2023. 3D Gaussian splatting for real-time radiance field rendering. ACM Trans. Graph. 42, 4 (2023), 139–1. Jia Li, Lu Wang, Lei Zhang, and Beibei Wang. 2024. Tensosdf: Roughness-aware tensorial representation for robust geometry and material reconstruction. ACM Transactions on Graphics (TOG) 43, 4 (2024), 1–13. Ruofan Liang, Huiting Chen, Chunlin Li, Fan Chen, Selvakumar Panneer, and Nandita Vijaykumar. 2023. Envidr: Implicit differentiable renderer with neural environment lighting. In Proceedings of the IEEE/CVF International Conference on Computer Vision .79–89. Zhihao Liang, Qi Zhang, Ying Feng, Ying Shan, and Kui Jia. 2024. GS-IR: 3D Gauss-ian Splatting for Inverse Rendering. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 21644–21653. Yuan Liu, Peng Wang, Cheng Lin, Xiaoxiao Long, Jiepeng Wang, Lingjie Liu, Taku Komura, and Wenping Wang. 2023. Nero: Neural geometry and brdf reconstruction of reflective objects from multiview images. ACM Transactions on Graphics (ToG) 
+
+42, 4 (2023), 1–22. Xiaoyang Lyu, Yang-Tian Sun, Yi-Hua Huang, Xiuzhe Wu, Ziyi Yang, Yilun Chen, Jiangmiao Pang, and Xiaojuan Qi. 2024. 3dgsr: Implicit surface reconstruction with 3d gaussian splatting. ACM Transactions on Graphics (TOG) 43, 6 (2024), 1–12. Ben Mildenhall, Pratul P. Srinivasan, Matthew Tancik, Jonathan T. Barron, Ravi Ra-mamoorthi, and Ren Ng. 2020. NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis. In ECCV .Thomas Müller, Alex Evans, Christoph Schied, and Alexander Keller. 2022. Instant Neural Graphics Primitives with a Multiresolution Hash Encoding. ACM Trans. Graph. 41, 4, Article 102 (July 2022), 15 pages. doi:10.1145/3528223.3530127 Dor Verbin, Peter Hedman, Ben Mildenhall, Todd Zickler, Jonathan T. Barron, and Pratul P. Srinivasan. 2022. Ref-NeRF: Structured View-Dependent Appearance for Neural Radiance Fields. CVPR (2022). Dor Verbin, Pratul P Srinivasan, Peter Hedman, Ben Mildenhall, Benjamin Attal, Richard Szeliski, and Jonathan T Barron. 2024. Nerf-casting: Improved view-dependent appearance with consistent reflections. In SIGGRAPH Asia 2024 Conference Papers .1–10. Fangjinhua Wang, Marie-Julie Rakotosaona, Michael Niemeyer, Richard Szeliski, Marc Pollefeys, and Federico Tombari. 2024. Unisdf: Unifying neural representations for high-fidelity 3d reconstruction of complex scenes with reflections. Advances in Neural Information Processing Systems 37 (2024), 3157–3184. Peng Wang, Lingjie Liu, Yuan Liu, Christian Theobalt, Taku Komura, and Wenping Wang. 2021. NeuS: Learning Neural Implicit Surfaces by Volume Rendering for Multi-view Reconstruction. NeurIPS (2021). Yiqun Wang, Ivan Skorokhodov, and Peter Wonka. 2022. Hf-neus: Improved surface reconstruction using high-frequency details. Advances in Neural Information Pro-cessing Systems 35 (2022), 1966–1978. Tao Xie, Xi Chen, Zhen Xu, Yiman Xie, Yudong Jin, Yujun Shen, Sida Peng, Hujun Bao, and Xiaowei Zhou. 2025. EnvGS: Modeling View-Dependent Appearance with Environment Gaussian. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 5742–5751. Ziyi Yang, Xinyu Gao, Yang-Tian Sun, Yihua Huang, Xiaoyang Lyu, Wen Zhou, Shao-hui Jiao, Xiaojuan Qi, and Xiaogang Jin. 2024. Spec-gaussian: Anisotropic view-dependent appearance for 3d gaussian splatting. Advances in Neural Information Processing Systems 37 (2024), 61192–61216. Yuxuan Yao, Zixuan Zeng, Chun Gu, Xiatian Zhu, and Li Zhang. 2025. Re-flective Gaussian Splatting. In International Conference on Representation Learning , Y. Yue, A. Garg, N. Peng, F. Sha, and R. Yu (Eds.), Vol. 2025. 68695–68711. https://proceedings.iclr.cc/paper_files/paper/2025/file/ abf3682c9cf9245a0294a4bebe4544ff-Paper-Conference.pdf Keyang Ye, Qiming Hou, and Kun Zhou. 2024. 3d gaussian splatting with deferred reflection. In ACM SIGGRAPH 2024 Conference Papers . 1–10. Mulin Yu, Tao Lu, Linning Xu, Lihan Jiang, Yuanbo Xiangli, and Bo Dai. 2024a. GSDF: 3DGS Meets SDF for Improved Neural Rendering and Reconstruction. In Advances in Neural Information Processing Systems , A. Globerson, L. Mackey, D. Belgrave, A. Fan, U. Paquet, J. Tomczak, and C. Zhang (Eds.), Vol. 37. Curran Associates, Inc., 129507–129530. doi:10.52202/079017-4115 Zehao Yu, Torsten Sattler, and Andreas Geiger. 2024b. Gaussian Opacity Fields: Efficient Adaptive Surface Reconstruction in Unbounded Scenes. ACM Transactions on Graphics (2024). Wenyuan Zhang, Jimin Tang, Weiqi Zhang, Yi Fang, Yu-Shen Liu, and Zhizhong Han. 2025c. MaterialRefGS: Reflective Gaussian Splatting with Multi-view Consistent Material Inference. In The Thirty-ninth Annual Conference on Neural Information Processing Systems .Youjia Zhang, Anpei Chen, Yumin Wan, Zikai Song, Junqing Yu, Yawei Luo, and Wei Yang. 2025a. Ref-gs: Directional factorization for 2d gaussian splatting. In Proceedings of the Computer Vision and Pattern Recognition Conference . 26483–26492. Ziyu Zhang, Binbin Huang, Hanqing Jiang, Liyang Zhou, Xiaojun Xiang, and Shuhan Shen. 2025b. Quadratic Gaussian Splatting: High Quality Surface Reconstruction with Second-order Geometric Primitives. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) . 28260–28270. Zuo-Liang Zhu, Jian Yang, and Beibei Wang. 2025. GS-ROR 2: Bidirectional-guided 3DGS and SDF for Reflective Object Relighting and Reconstruction. ACM Transactions on Graphics (TOG) . doi:10.1145/3759248 Ref-DGS: Reflective Dual Gaussian Splatting • 9Ref -GS Ref -Gaussian  Gs -ror2 GT  3DGS -DR Image  MaterialRefGS  ours 
+
+Image GT 3DGS-DR Ref-Gaussian Ref-GS GS-ROR 2 MaterialRefGS Ours 
+
+Fig. 6. Qualitative surface reconstruction results (meshes and normals) on the ShinySynthetic (coffee, toaster) and GlossySynthetic (cat) datasets. Garden 
+
+Bear 
+
+Vase 
+
+Coral 
+
+maneki 
+
+GT Ours Normal 3DGS-DR Ref-Gaussian Ref-GS Ours GT Ours Normal 3DGS-DR Ref-Gaussian Ref-GS Ours PSNR:24.61 PSNR:22.70 PSNR:24.89 PSNR:25.58 PSNR:24.55 PSNR:20.79 PSNR:24.25 PSNR:27.57 
+
+Fig. 7. Qualitative rendering quality and surface reconstruction on the GlossyReal (bear, vase) dataset. 10 • Fan et al. Ref -GS Ref -Ga ussian  Gs -ror2 3DGS -DR GT  ours MaterialRefGS 
+
+GT 3DGS-DR Ref-Gaussian Ref-GS GS-ROR 2 MaterialRefGS Ours 
+
+Fig. 8. Qualitative NVS results on the ShinySynthetic (toaster) and GlossySynthetic (cat, tbell, teapot) datasets. Full model GT  abdua lImage  ablocal 
+
+Image GT mesh w/o Flocal w/o Glocal w/o Glocal Full model 
+
+Fig. 9. Ablation study on surface reconstruction. Full 
+
+GT  abdual ablocal 
+
+abw  abph y
+
+GT w/o Flocal w/o Glocal w/o Glocal w/o Adap Mix w/o Phy-Aware Full model 
+
+Fig. 10. Ablation study on novel view synthesis. Supplementary Material • 11 
+
+A Additional Results 
+
+In this section, we present additional results on a real-world dataset and scene decomposition. Specifically, we show qualitative results on the Mip-NeRF 360 dataset and additional scene decomposition examples to illustrate how our method handles near-field reflec-tions. These results provide further insight into the behavior of our approach in surface reconstruction, rendering, and material decomposition under challenging reflective conditions. 
+
+A.1 Mip-NeRF 360 Dataset 
+
+Fig. 11 shows qualitative results and normal map visualizations on the Mip-NeRF 360 dataset for the garden and counter scenes. We compare our method with Ref-Gaussian and Ref-GS. In the garden scene, the vase placed on the table produces clear near-field reflec-tions on the tabletop. Existing methods tend to introduce concave artifacts in this region to fit the reflected appearance, whereas our method reconstructs a flatter and more geometrically consistent surface. Consequently, the recovered surface normals are more co-herent, with fewer distortions in the reflection region. In the counter scene, the stainless steel bowl exhibits strong specular reflections, and the presence of many surrounding objects leads to complex illu-mination effects. Under these conditions, our model yields a cleaner surface and more stable surface normals for the stainless steel bowl than the baseline methods. 
+
+A.2 Scene Decomposition 
+
+Fig. 12 shows additional qualitative results of scene decomposition in the presence of strong near-field reflections. Our method achieves a cleaner separation of the diffuse component, specular reflection component, and surface roughness compared to prior approaches. In regions affected by strong near-field reflections, existing meth-ods tend to misattribute reflection signals to the diffuse component. Since surface reconstruction primarily relies on the diffuse signal, this leakage directly degrades geometry quality, leading to incorrect surface shape and unstable surface normals. In contrast, our method suppresses such leakage, preserving a more consistent diffuse esti-mate that better supports geometry reconstruction. Moreover, near-field reflections also interfere with roughness estimation in prior methods. When the specular appearance cannot be explained by the environment map, these methods tend to increase surface roughness, causing the reflection to be matched through higher-level mipmap sampling of the environment map. This leads to inflated roughness values and blurred reflection appearance. Our approach produces more stable and physically plausible roughness estimates, reducing the influence of reflection artifacts on the material decomposition. 
+
+B Optimization 
+
+We optimize the parameters of the geometry Gaussians Ggeo , the local reflection Gaussians Glocal , the spherical mipmap M, and the neural shader 𝑓 𝜃 . The loss function is 
+
+L = L𝑐 + 𝜆 𝑛 L𝑛 + L 𝛼 + 𝜆 prior Lprior . (10) The photometric and normal consistency losses follow 2DGS [Huang et al. 2024a]: 
+
+L𝑐 = (1 − 𝜆 )L 1 + 𝜆 LSSIM , L𝑛 =∑︁ 
+
+> 𝑖
+
+𝜔 𝑖 
+
+ 1 − n⊤ 
+
+> 𝑖
+
+N . (11) The opacity regularization is defined using binary cross entropy, 
+
+L𝛼 = −∑︁ 
+
+> 𝑖
+
+[𝛼 𝑖 log ˆ 𝛼 𝑖 + ( 1 − 𝛼 𝑖 ) log (1 − ˆ𝛼 𝑖 )] , (12) where ˆ𝛼 𝑖 denotes the predicted opacity and 𝛼 𝑖 denotes the ground-truth opacity, and this term is applied only to synthetic datasets. The prior term consists of a depth prior 
+
+Ldepth = min  
+
+> 𝑠,𝑡
+
+∥𝑠𝐷 + 𝑡 − 𝐷 ref ∥22 , (13) where 𝑠 and 𝑡 denote a scale and a translation factor used to align the predicted depth with the reference depth, and a normal prior 
+
+Lnormal = ∥N − Nref ∥1 + 𝜆 
+
+
+
+1 − N · Nref 
+
+∥N∥ ∥ Nref ∥
+
+
+
+, (14) with Lprior = Ldepth + L normal . Here 𝐷 and N denote the predicted depth and normal, respectively, while 𝐷 ref and Nref are obtained from VGGT for synthetic datasets and from Metric3d v2 for real-world datasets. 12 • Fan et al. Toaster 
+
+> Cat
+> Bell
+> teapot
+
+Ref-Gaussian Ref-GS Ours Ref-Gaussian Ref-GS Ours PSNR:25.53 PSNR:22.75 PSNR:29.29 PSNR:27.73 PSNR:26.13 PSNR:29.36 
+
+Fig. 11. Qualitative rendering quality and normal map results on the Mip-NeRF 360 dataset for the garden (left) and counter (right) scenes. Best viewed with zoom in. Toaster   
+
+> cat
+> Luyu
+> Bell
+> Horse
+> ours Ref -gaussian Ref -GS MaterialRefGS GS -ROR2
+
+Ref-Gaussian Ref-GS MaterialRefGS Ours Ref-Gaussian Ref-GS MaterialRefGS Ours Diffuse Specular Roughness  Diffuse Specular Roughness 
+
+Fig. 12. Scene decomposition under strong near-field reflections. Our method separates the diffuse component, specular reflection component, and surface roughness in regions dominated by near-field reflections. Best viewed with zoom in.

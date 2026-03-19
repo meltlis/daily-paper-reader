@@ -1,0 +1,1076 @@
+Title: B$^3$-Seg: Camera-Free, Training-Free 3DGS Segmentation via Analytic EIG and Beta-Bernoulli Bayesian Updates
+
+URL Source: https://arxiv.org/pdf/2602.17134v1
+
+Published Time: Fri, 20 Feb 2026 01:38:10 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# B3-Seg: Camera-Free, Training-Free 3DGS Segmentation via Analytic EIG and Beta–Bernoulli Bayesian Updates 
+
+## Hiromichi Kamata Sony Group Corporation Tokyo, Japan 
+
+Hiromichi.Kamata@sony.com 
+
+## Samuel Arthur Munro Pixomondo London, United Kingdom 
+
+samuelm@pixomondo.com 
+
+## Fuminori Homma Sony Group Corporation Tokyo, Japan 
+
+Fuminori.Homma@sony.com 
+
+## Abstract 
+
+Interactive 3D Gaussian Splatting (3DGS) segmentation is essential for real-time editing of pre-reconstructed as-sets in film and game production. However, existing meth-ods rely on predefined camera viewpoints, ground-truth labels, or costly retraining, making them impractical for low-latency use. We propose B3-Seg (Beta–Bernoulli Bayesian Segmentation for 3DGS) , a fast and theoreti-cally grounded method for open-vocabulary 3DGS segmen-tation under camera-free and training-free conditions. Our approach reformulates segmentation as sequential Beta– Bernoulli Bayesian updates and actively selects the next view via analytic Expected Information Gain (EIG). This Bayesian formulation guarantees the adaptive monotonic-ity and submodularity of EIG, which produces a greedy 
+
+(1 −1/e ) approximation to the optimal view sampling pol-icy. Experiments on multiple datasets show that B 3-Seg achieves competitive results to high-cost supervised meth-ods while operating end-to-end segmentation within a few seconds. The results demonstrate that B 3-Seg enables prac-tical, interactive 3DGS segmentation with provable infor-mation efficiency. 
+
+## 1. Introduction 
+
+Recently, 3D Gaussian Splatting (3DGS) [12] has rapidly gained attention as a 3D representation that combines real-time rendering with high visual fidelity. In film and game production, it is increasingly common that only a pre-reconstructed 3DGS asset is shared across teams. Thus, interactive 3DGS segmentation—selecting, editing, and re-moval of objects directly on the asset—has become a re-quired capability [16, 26]. Many recent works tackle open-vocabulary 3DGS seg-mentation and achieve strong accuracy [18, 19, 28, 29, 34]. However, most methods assume access to predefined cam-era viewpoints and/or ground-truth semantic masks, which 
+
+Figure 1. B 3-Seg actively selects the next view via Expected In-formation Gain and updates 3D labels by Beta–Bernoulli Bayesian updates. It runs in a few seconds and requires neither predefined views nor ground-truth semantic labels. 
+
+does not align with the practical setting where only a shared 3DGS asset is available. In real use, interactive editing must operate camera-free, training-free, and open-vocabulary, and return results within a few seconds. Interactive editing also requires low latency. Although several recent methods [18, 28, 29, 34] are highly accurate, they are based on large-scale pretraining and often take min-utes to tens of minutes per scene. Faster approaches that re-turn results within a minute have also appeared [23, 30], but still assume access to camera viewpoints and ground-truth labels. We introduce B3-Seg (Beta–Bernoulli Bayesian Seg-
+
+> arXiv:2602.17134v1 [cs.CV] 19 Feb 2026
+
+mentation for 3DGS) . B 3-Seg runs under camera-free, training-free, open-vocabulary conditions and produces results within a few seconds . We reformulate 3DGS seg-mentation as sequential Beta–Bernoulli Bayesian updates and select the next best view via analytic Expected Infor-mation Gain (EIG). On each actively selected view, we ob-tain masks using Grounding DINO + SAM2 [22] with CLIP [20] re-ranking, and we update the Beta posteriors accord-ingly. Building on this Bayesian formulation, we prove the non-negativity and diminishing returns of EIG, and derive a greedy (1 −1/e ) approximation guarantee. This yields an interactive 3DGS segmentation method that is both information-efficient and theoretically grounded. Our contributions are as follows. • Camera-free, training-free, and few-second segmenta-tion. We achieve open-vocabulary 3DGS segmentation in a few seconds without camera viewpoints, ground-truth labels, or retraining. • Bayesian reformulation. We reformulate 3DGS seg-mentation as sequential Beta–Bernoulli Bayesian up-dates, providing a unified and robust probabilistic model. • Analytic EIG and active view selection. We estimate per-view pseudo-counts from one render and choose the next view using analytic EIG. • Theoretical guarantees. We show non-negativity and diminishing returns of EIG, confirming adaptive mono-tonicity and adaptive submodularity, leading to greedy 
+
+(1 −1/e ) approximation. • Competitive accuracy. Across datasets, our method is competitive with slower, label-dependent baselines while preserving the practical constraints above. 
+
+## 2. Related Works 
+
+2.1. 3DGS Segmentation 
+
+Recent works improve 3DGS with semantics through text conditioning and cross-modal supervision, allowing open-vocabulary retrieval and segmentation [13, 19, 28, 29, 34]. LERF [13] integrates CLIP features into a NeRF by opti-mizing a dense language field across views, enabling flex-ible text queries but requiring access to multi-view im-ages and extended scene optimization. Gaussian Grouping [29] effectively groups Gaussians into instances/parts us-ing multi-view supervision and feature aggregation, achiev-ing high accuracy with additional optimization for all reconstruction views. OpenGaussian [28] distills open-vocabulary 2D segmenters into 3D Gaussians using cross-modal pretraining and multi-stage pipelines with multi-view images and camera trajectories. ObjectGS [34] cre-ates an object-centric 3DGS with instance-level reasoning and compositional editing. However, it requires strong se-mantic priors, and extensive computation for per-scene op-timization. These methods achieve high accuracy, but their need for reconstruction images/camera paths, ground-truth or distilled labels, and significant optimization time lim-its their use in interactive editing with only a stand-alone 3DGS asset. 
+
+2.2. Few-Second 3DGS Segmentation 
+
+To improve responsiveness, few-second frameworks such as FlashSplat [23] and COB-GS have been proposed [30]. FlashSplat casts the consistency between 2D masks and 3D labels as a linear program, and COB-GS maintains quality via boundary-aware improvements and texture heuristics. However, these approaches still assume the availability of reconstruction views and semantic masks, and they provide no theoretical guarantees. iSegMan [31] presents an inter-active segmentation framework for 3DGS scenes. It uses visibility voting from multiple views based on empirically designed camera trajectories. 
+
+2.3. Active View Sampling on 3DGS 
+
+Active view selection has been widely studied for 3D recon-struction. FisherRF [10] formulates the next-best view us-ing Fisher information. ActiveGS [11] uses 3DGS as a map representation to greedily select the next-best view based on confidence and coverage. ActiveGAMER [5] leverages fast 3DGS rendering and an information-gain objective with coarse-to-fine search to improve fidelity and completeness. ActiveSGM [6] integrates active camera sampling and seg-mentation in indoor scenes such as Replica [25], but re-quires backpropagation-based training and targets a fixed set of classes via OneFormer [8]. In contrast, our method provides Bayesian updates with analytic EIG, and operates camera-free and training-free under open-vocabulary con-ditions. 
+
+## 3. Proposed Method 
+
+B3-Seg performs a few-second and accurate segmenta-tion of a user-specified object from a 3DGS scene under camera-free and training-free conditions. The method has two components: (i) 3DGS segmentation via sequential Beta–Bernoulli Bayesian updates of per-Gaussian probabil-ities, and (ii) active view selection based on the EIG in Beta distributions. 
+
+3.1. Preliminaries 
+
+3DGS [12] represents a scene as a set of Gaussians 
+
+G={gi}Ni=1 . Each Gaussian gi has mean μi, covariance Σi,opacity αi, and color ci. Rendering from a camera view v
+
+accumulates per-Gaussian contributions as 
+
+I(v) = X
+
+> i
+
+ci αi Ti, (1) where Ti = Qi−1
+
+> j=1
+
+(1 − αj ) denotes the transmittance along the ray in view v.Figure 2. Overview of B 3-Seg . (1) Sample Ncand candidate views on a sphere centered at the estimated object center cobj . (2) Render each candidate to compute EIG( v) by Eq. (11), and pick the best view v⋆ (red). On v⋆, obtain masks using Grounded SAM2 and CLIP reranking. (3) From the mask, compute (ei, 1, e i, 0) by Eq. (5) and update Beta parameters. We iterate (1)–(3) process 20 steps. The pipeline enables camera-free, training-free, open-vocabulary 3DGS segmentation in a few seconds. 
+
+FlashSplat [23] uses linear programming to solve binary assignments Pi ∈ { 0, 1}, determining whether gi is part of the target object or not. 
+
+min 
+
+> {Pi}
+
+X
+
+> v
+
+X
+
+> (j,k )∈I(v)
+
+X
+
+> i
+
+Pi αi Ti − Mj,k (v) , (2) where M (v) is the binary mask of I(v). FlashSplat pro-duces the following decision rule: 
+
+Pi = arg max nAi,n , n ∈ { 0, 1},
+
+where Ai,n = X
+
+> v
+
+X
+
+> (j,k )∈I(v)
+
+αiTi I[Mj,k (v) = n], (3) which compares visible responsibility inside and outside the mask. COB-GS [30] uses a similar gradient descent update. 
+
+3.2. Bayesian Reformulation of 3DGS Segmentation 
+
+We use the insights of Sec 3.1 to reformulate 3DGS seg-mentation as probabilistic Bayesian updates. Let yi ∈{0, 1} indicate whether Gaussian gi belongs to the user-specified object. We place a Bernoulli–Beta prior/posterior on pi = Pr( yi=1) :
+
+yi | pi ∼ Bernoulli( pi), pi ∼ Beta( ai, b i). (4) Given a rendered image I(v) and an object mask M (v),we treat per-pixel responsibilities as observations of success counts ei, 1(v) and failure counts ei, 0(v):
+
+ei, 1(v) = X
+
+> (j,k )∈I(v)
+
+αiTi I[Mj,k (v) = 1] ,ei, 0(v) = X
+
+> (j,k )∈I(v)
+
+αiTi I[Mj,k (v) = 0] . (5) By Beta-Bernoulli conjugacy, the posterior updates are 
+
+Beta( ai, b i) ← Beta( ai + ei, 1(v), b i + ei, 0(v)) . (6) After multiple views, the posterior is 
+
+pi ∼ Beta 
+
+
+
+ainit + P 
+
+> v
+
+ei, 1(v), b init + P 
+
+> v
+
+ei, 0(v)
+
+
+
+. (7) For ainit =binit , the posterior mean becomes ai/(ai+bi). In this symmetric case, the Bayes-optimal label reduces to se-lecting the class with the larger accumulated pseudo-counts, which exactly recovers the decision rule of Eq. (3): 
+
+yi = arg max 
+
+> n∈{ 0,1}
+
+X
+
+> v
+
+ei,n (v)= arg max 
+
+> n∈{ 0,1}
+
+X
+
+> v
+
+X
+
+> (j,k )∈I(v)
+
+αiTi I[Mj,k (v) = n]. (8) Thus, FlashSplat’s label-selection rule appears as the MAP decision within our Bayesian formulation. 
+
+3.3. Active Camera Sampling Based on EIG 
+
+To efficiently estimate pi, we sample the most informative camera view from randomly sampled candidate views. The details of candidate view sampling are described in Sec 3.5. For each candidate view v, the information gain is the dif-ference in entropy before and after adding that view: 
+
+IG( v) = X
+
+> i
+
+{H(Beta( ai, b i)) 
+
+− H (Beta( ai + ei, 1(v), b i + ei, 0(v))) } (9) where H denotes entropy and the Beta entropy can be calcu-lated analytically (Appendix A). However, due to the need Figure 3. Information Gain vs. Expected Information Gain (ours). (a) IG calculation updates the Beta posterior using SAM2 segmentation masks (Eq. (9)). (b) Our EIG approximates the pos-terior update from the prior Beta distribution, avoiding SAM2 in-ference and enabling efficient viewpoint evaluation (Eq. (11)). 
+
+for mask estimation, it is inefficient to calculate IG( v) for all candidate views. Instead, we use Expected Informa-tion Gain (EIG) . The per-Gaussian responsibility in the rendered image is calculated as τi = P 
+
+> (j,k )∈I(v)
+
+αiTi, and success/failure counts can be approximated using the mean of the Beta distribution mi = ai/(ai + bi).
+
+˜ei, 1 = miτi = X
+
+> (j,k )∈I(v)
+
+αiTi
+
+ai
+
+ai + bi
+
+,
+
+˜ei, 0 = (1 − mi)τi = X
+
+> (j,k )∈I(v)
+
+αiTi
+
+bi
+
+ai + bi
+
+. (10) Assuming gi falls inside the mask with probability mi,Eq. (10) approximates Eq. (9). From them, EIG is calcu-lated as follows: 
+
+EIG( v) = X
+
+> i
+
+{H(Beta( ai, b i)) 
+
+− H (Beta( ai + ˜ ei, 1(v), b i + ˜ ei, 0(v))) } (11) Then, we greedily select the view with the highest EIG, 
+
+v⋆ = arg max  
+
+> v
+
+EIG( v) (12) 
+
+Algorithm 1 B3-Seg: Camera-Free, Training-Free 3DGS Segmentation via Analytic EIG  
+
+> 1:
+
+Initialize (ai, b i) ← (ainit , b init ) for all Gaussians.  
+
+> 2:
+
+From a canonical view of the scene, estimate an initial mask using segmentation module of Sec. 3.4.  
+
+> 3:
+
+Update (ai, b i) with Eq. (6).  
+
+> 4:
+
+Compute cobj , r obj from Gaussians satisfying ai > b i. 
+
+> 5:
+
+for iteration t = 1 , . . . , T do  
+
+> 6:
+
+Uniformly sample Ncand candidate viewpoints on the sphere centered at cobj , with a radius rsphere . 
+
+> 7:
+
+for each candidate v do  
+
+> 8:
+
+Render once to obtain τi = P 
+
+> (j,k )
+
+αiTi. 
+
+> 9:
+
+Compute (˜ ei, 1, ˜ei, 0) with Eq. (10).  
+
+> 10:
+
+Compute EIG( v) with Eq. (11).  
+
+> 11:
+
+end for  
+
+> 12:
+
+Select v⋆ = arg max v EIG( v). 
+
+> 13:
+
+Render RGB image I(v⋆). 
+
+> 14:
+
+Estimate M (v⋆) with the module of Sec. 3.4.  
+
+> 15:
+
+Compute (ei, 1(v⋆), e i, 0(v⋆)) with Eq. (5).  
+
+> 16:
+
+Beta update: (ai, b i) ← (ai + ei, 1, b i + ei, 0). 
+
+> 17:
+
+Update cobj , r obj from Gaussians with ai > b i. 
+
+> 18:
+
+end for  
+
+> 19:
+
+Return final 3D mask: Gaussians with ai > b i
+
+The stability and validity of EIG-based greedy sampling are discussed in Section 4. 
+
+3.4. Open-Vocabulary Mask Inference 
+
+To obtain a 2D semantic mask for each selected view, we adopt a lightweight open-vocabulary segmentation module. This module consists of three stages: 1. Text-conditioned region proposal (Grounding DINO). Given a user prompt, Grounding DINO [15] generates candidate bounding boxes {Bk} that indicate possible object regions. 2. Mask prediction with prior guidance (SAM2). For each candidate box Bk in a view v⋆, we use SAM2 [21] for segmentation masks. To stabilize inference, SAM2’s 
+
+mask input receives a prior image R(v⋆), rendered from current Beta means mi = ai 
+
+> ai+bi
+
+:
+
+Rsoft (v⋆) = X
+
+> i
+
+mi αi Ti(v⋆), R (v⋆) = log Rsoft (v⋆)1 − Rsoft (v⋆) .
+
+This cues SAM2 with view-specific information from Beta posterior means, ensuring temporal consistency and reducing drift to distractors. 
+
+Mk(v⋆) = SAM2 ( I(v⋆), B k, mask input = R(v⋆)) .
+
+3. Semantic ranking via CLIP. Each candidate mask 
+
+Mk(v) is applied to the RGB image to obtain a masked crop, which is scored by CLIP [20] against the user text. The highest scoring mask for the view v is chosen: 
+
+M (v⋆) = arg max  
+
+> k
+
+CLIP  I(v⋆) ⊙ Mk(v⋆), text .
+
+Following the selected mask, ei, 1(v⋆) and ei, 0(v⋆) are cal-culated with Eq. (5). We then update the Beta parameters according to Eq. (6): 
+
+Beta( ai, b i) ← Beta( ai + ei, 1(v⋆), b i + ei, 0(v⋆)) .
+
+We repeat this view-selection and update loop. 
+
+3.5. Overall Pipeline and Candidate Sampling 
+
+Algorithm 1 summarizes the pipeline. We initialize all Gaussians with (ainit , b init ) and obtain an initial mask from a canonical view using the procedure in Section 3.4. Af-ter this first update, we consider Gaussians with ai > b i as foreground and estimate the object center and radius by 
+
+cobj =
+
+P 
+
+> i∈G fg
+
+mi μi
+
+P 
+
+> i∈G fg
+
+mi
+
+, r obj =
+
+P 
+
+> i∈G fg
+
+mi ∥μi − cobj ∥
+
+P 
+
+> i∈G fg
+
+mi
+
+.
+
+Then, Ncand candidate cameras are uniformly sampled from the cobj centered sphere, with a radius calculated as 
+
+rsphere = 1 .5 robj / tan(fov /2) . Next, we compute the EIG for each candidate and pick the most informative view. We repeat mask inference and updates (ai, b i), while updating 
+
+cobj , r obj at each iteration. The final 3D mask consists of Gaussians with ai > b i.
+
+## 4. Theoretical Guarantees 
+
+This section shows that the proposed method is (i) adaptive monotone and (ii) adaptive submodular, and then derives (iii) a greedy (1 −1/e ) approximation guarantee. Let S be the set of already selected views, and denote by EIG( v | S)
+
+the conditional expected gain when adding a candidate view 
+
+v under S (the per-view EIG itself is given in Eq. (11)). The detailed proofs are provided in the Appendix. 
+
+Lemma 1 (Adaptive monotonicity). EIG( v | S) is adap-tive monotone, i.e., E[EIG( v | S)] ≥ 0 for any selected set 
+
+S and any candidate v.
+
+Sketch. The Beta entropy H(Beta( ai, b i)) is non-increasing in κi = ai+bi for κi ≥ 2 (Appendix. B), which is satis-fied by our initialization ( ainit = binit = 1 ). Each candi-date v adds nonnegative pseudo-counts τi(v) ≥ 0 to κi, so the posterior entropy decreases in expectation, which yields 
+
+E[EIG( v | S)] ≥ 0. Intuitively, observing an additional view always decreases uncertainty, so the learning progress is stable. 
+
+Lemma 2 (Adaptive submodularity). EIG( v | S) is adap-tive submodular, i.e., E[EIG( v | S)] ≥ E[EIG( v | S′)] for any S′ ⊇ S and any candidate v.
+
+Sketch. As we observe more views, each κi increases and the reduction in Beta entropy (Eq. (11)) becomes smaller (Appendix. C). In addition, τi(v) is added linearly and is nonnegative. Therefore, the expected marginal gain for the same v is smaller under the larger set S′.
+
+Theorem (Greedy (1 −1/e ) approximation). At each step 
+
+t, we greedily select vgreedy  
+
+> t
+
+= arg max v EIG( v | St−1),where St−1 is the set of views already selected. We define the total expected information gain of this greedy policy as 
+
+EIG( Sgreedy  
+
+> k
+
+) := 
+
+> k
+
+X
+
+> t=1
+
+EIG( vgreedy  
+
+> t
+
+| Sgreedy  
+
+> t−1
+
+).
+
+Then, according to Theorem 16 of [7], 
+
+E
+
+h
+
+EIG( Sgreedy  
+
+> k
+
+)
+
+i
+
+≥ (1 − 1/e ) max  
+
+> π
+
+E[EIG( Sπk )] , (13) where Sπk denotes the sets obtained by all adaptive policies. Thus, our EIG-based greedy selection achieves a (1 −1/e )
+
+approximation to the optimal view selection policy. 
+
+## 5. Experiment 
+
+5.1. Experimental Settings 
+
+We evaluated on two datasets: LERF-Mask [29] and 3D-OVS [14]. For LERF-Mask, we follow the Gaussian Group-ing protocol [29]; for 3D-OVS, we follow [34]. We set the number of update iterations to T =20 , the number of can-didate views to Ncand =20 , and initialize the Beta parame-ters with ainit =binit =1 . Each sequence starts with a single canonical scene view, providing the initial mask and object center. The canonical view is the first camera viewpoint in the scene metadata, which does not need extra supervi-sion or specific reconstruction data—just the camera pose of dataset. It is used only to obtain the initial prior, with sub-sequent views chosen by our EIG-based planning. The low dependency on the initial condition is discussed in Sec. 5.4 Our experiments were conducted with a single RTX A6000 GPU. The end-to-end runtime (rendering, mask inference, and updates) is within a few seconds, enabled by our ap-proximation and active selection (Section 4). 
+
+5.2. Qualitative Results 
+
+Figure 4 shows representative comparisons in the LERF-Mask and 3D-OVS dataset. Our B 3-Seg produces cleaner, more complete object masks than prior 3DGS methods; for example, it recovers the full chair in the “green toy chair” scene and segments the “stuffed bear” despite heavy clut-ter. These improvements follow from two complementary components: analytic EIG that prioritizes highly informa-tive views, and robust Beta-Bernoulli updates that accumu-late reliable pseudo-counts from the 2D mask. Importantly, Figure 4. Qualitative comparison on text-guided 3D segmentation. We compare our method ( B3-Seg ) with prior 3DGS segmentation approaches. Our method produces cleaner and more complete object masks, especially in cluttered scenes.  
+
+> Figure 5. Candidate-view EIG on LERF-Mask (Teatime) with the prompt “stuffed bear” . Each panel shows a candidate rendering; the bottom-right inset is the current confidence map (posterior mean).
+
+almost high-mIoU baselines rely on reconstruction views, ground-truth masks, or per-scene optimization that take tens of minutes. By contrast, our B 3-Seg achieves comparable visual quality in a budget of 20 views and a few seconds. Figure 5 illustrates our view selection on the LERF-Mask Teatime scene. Views where the bear is larger and less occluded have a higher EIG, showing that our view-selection criterion selects views that reduce uncertainty. 
+
+5.3. Quantitative Results 
+
+LERF-Mask. Table 1 reports accuracy and latency. As baselines, FlashSplat (Uniform-Sphere) and FlashSplat (Recon-Cam) are used to isolate sampling effects. In Flash-Splat (Uniform-Sphere), Ncand candidate viewpoints are sampled uniformly on a sphere centered at the estimated object center; a random candidate chosen (no camera pri-ors, no EIG). In FlashSplat (Recon-Cam), Ncand candidate viewpoints are randomly sampled from reconstruction cam-eras (available on LERF-Mask). Both baselines used the same segmentation pipeline with B 3-seg for a fair compar-ison. From Table 1, B 3-Seg achieves higher segmentation scores than baselines and is competitive even with methods that assume reconstruction views. 
+
+3D-OVS. Table 2 follows the same presentation: the top block lists methods that assume reconstruction views/labels, while the bottom block compares sampling-based, training-free approaches under the 20-view budget. As shown in Table 2, our B 3-Seg surpasses baselines in segmentation scores and matches the performance of methods with re-construction views. Method Accuracy (mIoU / mBIoU) views time steps figurines ramen teatime mean 
+
+Assumes reconstruction views and/or labels (not directly comparable) 
+
+LERF [13] 33.5 / 30.6 28.3 / 14.7 49.7 / 42.6 37.2 / 29.3 GT 45 min 30k SA3D [2] 24.9 / 23.8 7.4 / 7.0 42.5 / 39.2 24.9 / 23.3 GT 35 min 30k LangSplat [19] 52.8 / 50.5 50.4 / 44.7 69.5 / 65.6 57.6 / 53.6 GT 19 min 30k Gaussian Grouping [29] 69.7 / 67.9 77.0 / 68.8 71.7 / 66.1 72.8 / 67.6 GT 37 min 30k Gaga [17] 90.7 / 89.0 64.1 / 61.6 69.3 / 66.0 74.7 / 72.2 GT 13 min 30k Unified-Lift [33] – – – 80.9 / 77.1 GT 40 min 30k ObjectGS [34] 88.2 / 89.0 88.0 / 79.9 88.9 / 88.6 88.4 / 85.8 GT ∼ 50 min 30k 
+
+Sampling-based, no retraining (directly comparable within this block) 
+
+FlashSplat [23] (Uniform-Sphere) † 60.2 / 57.5 68.4 / 61.5 80.4 / 76.3 69.6 / 65.1 Sample 10.2 sec 20 
+
+FlashSplat [23] (Recon-Cam) ‡ 71.6 / 69.1 71.4 / 66.3 86.6 / 83.9 76.5 / 73.1 Sample 10.1 sec 20 B3-Seg (Ours) 88.3 / 85.4 75.3 / 69.7 89.8 / 88.0 84.5 / 81.0 Sample 12.1 sec 20       
+
+> Table 1. LERF-Mask (accuracy, assumptions, and latency). Top: Methods that require reconstruction views/labels (=not directly com-parable). Bottom: Sampling-based, training-free approach with our 20 views/updates runtime (few seconds). †Uniform-Sphere : Candidate viewpoints sampled uniformly on a sphere. ‡Recon-Cam : Candidate viewpoints randomly sampled from reconstruction cameras.
+
+Method mIoU (%) Bed Bench Sofa Lawn 
+
+Assumes reconstruction views/labels (not comparable) 
+
+LangSplat [19] 92.5 94.2 90.0 96.1 Feature 3DGS [32] 83.5 90.7 86.9 93.4 LEGaussians [24] 84.9 91.1 87.8 92.5 Gaussian Grouping [29] 83.0 91.5 87.3 90.6 N2F2 [1] 93.8 92.6 92.1 96.3 SAGA [3] 97.4 95.4 93.5 96.6 
+
+FastLGS [9] 94.7 95.1 90.6 96.2 LBG [4] 97.7 96.3 97.3 87.4 CCL-LGS [27] 97.3 95.0 92.3 96.1 ObjectGS [34] 98.0 96.4 97.2 95.4 
+
+Camera-free & training-free (comparable) 
+
+FlashSplat (Uniform-Sphere) 91.7 86.9 90.2 91.9 FlashSplat (Recon-Cam) 94.3 90.3 85.7 96.3 
+
+B3-Seg (Ours) 97.1 92.2 94.1 96.8   
+
+> Table 2. 3D-OVS (mIoU). Top: assumes views/labels ( not com-parable ). Bottom: camera-free & training-free.
+
+EIG proxy validation. We further verify that our analytic EIG is a faithful proxy for the true information gain. Fig-ure 6 plots the analytic EIG (Eq. (11)) against the measured information gain (Eq. (9)) for selected views in scenes. A strong correlation of IG( v) and EIG( v) supports the use of Eq. (11) as a practical ranking surrogate. 
+
+Information efficiency over iterations. Figure 7 visu-alizes the total Beta entropy P 
+
+> i
+
+H(Beta( ai, b i)) in itera-CLIP re-rank SAM2 mask-input Accuracy ∆ vs. Base mIoU mBIoU mIoU mBIoU – – 74.9 70.2 – –
+
+✓ – 81.5 76.6 +6.6 +6.4 
+
+✓ ✓ 84.5 81.0 +9.6 +10.8   
+
+> Table 3. Ablation study on LERF-Mask. Both CLIP re-ranking and SAM2 mask-input improve segmentation performance.
+
+tions on the LERF-Mask Teatime scene. Lower entropy indicates higher segmentation certainty. Our EIG-driven policy achieves the largest per-step entropy drop and con-verges faster than spherical and reconstruction-view sam-pling, confirming improved information-efficiency. 
+
+Runtime analysis. Table 4 reports the runtime break-down of our method. Mask inference is the dominant cost (9.76 s out of 12.11 s). Our EIG-based view selection only requires lightweight rendering and entropy evaluation, avoiding mask inference on each candidate view. 
+
+5.4. Ablation Studies 
+
+CLIP re-ranking and SAM2 mask-input We evaluated the effectiveness of (i) CLIP re-ranking of candidate masks and (ii) SAM2 with prior mask input. Integrating these im-proves segmentation quality (Table 3). CLIP filters out in-consistent candidates and SAM2 stabilizes masks. These enhancements complement the EIG-based selection. 
+
+Sensitivity analysis. We evaluate the influence of Ncand 
+
+and T in Table 5. Accuracy improves as these parame-ters increase but quickly saturates around Ncand =20 and Figure 6. Predicted EIG closely matches information gain on the LERF-Mask, with a strong correlation ( r = 0 .964 ). 
+
+> Figure 7. Posterior entropy vs. iteration for three view-selection strategies on the LERF-Mask Teatime scene. EIG-based selection consistently achieves the largest per-step entropy drop.
+
+Mask Inference View Selection Beta Update Other Total Time (s) 9.761 2.111 0.119 0.117 12.108  
+
+> Table 4. Runtime breakdown of B 3-Seg . End-to-end inference completes in 12 seconds for 20 actively selected views.
+
+T =20 , showing that our lightweight setting is already suffi-cient. Furthermore, as shown in Table 6, B 3-Seg remains ro-bust even when the initial object center is perturbed: a 50% shift in cobj results in only a 1.6% drop in mIoU. This illus-trates that the performance of B 3-Seg is not dependent on its initial condition; EIG-based active view selection quickly compensates for any suboptimal initial condition. 
+
+5.5. Discussion and Limitations 
+
+B3-Seg offers a fast and theoretically grounded frame-work for camera-free 3DGS segmentation. Our experi-ments focus on typical object-centric scenes, where the pro-posed analytic EIG and sequential Bayesian updates op-
+
+Ncand 5 10 20 30 mIoU (%) 76.2 83.1 84.5 84.6 time (s) 10.3 11.6 12.1 14.4 
+
+T (iterations) 5 10 20 30 mIoU (%) 79.8 82.7 84.5 84.8 time (s) 3.5 6.6 12.1 19.4            
+
+> Table 5. Sensitivity to Ncand and Ton LERF-Mask. Accuracy saturates around Ncand =20 and T=20 while runtime increases almost linearly.
+
+cobj shift 0% 20% 50% 70% 100% mIoU (%) 84.5 83.6 82.9 81.7 80.7 
+
+∆ – -0.9 -1.6 -2.8 -3.8      
+
+> Table 6. Sensitivity to the initial condition on LERF-Mask. We shift the initial object center cobj along a random 3D direction by a percentage of robj .
+
+erate efficiently. Extending the method to substantially larger environments—such as wide indoor spaces or out-door scans—may require broader viewpoint exploration strategies. Integrating methods like RRT-based camera sampling or multi-scale candidate generation is a promis-ing direction that remains compatible with our analytic EIG formulation. Additionally, the present probabilistic model addresses binary foreground–background decisions. Many real-world applications involve multiple objects or semantic cate-gories. The framework naturally generalizes to a Dirich-let–Categorical model. This enables multi-object segmen-tation while preserving the pseudo-count interpretation and the theoretical properties of our EIG-driven updates. 
+
+## 6. Conclusion 
+
+We introduce B 3-Seg, a camera-free, training-free, open-vocabulary framework for 3DGS segmentation. The method uses sequential Beta–Bernoulli updates for per-Gaussian labeling and selects camera views via analytic EIG. This Bayesian approach ensures adaptive monotonic-ity and adaptive submodularity, providing a (1 −1/e ) ap-proximation guarantee. B 3-Seg achieves competitive scores with the latest methods, without using camera trajectories or ground-truth labels. Our Bayesian framework can be generalized to multi-class segmentation with a Dirichlet– Categorical model and scalability for larger or dynamic scenes, all integrable into the current EIG-based pipeline. These are left for future work. References 
+
+[1] Yash Bhalgat, Iro Laina, Joao F Henriques, Andrew Zisser-man, and Andrea Vedaldi. N2f2: Hierarchical scene under-standing with nested neural feature fields. In ECCV , pages 197–214, 2024. 7 [2] Jiazhong Cen, Zanwei Zhou, Jiemin Fang, Wei Shen, Lingxi Xie, Dongsheng Jiang, Xiaopeng Zhang, Qi Tian, et al. Seg-ment anything in 3d with nerfs. In NeurIPS , pages 25971– 25990, 2023. 7 [3] Jiazhong Cen, Jiemin Fang, Chen Yang, Lingxi Xie, Xi-aopeng Zhang, Wei Shen, and Qi Tian. Segment any 3d gaussians. In AAAI , pages 1971–1979, 2025. 7 [4] Rohan Chacko, Nicolai H¨ ani, Eldar Khaliullin, Lin Sun, and Douglas Lee. Lifting by gaussians: A simple, fast and flex-ible method for 3d instance segmentation. In WACV , pages 3497–3507, 2025. 7 [5] Liyan Chen, Huangying Zhan, Kevin Chen, Xiangyu Xu, Qingan Yan, Changjiang Cai, and Yi Xu. Activegamer: Ac-tive gaussian mapping through efficient rendering. In CVPR ,pages 16486–16497, 2025. 2 [6] Liyan Chen, Huangying Zhan, Hairong Yin, Yi Xu, and Philippos Mordohai. Understanding while exploring: Semantics-driven active mapping. In NeurIPS , 2025. 2 [7] Daniel Golovin and Andreas Krause. Adaptive submodular-ity: Theory and applications in active learning and stochastic optimization. Journal of Artificial Intelligence Research , 42: 427–486, 2011. 5, 2 [8] Jitesh Jain, Jiachen Li, Mang Tik Chiu, Ali Hassani, Nikita Orlov, and Humphrey Shi. Oneformer: One transformer to rule universal image segmentation. In CVPR , pages 2989– 2998, 2023. 2 [9] Yuzhou Ji, He Zhu, Junshu Tang, Wuyi Liu, Zhizhong Zhang, Xin Tan, and Yuan Xie. Fastlgs: Speeding up lan-guage embedded gaussians with feature grid mapping. In 
+
+AAAI , pages 3922–3930, 2025. 7 [10] Wen Jiang, Boshu Lei, and Kostas Daniilidis. Fisherrf: Ac-tive view selection and uncertainty quantification for radi-ance fields using fisher information. In ECCV , 2024. 2 [11] Liren Jin, Xingguang Zhong, Yue Pan, Jens Behley, Cyrill Stachniss, and Marija Popovi´ c. Activegs: Active scene re-construction using gaussian splatting. IEEE Robotics and Automation Letters , 2025. 2 [12] Bernhard Kerbl, Georgios Kopanas, Thomas Leimk¨ uhler, and George Drettakis. 3d gaussian splatting for real-time radiance field rendering. ACM Trans. Graph. , 42(4):139–1, 2023. 1, 2 [13] Justin Kerr, Chung Min Kim, Ken Goldberg, Angjoo Kanazawa, and Matthew Tancik. Lerf: Language embed-ded radiance fields. In CVPR , pages 19729–19739, 2023. 2, 7[14] Kunhao Liu, Fangneng Zhan, Jiahui Zhang, Muyu Xu, Yingchen Yu, Abdulmotaleb El Saddik, Christian Theobalt, Eric Xing, and Shijian Lu. Weakly supervised 3d open-vocabulary segmentation. In NeurIPS , pages 53433–53456, 2023. 5 [15] Shilong Liu, Zhaoyang Zeng, Tianhe Ren, Feng Li, Hao Zhang, Jie Yang, Qing Jiang, Chunyuan Li, Jianwei Yang, Hang Su, et al. Grounding dino: Marrying dino with grounded pre-training for open-set object detection. In 
+
+ECCV , pages 38–55, 2024. 4 [16] PlayCanvas Ltd. Supersplat: 3d gaussian splat editor, 2025. Software available from PlayCanvas Ltd. 1 [17] Weijie Lyu, Xueting Li, Abhijit Kundu, Yi-Hsuan Tsai, and Ming-Hsuan Yang. Gaga: Group any gaussians via 3d-aware memory bank. In AAAI , 2025. 7 [18] Juliette Marrie, Romain M´ en´ egaux, Michael Arbel, Diane Larlus, and Julien Mairal. Ludvig: Learning-free uplifting of 2d visual features to gaussian splatting scenes. In ICCV ,2025. 1 [19] Minghan Qin, Wanhua Li, Jiawei Zhou, Haoqian Wang, and Hanspeter Pfister. Langsplat: 3d language gaussian splatting. In CVPR , pages 20051–20060, 2024. 1, 2, 7 [20] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learn-ing transferable visual models from natural language super-vision. In ICML , pages 8748–8763. PmLR, 2021. 2, 5 [21] Nikhila Ravi, Valentin Gabeur, Yuan-Ting Hu, Ronghang Hu, Chaitanya Ryali, Tengyu Ma, Haitham Khedr, Roman R¨ adle, Chloe Rolland, Laura Gustafson, Eric Mintun, Junt-ing Pan, Kalyan Vasudev Alwala, Nicolas Carion, Chao-Yuan Wu, Ross Girshick, Piotr Doll´ ar, and Christoph Feicht-enhofer. Sam 2: Segment anything in images and videos. 
+
+arXiv preprint arXiv:2408.00714 , 2024. 4 [22] Tianhe Ren, Shilong Liu, Ailing Zeng, Jing Lin, Kunchang Li, He Cao, Jiayu Chen, Xinyu Huang, Yukang Chen, Feng Yan, et al. Grounded sam: Assembling open-world models for diverse visual tasks. arXiv preprint arXiv:2401.14159 ,2024. 2 [23] Qiuhong Shen, Xingyi Yang, and Xinchao Wang. Flashsplat: 2d to 3d gaussian splatting segmentation solved optimally. In 
+
+ECCV , pages 456–472, 2024. 1, 2, 3, 7 [24] Jin-Chuan Shi, Miao Wang, Hao-Bin Duan, and Shao-Hua Guan. Language embedded 3d gaussians for open-vocabulary scene understanding. In CVPR , pages 5333– 5343, 2024. 7 [25] Julian Straub, Thomas Whelan, Lingni Ma, Yufan Chen, Erik Wijmans, Simon Green, Jakob J Engel, Raul Mur-Artal, Carl Ren, Shobhit Verma, et al. The replica dataset: A digital replica of indoor spaces. arXiv preprint arXiv:1906.05797 ,2019. 2 [26] Matthew Tancik, Ethan Weber, Evonne Ng, Ruilong Li, Brent Yi, Terrance Wang, Alexander Kristoffersen, Jake Austin, Kamyar Salahi, Abhik Ahuja, et al. Nerfstudio: A modular framework for neural radiance field development. In SIGGRAPH , pages 1–12, 2023. 1 [27] Lei Tian, Xiaomin Li, Liqian Ma, Hao Yin, Zirui Zheng, Hefei Huang, Taiqing Li, Huchuan Lu, and Xu Jia. Ccl-lgs: Contrastive codebook learning for 3d language gaussian splatting. In ICCV , pages 9855–9864, 2025. 7 [28] Yanmin Wu, Jiarui Meng, Haijie Li, Chenming Wu, Yahao Shi, Xinhua Cheng, Chen Zhao, Haocheng Feng, Errui Ding, Jingdong Wang, et al. Opengaussian: Towards point-level 3d gaussian-based open vocabulary understanding. In NeurIPS ,pages 19114–19138, 2024. 1, 2 [29] Mingqiao Ye, Martin Danelljan, Fisher Yu, and Lei Ke. Gaussian grouping: Segment and edit anything in 3d scenes. In ECCV , pages 162–179, 2024. 1, 2, 5, 7 [30] Jiaxin Zhang, Junjun Jiang, Youyu Chen, Kui Jiang, and Xi-anming Liu. Cob-gs: Clear object boundaries in 3dgs seg-mentation based on boundary-adaptive gaussian splitting. In 
+
+CVPR , pages 19335–19344, 2025. 1, 2, 3 [31] Yian Zhao, Wanshi Xu, Ruochong Zheng, Pengchong Qiao, Chang Liu, and Jie Chen. isegman: Interactive segment-and-manipulate 3d gaussians. In CVPR , pages 661–670, 2025. 2[32] Shijie Zhou, Haoran Chang, Sicheng Jiang, Zhiwen Fan, Ze-hao Zhu, Dejia Xu, Pradyumna Chari, Suya You, Zhangyang Wang, and Achuta Kadambi. Feature 3dgs: Supercharging 3d gaussian splatting to enable distilled feature fields. In 
+
+CVPR , pages 21676–21685, 2024. 7 [33] Runsong Zhu, Shi Qiu, Zhengzhe Liu, Ka-Hei Hui, Qianyi Wu, Pheng-Ann Heng, and Chi-Wing Fu. Rethinking end-to-end 2d to 3d scene segmentation in gaussian splatting. In 
+
+CVPR , pages 3656–3665, 2025. 7 [34] Ruijie Zhu, Mulin Yu, Linning Xu, Lihan Jiang, Yixuan Li, Tianzhu Zhang, Jiangmiao Pang, and Bo Dai. Objectgs: Object-aware scene reconstruction and scene understanding via gaussian splatting. In ICCV , 2025. 1, 2, 5, 7 B3-Seg: Camera-Free, Training-Free 3DGS Segmentation via Analytic EIG and Beta–Bernoulli Bayesian Updates 
+
+# Supplementary Material 
+
+## A. Beta Entropy and Notation 
+
+Let X ∼ Beta( a, b ) with a, b > 0. For simplicity, we define 
+
+B(·, ·) as a Beta function, and H(·, ·) as the entropy of the Beta distribution. The entropy is 
+
+H(a, b ) = log B(a, b ) − (a − 1) ψ(a) − (b − 1) ψ(b)+ ( a + b − 2) ψ(a + b), (14) where ψ is the digamma function. 
+
+## B. Lemma 1: Non-negativity (Adaptive Mono-tonicity) 
+
+Claim. For any candidate view v and any selected set S,the expected gain is nonnegative: E[EIG( v | S)] ≥ 0.
+
+Proof. For a single Gaussian i, define its mean mi and con-centration κi
+
+mi = ai
+
+ai + bi
+
+, κi = ai + bi.
+
+From Eq. (11), the approximate posterior entropy of EIG is given by 
+
+H(ai + ˜ ei, 1(v), b i + ˜ ei, 0(v)) = H(ai + miτi, b i + (1 − mi)τi)= H
+
+
+
+1 + X
+
+> (j,k )∈I(v)
+
+αiTi
+
+1
+
+ai + bi
+
+
+
+ai,
+
+
+
+1 + X
+
+> (j,k )∈I(v)
+
+αiTi
+
+1
+
+ai + bi
+
+
+
+bi
+
+!
+
+:= H(ciai, c ibi).
+
+This corresponds to multiplying the concentration κi by 
+
+ci > 1 while leaving the mean mi unchanged. This can be interpreted as the observation of more trials of the same underlying Bernoulli probabilities. In this situation, increasing the concentration κi makes the Beta distribution more peaked around mi and therefore reduces its entropy. In particular, Beta(1 , 1) is the uniform distribution, which has the maximum entropy among Beta distributions. In our setting of ai, b i > 1, the density be-comes increasingly concentrated and the entropy decreases. Equivalently, we obtain 
+
+H(ciai, c ibi) ≤ H(ai, b i)
+
+for every Gaussian i. Thus the entropy drop 
+
+∆Hi(v | S) := Hi(S)−Hi
+
+ ai(S)+ ei, 1(v), b i(S)+ ei, 0(v)
+
+is nonnegative, and summing over i yields EIG( v | S) ≥ 0.
+
+Taking expectation over the randomness of the observation preserves the inequality, so we have 
+
+E[EIG( v | S)] ≥ 0.
+
+## C. Lemma 2: Adaptive Submodularity 
+
+Claim. For any S ⊆ S′ and any candidate view v,
+
+E[EIG( v | S)] ≥ E[EIG( v | S′)] .
+
+Proof. In our formulation, the uncertainty of each Gaussian 
+
+i is represented by the entropy of its Beta posterior 
+
+Hi(S) = H(ai(S), b i(S)) .
+
+The per-view information gain is defined as the total entropy reduction: 
+
+EIG( v | S) = X
+
+> i
+
+h
+
+Hi(S)−Hi(ai(S)+ ei, 1(v), b i(S)+ ei, 0(v)) 
+
+i
+
+,
+
+which is identical to Eq. (11) in the main paper. The success/failure count increment 
+
+τi(v) = ei, 1(v) + ei, 0(v)
+
+depends only on the chosen view v and is independent of S.On the other hand, if S ⊆ S′, then 
+
+κi(S) = ai(S) + bi(S) ≤ κi(S′) = ai(S′) + bi(S′),
+
+meaning that the concentration monotonically increases as more views are observed. By Lemma 1, the Beta entropy Hi(κi) is a monotoni-cally decreasing function of the concentration parameter κi
+
+(with the mean fixed). In other words, as the pseudo-counts accumulate and κi becomes larger, the posterior becomes more concentrated and its entropy becomes less sensitive to additional evidence. Therefore, adding the same pseudo-count increment τi(v) results in a smaller change in entropy when κi is large. When κi is small, the posterior distri-bution is still broad, so new evidence can significantly re-duce uncertainty. In contrast, when κi is already large and the posterior is sharply concentrated, the same τi(v) leads to only a minor decrease in uncertainty. Therefore, when 
+
+S ⊆ S′,
+
+∆Hi(κi(S); τi(v)) ≥ ∆Hi(κi(S′); τi(v)) . (15) Summing Eq. (15) over all Gaussians i, and taking ex-pectation over the random observation, yields 
+
+E[EIG( v | S)] ≥ E[EIG( v | S′)] ,
+
+which proves the adaptive submodularity of the proposed EIG. Intuitively, as more views are incorporated into S′, the concentration κi of each Gaussian increases and the Beta posterior becomes more peaked. Additional observations therefore reduce uncertainty by a smaller amount, yielding a natural diminishing-return behavior characteristic of sub-modular set functions. 
+
+## D. Greedy (1 −1/e ) Guarantee 
+
+In the main paper, we use the notation EIG( v | S) for the one-step expected information gain of adding a candi-date view v after a set of previously selected views S, and 
+
+EIG( Sk) for the total information gain accumulated over k
+
+steps of our greedy policy: 
+
+EIG( Sgreedy  
+
+> k
+
+) := 
+
+> k
+
+X
+
+> t=1
+
+EIG( vgreedy  
+
+> t
+
+| Sgreedy  
+
+> t−1
+
+).
+
+For clarity, we now make explicit how this notation re-lates to the adaptive submodularity framework of [7]. Let 
+
+F : 2 V → R be the set-level objective defined by the ex-pected total information gain after observing a set of views 
+
+Sk:
+
+F (Sk) := 
+
+> k
+
+X
+
+> t=1
+
+EIG( vt | St−1). (16) In the notation of [7], F corresponds to the utility func-tion f , and the conditional marginal gain ∆( v | ψ) under a partial realization ψ is exactly our one-step EIG( v | S)
+
+evaluated after the views in ψ.Lemmas 1 and 2 are stated in terms of EIG( v | S),but they can equivalently be viewed as establishing that the set-level objective F (S) is adaptive monotone and adaptive submodular in the sense of [7]. Therefore, by Theorem 5 and 16 of [7], the greedy policy that selects at each step vgreedy  
+
+> t
+
+= arg max v EIG( v | St−1)
+
+achieves a (1 −1/e ) approximation to the optimal adap-tive policy in terms of the expected total information gain 
+
+F (Sk):
+
+E
+
+h
+
+F (Sgreedy  
+
+> k
+
+)
+
+i
+
+≥ (1 − 1/e ) max  
+
+> π
+
+E[F (Sπk )] , (17) where Sπk denotes the random set of views selected by any adaptive policy π. Since F (Sk) equals EIG( Sk) by defini-tion (16), this matches the statement used in the main paper. 
+
+## E. Relationship Between Posterior Entropy and Bayes Accuracy 
+
+In our Beta-Bernoulli setting, each Gaussian i has an un-known binary label yi ∈ {0, 1} with latent probability 
+
+pi = Pr( yi = 1) . Given observations, the posterior dis-tribution of pi is 
+
+pi | data ∼ Beta( ai, b i),
+
+and the corresponding predictive distribution of the label is Bernoulli with predictive mean 
+
+qi := E[pi | data ] = ai
+
+ai + bi
+
+.
+
+The predictive uncertainty of the binary label is mea-sured by the Bernoulli entropy 
+
+Hpred (qi) = −qi log qi − (1 − qi) log(1 − qi).
+
+This entropy is maximized at qi = 1 /2 and decreases mono-tonically as qi moves away from 1/2.Under 0-1 loss for each Gaussian, the Bayes-optimal pre-diction is 
+
+ˆyi =
+
+(
+
+1, qi ≥ 1/2,
+
+0, qi < 1/2,
+
+yielding Bayes accuracy 
+
+Ai(qi) = max( qi, 1 − qi).
+
+Because the Bernoulli entropy is symmetric, Hpred (q) = 
+
+Hpred (1 − q), it depends only on the smaller of {q, 1 − q}.Hence we can write 
+
+Hpred (q) = h min( q, 1 − q),
+
+where h(u) = −u log u − (1 − u) log(1 − u),
+
+with min( q, 1 − q) ∈ [0 , 1/2] . On this interval, the binary entropy satisfies the simple lower bound 
+
+h(u) ≥ 2(log 2) u, 0 ≤ u ≤ 1/2.
+
+Therefore, 
+
+Hpred (q) = h min( q, 1 − q) ≥ 2(log 2) min( q, 1 − q),
+
+which implies 
+
+min( q, 1 − q) ≤ Hpred (q)2 log 2 .
+
+The per-Gaussian Bayes accuracy is 
+
+A(q) = max( q, 1 − q) = 1 − min( q, 1 − q),
+
+so we obtain the explicit entropy-based lower bound 
+
+A(q) ≥ 1 − Hpred (q)2 log 2 . (18) Thus, in our Beta–Bernoulli model, reducing the predic-tive entropy Hpred (q) directly tightens a linear lower bound on the per-Gaussian Bayes-optimal accuracy. Figure 8. Example of assumed application of B 3-Seg. A user specifies an object in an interactive 3DGS editor through text, clicking, or dragging. Our method then performs fast and stable 3D segmentation from the current viewpoint. 
+
+## F. Approximation Gap Between IG and EIG 
+
+In the main paper, the information gain (IG) of a candidate view v is defined using the actual 2D mask M (v) returned by the segmentation module: 
+
+IG( v) = X
+
+> i
+
+h
+
+H(Beta( ai, b i)) 
+
+− H(Beta( ai + ei, 1(v), b i + ei, 0(v))) 
+
+i
+
+.
+
+This quantity is deterministic once the view is rendered and its mask has been inferred. In contrast, our analytic EIG approximates the Beta up-date using the posterior mean mi = ai/(ai + bi):
+
+˜ei, 1(v) = miτi(v), ˜ei, 0(v) = (1 − mi)τi(v),
+
+where τi(v) = ei, 1(v) + ei, 0(v) is the total responsibility of Gaussian i. Thus, 
+
+EIG( v) = X
+
+> i
+
+h
+
+H(Beta( ai, b i)) 
+
+− H(Beta( ai + ˜ ei, 1(v), b i + ˜ ei, 0(v))) 
+
+i
+
+.
+
+To analyze the difference, define for each Gaussian i the function 
+
+fi(w) = H(Beta( ai + w, b i + τi − w)) , w ∈ [0 , τ i].
+
+Then 
+
+IG i(v) = H(Beta( ai, b i)) − fi(Wi),
+
+EIG i(v) = H(Beta( ai, b i)) − fi(μi),
+
+where Wi = ei, 1(v) is the true foreground responsibility and μi = miτi is the posterior-mean prediction. Hence the approximation error is 
+
+∆i(v) := IG i(v) − EIG i(v) = fi(μi) − fi(Wi).
+
+Because fi(w) is continuously differentiable on the in-terval [0 , τ i], the mean value theorem applies directly. Therefore, for some ξi ∈ [ min( Wi, μ i), max( Wi, μ i) ] ,
+
+fi(μi) − fi(Wi) = f ′ 
+
+> i
+
+(ξi)  μi − Wi
+
+.
+
+Therefore, 
+
+|IG i(v) − EIG i(v)| ≤ sup 
+
+> u∈[0 ,τ i]
+
+|f ′ 
+
+> i
+
+(u)|
+
+!
+
+|μi − Wi|.
+
+The term |μi − Wi| = τi |mi − Wi/τ i| reflects the mis-match between the posterior belief mi and the true propor-tion Wi/τ i inferred by the mask. As the Beta posterior becomes aligned with the observed masks, this mismatch shrinks, and so does the approximation error. Thus, once a few updates have been incorporated, the analytic EIG becomes a highly accurate surrogate of the true IG while requiring no mask inference for candidate views, explaining the strong correlation observed in Fig. 6. 
+
+## G. Assumed Application 
+
+A primary motivation behind our method is the design of interactive 3DGS editing systems as web applications. In such an application, a user inspects a scene from an ar-bitrary camera viewpoint and selects a target object via text prompts (e.g., “bear statue”), clicks or drag gestures (Fig. 8). The system must immediately infer the corre-sponding 3D region, often within a fraction of a second, before further editing or manipulation (color changes, dele-tion, mesh extraction, etc.) can proceed. Figure 9. Effect of CLIP re-ranking in the LERF-Mask Teatime scene. Although GroundingDINO assigns a higher score to the wrong bounding box (green), CLIP correctly assigns a higher similarity score to the region corresponding to the true object described by the prompt “cookies on a plate” (orange). 
+
+This setting naturally provides a canonical initial view: the viewpoint from which the user initiates the interaction. Because the user always begins by examining the scene vi-sually, an initial camera view for the initial object mask is available by design. Thus, the assumption of an initial canonical view in our method is not an artificial restriction, but a realistic property of interactive 3DGS workflows. In fact, B 3-Seg is tailored for this usage scenario: its closed-form EIG, adaptively di-minishing uncertainty, and ∼12s end-to-end inference make it particularly suitable for real-time editing environments. 
+
+## H. Effectiveness of CLIP re-ranking 
+
+Text-driven region proposal by GroundingDINO is often coarse and sometimes selects a bounding box that does not match the user query with high confidence. To verify that CLIP re-ranking can correct such failure cases, we per-formed an ablation on the LERF-Mask Teatime scene using the prompt “cookies on a plate” . Figure 9 shows a repre-sentative example. GroundingDINO produces two candidate bounding boxes for this prompt. Despite the lower DINO score, the orange box corresponds to the correct region, while the green box (incorrect) receives a higher DINO confidence (0.65 vs. 0.54). We apply SAM2 to each bounding box to obtain a candidate segmentation mask, crop the correspond-ing region, and compute the CLIP image–text similarity. CLIP successfully assigns substantially higher similarity to the correct region, reversing the erroneous DINO order-ing. This confirms that CLIP acts as a strong fine-grained verifier for text–region alignment, and that the two-stage DINO → SAM2 → CLIP re-ranking pipeline significantly improves the reliability of text-guided segmentation. 
+
+## I. Future Directions 
+
+I.1. Multi-class Segmentation 
+
+In this work, we focused on binary foreground–background decisions with a Beta–Bernoulli model for each Gaussian. A natural extension is to support multi-class segmenta-tion by replacing the Beta–Bernoulli pair with a Dirichlet– Categorical model. Concretely, let each Gaussian label take values in a finite set of classes {1, . . . , K }. We introduce per-Gaussian class probabilities 
+
+πi = ( πi, 1, . . . , π i,K ),
+
+> K
+
+X
+
+> c=1
+
+πi,c = 1 ,
+
+and place a Dirichlet prior/posterior on πi:
+
+yi | πi ∼ Categorical( πi), πi ∼ Dirichlet( ai),
+
+where ai = ( ai, 1, . . . , a i,K ) denotes the class-wise pseudo-counts. Given a rendered view v and a multi-class mask, we ag-gregate class-specific evidence for each Gaussian in anal-ogy to Eq. (5). Let ei,c (v) denote the responsibility of Gaus-sian gi assigned to class c in view v (e.g., via per-pixel class masks or soft class scores): 
+
+ei,c (v) = X
+
+> (j,k )∈I(v)
+
+αiTi I[Mj,k (v) = c], c ∈ { 1, . . . , K }.The binary Beta update in Eq. (6) is then replaced by the Dirichlet update 
+
+Dirichlet( ai) ← Dirichlet  ai, 1+ei, 1(v), . . . , a i,K +ei,K (v),
+
+and after multiple views we obtain 
+
+πi ∼ Dirichlet 
+
+
+
+ainit + P 
+
+> v
+
+ei, 1(v), . . . , a init + P 
+
+> v
+
+ei,K (v)
+
+
+
+.
+
+The posterior mean E[πi,c ] = αi,c / P 
+
+> c′
+
+αi,c ′ then replaces the Beta mean used for binary decisions, enabling multi-class 3D labeling. The information-theoretic view of Sec. 3.3 also ex-tends naturally. The Beta entropy H(Beta( ai, b i)) in Eq. (9) and Eq. (11) is replaced by the Dirichlet entropy 
+
+H(Dirichlet( ai)) , and the per-view information gain be-comes 
+
+IG( v) = X
+
+> i
+
+h
+
+H Dirichlet( ai)−H Dirichlet( ai+ei(v)) i
+
+,
+
+where ei(v) = ( ei, 1(v), . . . , e i,K (v)) . The analytic EIG in Eq. (11) can analogously be defined by replacing the Beta mean mi and entropy with their Dirichlet counterparts, us-ing the posterior mean mi,c = αi,c / P 
+
+> c′
+
+αi,c ′ to construct approximate evidence ˜ei,c (v) for each class as follows. 
+
+˜ei,c (v) = mi,c τi = X
+
+> (j,k )∈I(v)
+
+αiTi
+
+ai,c 
+
+P 
+
+> c′
+
+ai,c ′
+
+Thus EIG is 
+
+EIG( v) = X
+
+> i
+
+h
+
+H Dirichlet( ai)−H Dirichlet( ai+˜ ei(v)) i
+
+.
+
+In this Dirichlet-Categorical setting, the concentration parameter generalizes to κi = PKc=1 αi,c , and the same intuition about monotonicity and diminishing returns car-ries over: increasing κi while keeping the class proportions fixed makes the posterior more concentrated and reduces the entropy. We therefore expect the adaptive monotonicity and adaptive submodularity arguments of Sec. 4 to extend to the multi-class regime, yielding a principled path toward fully multi-object, open-vocabulary 3DGS segmentation within the same EIG-driven framework. 
+
+I.2. Entropy-Based Early Stopping 
+
+The results in Appendix E imply that the predictive en-tropy of the Beta–Bernoulli posterior provides a quantitative lower bound on the achievable Bayes accuracy. For a Gaus-sian with posterior predictive probability qi, the Bernoulli entropy Hpred (qi) satisfies 
+
+Ai(qi) ≥ 1 − Hpred (qi)2 log 2 ,
+
+where Ai(qi) denotes the Bayes-optimal per-Gaussian ac-curacy. Thus, decreasing the entropy directly tightens a guaranteed lower bound on the final segmentation accuracy. This observation enables a principled entropy-based early stopping criterion for our sequential inference pipeline. Let 
+
+¯Ht := 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+Hpred (q(t) 
+
+> i
+
+)
+
+denote the average predictive entropy at iteration t. From the inequality above, the average Bayes accuracy after iter-ation t is lower bounded as 
+
+¯At ≥ 1 − ¯Ht
+
+2 log 2 .
+
+Therefore, instead of fixing the number of iterations to a constant T , one can run the view-selection loop until ¯Ht
+
+falls below a user-specified threshold ¯Htarget , correspond-ing to a desired guaranteed accuracy level 
+
+¯Atarget = 1 − ¯Htarget 
+
+2 log 2 .
+
+Such an adaptive stopping rule ensures that inference terminates once the posterior has become sufficiently con-centrated, avoiding unnecessary queries while maintain-ing provable segmentation quality. Integrating this early-stopping mechanism with analytic EIG is a promising fu-ture direction for further improving the responsiveness and efficiency of B 3-Seg. 
+
+## J. Additional Qualitative Results 
+
+To further illustrate the generality and robustness of B 3-Seg, Figures 10, 11, and 12 present additional qualitative results on each 3D dataset. Across a wide variety of object types—ranging from small items (e.g., fruit, plates, nap-kins) to deformable or texture-rich objects (e.g., stuffed an-imals, clothing, wooden materials), our method generally produces clean and spatially coherent 3D masks. Notably, B 3-Seg successfully handles objects with thin structures, strong self-occlusion, low contrast against the background, and cases where multiple distractors appear in close proximity. These results highlight that (i) analytic EIG selects informative viewpoints even in cluttered scenes, and (ii) the sequential Beta–Bernoulli updates accumulate stable evidence despite imperfect 2D masks. Figure 10. Qualitative results of B 3-Seg on LERF-Mask 
+
+Figure 11. Qualitative results of B 3-Seg on 3D-OVS Figure 12. Qualitative results of other 3D scenes

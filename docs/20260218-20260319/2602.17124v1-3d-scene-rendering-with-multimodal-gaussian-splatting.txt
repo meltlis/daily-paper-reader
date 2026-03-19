@@ -1,0 +1,229 @@
+Title: 3D Scene Rendering with Multimodal Gaussian Splatting
+
+URL Source: https://arxiv.org/pdf/2602.17124v1
+
+Published Time: Fri, 20 Feb 2026 01:32:57 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# 3D Scene Rendering with Multimodal Gaussian Splatting 
+
+Chi-Shiang Gau 1, Konstantinos D. Polyzos 1, Athanasios Bacharis 2, Saketh Madhuvarasu 1, and Tara Javidi 1
+
+Department of Electrical and Computer Engineering, University of California San Diego, USA 1
+
+NVIDIA 2
+
+Abstract —3D scene reconstruction and rendering are core tasks in computer vision, with applications spanning industrial monitoring, robotics, and autonomous driving. Recent advances in 3D Gaussian Splatting (GS) and its variants have achieved impressive rendering fidelity while maintaining high compu-tational and memory efficiency. However, conventional vision-based GS pipelines typically rely on a sufficient number of camera views to initialize the Gaussian primitives and train their parameters, typically incurring additional processing cost during initialization while falling short in conditions where visual cues are unreliable, such as adverse weather, low illumination, or partial occlusions. To cope with these challenges, and motivated by the robustness of radio-frequency (RF) signals to weather, lighting, and occlusions, we introduce a multimodal framework that integrates RF sensing, such as automotive radar, with GS-based rendering as a more efficient and robust alternative to vision-only GS rendering. The proposed approach enables efficient depth prediction from only sparse RF-based depth mea-surements, yielding a high-quality 3D point cloud for initializing Gaussian functions across diverse GS architectures. Numerical tests demonstrate the merits of judiciously incorporating RF sensing into GS pipelines, achieving high-fidelity 3D scene rendering driven by RF-informed structural accuracy. 
+
+Index Terms —3D reconstruction, 3D scene rendering, RF sensing, Gaussian splatting, depth prediction, 3D point cloud prediction, multimodal sensing 
+
+I. I NTRODUCTION 
+
+Lying at the crossroads of computer vision and robotics, 3D scene reconstruction and the ability to generate accurate 2D estimates from novel/unseen viewpoints, collectively referred to as 3D scene rendering, have become fundamental tasks due to their wide-ranging applications in autonomous driving, robotics, and surveillance, among others. Early remarkable advances in this domain were driven by neural radiance field (NeRF) methods [10], [4], which demonstrated remarkable reconstruction and rendering fidelity but at the cost of sub-stantial computational and memory demands. More recently, 3D Gaussian Splatting (GS) [6] and its subsequent extensions [8], [3] have emerged as efficient and lightweight alternatives. By representing the 3D scene with a set of anisotropic    
+
+> This work was supported by the Eric and Wendy Schmidt AI for Science, the NSF TILOS AI Institute, the UCSD Centers for Machine intelligence, computing, and security (MICS) and Wireless Communications (CWC), the ONR Award N00014-22-1-2363 and the NSF grant 2148313, with the latter being supported in part by funds from federal agency and industry partners as specified in the Resilient & Intelligent NextG Systems (RINGS) program. Emails: cgau@ucsd.edu, kpolyzos@ucsd.edu, abacharis@nvidia.com, vmadhuvarasu@ucsd.edu, tjavidi@ucsd.edu
+
+Gaussian functions, GS achieves high-quality rendering while significantly reducing computational and memory overhead. Given a fixed budget of available training camera views, the original and subsequent GS architectures rely on these images to (i) initialize the Gaussian primitives, typically by predicting a 3D point cloud (PC) to ensure proper alignment with the underlying 3D scene structure; and (ii) optimize the Gaussian parameters so that the rendered outputs match the ground-truth training images. Nonetheless, GS pipelines that depend on a large number of training views often incur substantial pre-processing overhead to generate this initial 3D PC, commonly via the traditional ‘structure-from-motion’ process [16] or through pre-trained depth and 2D-3D correspondence models [17], [7]. To mitigate this burden and reduce redundancy, view-planning methods in robotics and active vision aim to identify a compact set of camera viewpoints for efficient PC generation; see, e.g., [2], [1]. Motivated by the same objective in the context of GS and 3D rendering, the recently proposed ActiveInitSplat framework [13] introduced an efficient active-view-selection strategy that identifies a small yet informative set of images for GS initialization and training, while being compatible with diverse GS architectures. Although effective and significantly more computationally efficient than passive GS pipelines, ActiveInitSplat still requires a non-negligible time to collect and process the actively selected views. More critically, ActiveInitSplat along with all other vision-only GS methods, is vulnerable in challenging real-world conditions where visual sensing degrades, including adverse weather conditions, low illumination, reduced image resolution, or partial occlusions. While visual sensing can degrade under adverse conditions, complementary sensing modalities that use radio-frequency (RF) signals, such as automotive radar, offer robust alterna-tives for predicting depth and generating the corresponding 3D PC for reliable 3D reconstruction and rendering. In particular, RF signals exhibit strong robustness to weather, lighting conditions, and partial occlusions, making them well-suited for depth prediction when visual information becomes unreliable; see e.g., [11], [5]. Even in scenarios where vision sensing quality is not degraded, obtaining a high-quality 3D PC from images often incurs a non-negligible runtime, restricting the practicality of such vision-only pipelines in real-time applications. Driven by these insights, we introduce a multimodal ap-proach for efficient 3D scene rendering whose contributions 
+
+> arXiv:2602.17124v1 [cs.CV] 19 Feb 2026
+
+can be summarized in the following aspects: 
+
+C1. We introduce an efficient RF-based depth prediction module that serves as a time- and computationally-efficient alternative to vision-based approaches for gen-erating a reliable 3D PC for GS, while remaining robust under adverse conditions where visual cues become unreliable. 
+
+C2. Using only sparse RF-based depth measurements, we in-troduce an efficient depth-map reconstruction approach that adapts conventional Gaussian Processes (GPs) through a principled localization scheme. By modeling different spatial regions with distinct local GPs, the proposed method provides more detailed uncertainty estimates and improves both computational efficiency and prediction accuracy at unobserved locations. 
+
+C3. Numerical tests on a real-world setting demonstrate the effectiveness of the proposed approach in combining RF and vision sensing modalities for efficient GS-based rendering. II. P RELIMINARIES AND PROBLEM FORMULATION 
+
+GS has attracted significant attention from the research community due to its efficient representation of 3D scenes using a set of N anisotropic Gaussian functions {Gi}Ni=1 
+
+[6]. To initialize these Gaussian functions, the original GS formulation and subsequent variants typically rely on a given budget of Ttrain training images or camera views {Im}Ttrain 
+
+> m=1
+
+, to generate a set of 3D points called 3D point cloud (PC) of the scene of interest. This PC is commonly obtained through a structure-from-motion (SfM) pipeline [16] or estimated using pre-trained depth and 2D–3D correspondence models such as [7], [17]. With the PC at hand, each point pi, i ∈ { 1, . . . , N } in the PC is associated with an anisotropic Gaussian function defined as 
+
+Gi(z) = αiexp (− 12 (z − mi)⊤Σ−1 
+
+> i
+
+(z − mi)) (1) where z denotes any location in the 3D space at which the Gaussian is evaluated, mi is the mean of Gi, initially placed at the position of the PC point pi, and Σi is the 3×3 covariance matrix that determines the shape, size and orientation of Gi.The opacity parameter αi controls the contribution of Gi to the final rendered images. Given these Gaussian functions, the color at any pixel p of the rendered 2D image is computed as [6] 
+
+c(p) = 
+
+> N
+
+X
+
+> i=1
+
+ciG2Di (p)
+
+> i−1
+
+Y
+
+> j=1
+
+
+
+1 − G2Dj (p)
+
+
+
+(2) where c(p) denotes the color at pixel p, and ci is the color associated with the ith Gaussian, parameterized either directly in RGB or as spherical harmonics (SH) to model view-dependent appearance. The term G2Di (·) denotes the 2D projection of the corresponding 3D Gaussian function Gi,whose mean and covariance are given by 
+
+m2Di = [ u/b, l/b ]⊤, [u, l, b ]⊤ = LW [mi, 1] ⊤ (3a) 
+
+Σ2Di = JWΣ iW⊤J⊤ (3b) where matrices W, L denote the extrinsic and intrinsic camera parameter matrices, respectively, and J is the corresponding Jacobian; additional details are available in [6]. All Gaussian parameters are optimized so that the rendered images match the ground-truth training views {Im}Mm=1 . To guarantee that each covariance matrix Σi remains positive semi-definite during optimization, it is parameterized using the factorization Σi = RiSiS⊤ 
+
+> i
+
+R⊤ 
+
+> i
+
+where Si is the 3×3 diagonal scaling matrix and Ri is the rotation matrix represented analytically via quaternions. In the vision domain, obtaining a high-quality PC that faithfully reflects the underlying 3D structure from train-ing images {Im}Ttrain  
+
+> m=1
+
+often requires (i) a sufficiently large number Ttrain of views, whose processing, whether through SfM pipeline or pre-trained models, can be computationally expensive and unsuitable for time-critical applications; and (ii) images with adequate resolution and quality. These limitations naturally motivate the integration of alternative sensing modal-ities that are more time-efficient and remain robust under adverse conditions, such as weather or illumination ones, that degrade visual cues and reduce the quality of the captured images. In this work, we will focus on RF-based sensing as a complementary modality to vision and demonstrate the benefits of integrating it into the GS pipeline for efficient 3D rendering. Specifically, we aim to: (i) leverage a single radar transmission, providing only sparse RF-based depth measurements {yt}Tt=1 corresponding to locations {xt}Tt=1 , to efficiently predict depth yunobserved at any unobserved location 
+
+xunobserved , addressing the RF-based depth-map reconstruction problem 1; and (ii) use the resulting RF-driven depth map to construct a 3D PC as an alternative to the vision-based SfM or pre-trained models, and evaluate how this RF-informed initialization translates to GS-based rendering performance. The next section introduces the proposed RF-based depth-map reconstruction approach, which adapts conventional GPs through a localization scheme. In this framework, differ-ent spatial regions are modeled by distinct local GPs to improve computational efficiency and ensure that only the most relevant measurements influence each region, thereby yielding high-quality depth predictions with well-controlled uncertainty, as will be delineated next. III. RF-D RIVEN DEPTH -M AP RECONSTRUCTION FOR GS Given a single radar transmission that provides sparse RF-based depth measurements yT = [ y1, . . . , y T ]⊤ at correspond-ing spatial locations XT = [ x1, . . . , xT ]⊤, the objective is to learn a function f (·) : xt → yt, ∀t such that the depth value yunobserved can be accurately predicted at any unobserved location xunobserved . In this work, we will capitalize on GPs 
+
+> 1The radar depth-map reconstruction problem considered here is analogous to the well-studied radio map reconstruction problem (e.g., [14]), which relies on received signal strength observations, but in our setting uses depth measurements obtained from radar transmissions.
+
+as an efficient Bayesian modeling framework capable of learning an unknown function while simultaneously providing principled uncertainty estimates [15], [9]. 
+
+A. Conventional GP-based learning 
+
+GP-based learning begins by assuming that the un-known function f is a random function endowed with a Gaussian prior over its evaluations; specifically, fT := [f (x1), . . . , f (xT )] ⊤ ∼ N (0T , KT ) where Kt is the covariance matrix whose (m, m ′) entry is [Kt]m,m ′ =cov( f (xm), f (xm′ )) := κ(xm, xm′ ), and κ denotes the kernel function that assesses the pairwise similarity between distinct inputs xm and xm′ [15]. The next assumption links the observed measurements yT to the latent function values fT through a factored batch conditional likelihood 
+
+p(yT |fT ; XT ) = QTt=1 p(yt|f (xt)) where p(yt|f (xt)) =
+
+N (f (xt), σ 2
+
+> n
+
+) since yt can be expressed as yt = f (xt) + nt
+
+with nt ∼ N (0 , σ 2
+
+> n
+
+) being Gaussian noise uncorrelated across 
+
+t.With the GP prior and batch conditional likelihood at hand, the function posterior pdf of f (x) at any unobserved location 
+
+x can be computed through Bayes’ rule as [15] 
+
+p(f (x)|XT , yT ) = N (μT (x), σ 2 
+
+> T
+
+(x)) (4) with mean and variance given in closed form as 
+
+μT (x) = k⊤ 
+
+> T
+
+(x)( KT + σ2
+
+> n
+
+IT )−1yt (5a) 
+
+σ2 
+
+> T
+
+(x) = κ(x, x)−k⊤ 
+
+> T
+
+(x)( KT +σ2
+
+> n
+
+IT )−1kT (x) (5b) where kT (x) := [ κ(x1, x), . . . , κ (xT , x)] ⊤. Note that the posterior mean in (5a) provides a point prediction of the depth value corresponding to the unobserved location x, and the posterior variance in (5b) quantifies the associated uncertainty. Although effective in diverse practical settings, conven-tional GP-based learning incurs O(T 3) complexity (c.f. (5)), making its adoption impractical as T becomes large. More-over, in the RF-based depth prediction setting considered here, depth measurements obtained from faraway locations have negligible influence on the depth at a specific point, as only spatially proximate observations are informative. Motivated by these insights, we next introduce a more computationally efficient, localization-based GP approach that yields well-calibrated uncertainty and more accurate depth predictions. 
+
+B. Localized GPs for efficient depth prediction 
+
+Rather than relying on a global GP model defined over the entire depth domain R, we propose a principled localization strategy in which the space is partitioned into non-overlapping regions, R = {r1, . . . , r R}. For each region r ∈ { r1, . . . , r R}
+
+we instantiate a separate GP that conditions only on the ob-servations {y(r) 
+
+> i
+
+}T (r) 
+
+> i
+
+associated with that region. Specifically, for any query location x within region r, the GP-posterior pdf p(f (x)|X(r) 
+
+> T
+
+, y(r) 
+
+> T
+
+) = N (μ(r) 
+
+> T
+
+(x), σ (r)2  
+
+> T
+
+(x)) is computed using (5) considering only the T (r) relevant region-specific data {XT (r) , yT (r) }.The intuition behind this approach is threefold: (i) depth measurements originating from distant regions are largely irrelevant and have negligible influence on predictions within the local region; (ii) each region processes only T (r) ≪ T
+
+observations, reducing the GP computational complexity to 
+
+O(T (r)3 ); and (iii) by restricting GP-modeling and inference to the most pertinent measurements, the localization strategy yields better-controlled posterior variance and more accurate depth predictions within each region. It is worth noting that, although the localization strategy introduces R separate GP models, each model can be evaluated independently, enabling full parallelization and thereby preserving computational effi-ciency. With the PC obtained from the proposed localized GP-based depth-map reconstruction approach, the GS Gaussian functions are initialized accordingly, and their parameters are subsequently optimized using the available training images. 
+
+Remark. Although the multimodal framework in this work focuses primarily on vision and RF-based sensing, it can naturally incorporate LiDAR measurements for PC prediction whenever available. Exploring alternative strategies for jointly leveraging all three sensing modalities, beyond PC construc-tion, belongs to our future research agenda. 
+
+Fig. 1: Initial depth map from a single radar transmission consisting of sparse depth measurements/observations. IV. N UMERICAL TESTS 
+
+A. Implementation details 
+
+We evaluate the 3D rendering performance of the proposed approach on the View-of-Delft dataset [12], which contains urban driving scenes captured from a vehicle equipped with both camera and radar sensors. The part of the urban scene used in this study is captured by M = 35 total images with 
+
+Ntrain = 12 allocated for training and the remaining Ntrain =23 used for testing. In addition to RGB images captured from camera sensors, each radar transmission produces a sparse depth map computed from returned echoes at specific azimuth and elevation angles, as determined by the radar signal pro-cessing pipeline. The dataset provides depth measurements for sparse points spanning azimuth angles in [−90 ◦, 90 ◦] and elevation angles in [−20 ◦, 20 ◦]. This setting is particularly (a) Conventional GP prediction (b) Proposed localized GP prediction (c) Ground truth 
+
+Fig. 2: Comparison of (a) the conventional ‘global’ GP depth predictor and (b) the proposed localized GP predictor, shown alongside (c) the ground-truth depth map obtained from five radar transmissions. 
+
+Fig. 3: Depth variance at different angles using the conven-tional GP-based depth predictor. 
+
+Fig. 4: Depth variance at different angles using the proposed localized GP-based depth predictor. challenging for conventional GS-based rendering due to the very limited number of available images for GS initialization and training, combined with the confined scene coverage they provide. In our experimental setup for the proposed multimodal framework, the observed RF-based measurements consist of observed depth values obtained from a single radar transmis-sion captured in the same time slot as the first training image. For the proposed localized GP-based approach for efficient depth-map (and corresponding PC) reconstruction from RF measurements, each regional GP model employs an RBF kernel κ(r) whose lengthscale hyperparameter is optimized by maximizing the marginal log-likelihood using only the depth observations within that region. With the PC obtained either from our proposed localized GP-based method or from traditional vision-only baselines, used for GS initialization, we follow the standard GS pipeline of [6] for rendering. The GS model is trained using Ntrain = 12 images, optimizing the combined L1 and D-SSIM loss function as in [6], over 30000 training iterations. The localized GP-based approach for depth prediction was executed on an Intel Core i7-5930K CPU, while the GS training process was conducted on a Tesla V100-SXM2-16GB GPU hosted on Amazon servers. For GS training and rendering, we use the publicly available implementation at https://github.com/graphdeco-inria/gaussian-splatting. For the vision-only GS baseline, the PC used for GS initialization was constructed using COLMAP. 
+
+B. Numerical results 
+
+To demonstrate the merits of the proposed multimodal GP framework, we adopt a twofold evaluation strategy: (i) we first assess the effectiveness of the localized GP approach in predicting unobserved depth values from sparse radar-based depth measurements/observations; and (ii) we evaluate how the RF-derived PC produced by the localized GP method enhances GS rendering performance, while also reducing the processing cost for GS initialization compared to its vision-only GS-based counterpart. 
+
+1) Efficient RF-based depth prediction: Starting with a sparse set of depth values obtained from a single radar Fig. 5: Visual comparison of the proposed multimodal GS with the conventional vision-only 3DGS on two indicative test (novel) viewpoints. It is evident that the rendered images produced by the proposed multimodal GS approach exhibit substantially improved quality compared to the conventional unimodal 3DGS baseline. transmission, depicted in Fig. 1, we use the proposed localized GP-based framework to predict the depth values at unobserved angles to obtain a more informative PC to initialize the Gaussian functions of GS. Using as ground truth the depth values obtained from five radar transmissions–available in the View-of-Delft dataset but treated as unknown during prediction and used solely for evaluation–we compare in Fig. 2 the performance of the proposed localized GP approach against the conventional ‘global’ GP predictor [15]. The re-sults demonstrate that the depth map produced by the localized GP approach is closer to the ground truth, highlighting the advantages of the proposed localization strategy in terms of prediction accuracy. Quantitatively, the conventional GP method yields an overall mean absolute error of 13.07 m, whereas the proposed localized strategy substantially reduces this error to 10.57 m. In addition to the predicted mean depth values, we also illustrate the variance of the conventional GP predictor and the proposed localized GP predictor in Figs. 3 and 4, re-spectively. The results indicate that our proposed predictor provides a more detailed and spatially coherent representation of uncertainty, as the predicted depth variance adapts to local measurement characteristics. Lastly, we compare the localized approach with the conventional GP counterpart in terms of running time. Table I reports the runtime of the competing alternatives, where the proposed approach exhibits a substantially lower computational cost. This improvement is expected, as our method processes only the observations within each region rather than operating on the full set simultaneously, thereby reducing the overall computational complexity. 
+
+2) Gaussian splatting rendering performance: Next, we demonstrate how the proposed multimodal GS framework, leveraging the RF-assisted PC generated by our localized GP method from a single radar transmission, can assist GS per-formance relative to conventional vision-only GS approaches. TABLE I: Running time comparison for depth map recon-struction     
+
+> Method Running time ↓
+> Conventional GP-based prediction 9.39 s Localized GP-based prediction (ours) 0.81 s
+
+For our multimodal GS approach, note that a single radar transmission provides depth measurements only at a limited set of detected angles; it offers no information about depth at undetected angles or which of those angles contain objects. Therefore, unlike the previous subsection—where detected angles from five radar transmissions were used to validate the effectiveness of the proposed localized GP depth predictor—in practical scenarios such information is not available a priori. To mimic such a realistic practical setting, we instead generate random points within the azimuth and elevation ranges, predict their depth using our localized GP approach, and subsequently use the resulting PC for GS initialization. It is worth noting that, when constructing the PC, we retain only the depth estimates with lower posterior variance (those corresponding to higher confidence) ensuring a more reliable and accurate PC. In Table II, we compare the rendering performance—using the widely adopted LPIPS, SSIM, and PSNR metrics—of the proposed multimodal GS approach, which leverages the RF-assisted PC for GS initialization and uses the available training images for GS training, against the conventional unimodal GS baseline, which relies solely on the training images for both initialization and training. It can be clearly seen that the multimodal GS approach achieves a markedly improved rendering performance compared to the vision-only GS baseline. Qualitatively, Fig. 5 illustrates renderings from both approaches at two representative unseen (novel) test viewpoints, showing that the multimodal method produces outputs that more closely match the corresponding ground-TABLE II: LPIPS, SSIM and PSNR values for all competing methods in a certain scene of the View-of-Delft datset. 
+
+Method LPIPS ↓ SSIM ↑ PSNR ↑
+
+3DGS-Vision only sensing 0.5114 0.4161 13.339 Multimodal GS (ours) 0.4727 0.4628 15.032 
+
+truth images. This underscores the advantages of properly in-tegrating RF-based and vision-based sensing modalities, com-pared to conventional unimodal vision-only GS approaches. 
+
+Runtime comparison . In contrast to conventional GS rely-ing solely on training images and COLMAP to generate a PC, requiring 4.43 mins in our setting, the proposed radar-based depth predictor produces a complete PC from sparse depth measurements in approximately 1 sec , demonstrating a substantial improvement in computational efficiency for GS initialization. V. C ONCLUSIONS 
+
+In this paper, we introduced a multimodal 3D scene ren-dering framework that integrates RF-based and visual sensing modalities to address key limitations of unimodal, vision-only GS pipelines. Leveraging sparse radar depth measurements, we developed a localized GP framework for efficient depth-map reconstruction that produces highly informative PCs with improved depth-prediction accuracy, better-calibrated uncer-tainty, and substantially reduced computational complexity compared to conventional ‘global’ GP predictors. The result-ing RF-driven PC is then used for GS initialization as an alter-native to traditional vision-based pipelines. Numerical tests on a 3D scene from the View-of-Delft dataset demonstrated that (i) even a single radar transmission, when processed through the proposed localized GP approach, provides meaningful structural cues for 3D rendering; and (ii) RF-informed GS initialization achieves superior rendering fidelity compared to its vision-only counterpart, as evidenced by improvements in LPIPS, SSIM, and PSNR, while exhibiting reduced processing costs. These results highlight the strong potential of multi-modal sensing, particularly the integration of RF and vision, for efficient, and high-quality 3D scene rendering. REFERENCES [1] A. Bacharis, K. D. Polyzos, G. B. Giannakis, and N. Papanikolopoulos, “Bosfm: A view planning framework for optimal 3d reconstruction of agricultural scenes,” arXiv preprint arXiv:2509.24126 , 2025. [2] A. Bacharis, K. D. Polyzos, H. J. Nelson, G. B. Giannakis, and N. Papanikolopoulos, “Efficient 3d reconstruction in noisy agricultural environments: A bayesian optimization perspective for view planning,” 
+
+IEEE Robotics and Automation Letters , 2025. [3] Y. Bao, T. Ding, J. Huo, Y. Liu, Y. Li, W. Li, Y. Gao, and J. Luo, “3d gaussian splatting: Survey, technologies, challenges, and opportunities,” 
+
+IEEE Transactions on Circuits and Systems for Video Technology , 2025. [4] J. T. Barron, B. Mildenhall, M. Tancik, P. Hedman, R. Martin-Brualla, and P. P. Srinivasan, “Mip-nerf: A multiscale representation for anti-aliasing neural radiance fields,” in Proceedings of the IEEE/CVF Inter-national conference on Computer Vision , 2021, pp. 5855–5864. [5] C. Cui, Y. Ma, J. Lu, and Z. Wang, “Radar enlightens the dark: En-hancing low-visibility perception for automated vehicles with camera-radar fusion,” in 2023 IEEE 26th International Conference on Intelligent Transportation Systems (ITSC) . IEEE, 2023, pp. 2726–2733. [6] B. Kerbl, G. Kopanas, T. Leimk¨ uhler, and G. Drettakis, “3d gaussian splatting for real-time radiance field rendering.” ACM Transactions on Graphics , vol. 42, no. 4, pp. 139–1, 2023. [7] V. Leroy, Y. Cabon, and J. Revaud, “Grounding image matching in 3d with mast3r,” in Proceedings of the European Conference on Computer Vision . Springer, 2024, pp. 71–91. [8] H. Liu, B. Liu, Q. Hu, P. Du, J. Li, Y. Bao, and F. Wang, “A review on 3d gaussian splatting for sparse view reconstruction,” Artificial Intelligence Review , vol. 58, no. 7, p. 215, 2025. [9] Q. Lu, K. D. Polyzos, B. Li, and G. B. Giannakis, “Surrogate modeling for bayesian optimization beyond a single gaussian process,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 45, no. 9, pp. 11 283–11 296, 2023. [10] B. Mildenhall, P. P. Srinivasan, M. Tancik, J. T. Barron, R. Ramamoor-thi, and R. Ng, “Nerf: Representing scenes as neural radiance fields for view synthesis,” Communications of the ACM , vol. 65, no. 1, pp. 99–106, 2021. [11] D.-H. Paek, S.-H. Kong, and K. T. Wijaya, “K-radar: 4d radar object detection for autonomous driving in various weather conditions,” Ad-vances in Neural Information Processing Systems , vol. 35, pp. 3819– 3829, 2022. [12] A. Palffy, E. Pool, S. Baratam, J. F. P. Kooij, and D. M. Gavrila, “Multi-class road user detection with 3+1d radar in the view-of-delft dataset,” 
+
+IEEE Robotics and Automation Letters , vol. 7, no. 2, pp. 4961–4968, 2022. [13] K. D. Polyzos, A. Bacharis, S. Madhuvarasu, N. Papanikolopoulos, and T. Javidi, “Activeinitsplat: How active image selection helps gaussian splatting,” arXiv preprint arXiv:2503.06859 , 2025. [14] K. D. Polyzos, A. Sadeghi, W. Ye, S. Sleder, K. Houssou, J. Calder, Z.-L. Zhang, and G. B. Giannakis, “Bayesian active learning for sample efficient 5g radio map reconstruction,” IEEE Transactions on Wireless Communications , 2024. [15] C. E. Rasmussen and C. K. Williams, Gaussian processes for machine learning . MIT press Cambridge, MA, 2006. [16] J. L. Sch¨ onberger and J.-M. Frahm, “Structure-from-motion revisited,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2016. [17] S. Wang, V. Leroy, Y. Cabon, B. Chidlovskii, and J. Revaud, “Dust3r: Geometric 3d vision made easy,” in Proceedings of the IEEE/CVF International conference on Computer Vision , 2024, pp. 20 697–20 709.
