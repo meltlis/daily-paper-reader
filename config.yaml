@@ -69,4 +69,5 @@ subscriptions:
           enabled: true
           source: manual
           note: ''
-      updated_at: '2026-03-19T15:16:36.331Z'
+      updated_at: '2026-03-19T15:18:11.633Z'
+      paused: false
