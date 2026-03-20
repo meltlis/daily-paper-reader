@@ -1,0 +1,564 @@
+Title: Spectral Defense Against Resource-Targeting Attack in 3D Gaussian Splatting
+
+URL Source: https://arxiv.org/pdf/2603.12796v1
+
+Published Time: Mon, 16 Mar 2026 00:43:41 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# Spectral Defense Against Resource-Targeting Attack in 3D Gaussian Splatting 
+
+Yang Chen 1, Yi Yu 1, Jiaming He 2, Yueqi Duan 3,Zheng Zhu 4, and Yap-Peng Tan 5,1
+
+> 1
+
+Nanyang Technological University 2 UESTC 3 Tsinghua University  
+
+> 4
+
+GigaAI 5 VinUniversity 
+
+Abstract. Recent advances in 3D Gaussian Splatting (3DGS) deliver high-quality rendering, yet the Gaussian representation exposes a new attack surface, the resource-targeting attack. This attack poisons training images, excessively inducing Gaussian growth to cause resource exhaus-tion. Although efficiency-oriented methods such as smoothing, thresh-olding, and pruning have been explored, these spatial-domain strategies operate on visible structures but overlook how stealthy perturbations distort the underlying spectral behaviors of training data. As a result, poisoned inputs introduce abnormal high-frequency amplifications that mislead 3DGS into interpreting noisy patterns as detailed structures, ultimately causing unstable Gaussian overgrowth and degraded scene fi-delity. To address this, we propose Spectral Defense in Gaussian and image fields. We first design a 3D frequency filter to selectively prune Gaussians exhibiting abnormally high frequencies. Since natural scenes also contain legitimate high-frequency structures, directly suppressing high frequencies is insufficient, and we further develop a 2D spectral reg-ularization on renderings, distinguishing naturally isotropic frequencies while penalizing anisotropic angular energy to constrain noisy patterns. Experiments show that our defense builds robust, accurate, and secure 3DGS, suppressing overgrowth by up to 5.92 ×, reducing memory by up to 3.66 ×, and improving speed by up to 4.34 × under attacks. 
+
+Keywords: Adversarial Attack and Defense · 3D Gaussian Splatting 
+
+1 Introduction 
+
+3DGS [16] has become a dominant paradigm for scene reconstruction and novel view synthesis, achieving photo-realistic quality with high rendering speed. In 3DGS, a scene is represented by a set of 3D Gaussian primitives, dynamically ad-justing to match the complexity of the scene during training, which is optimized from input images [1, 18, 21, 35, 39]. This adaptive mechanism, while key to effi-ciency and detail of 3DGS, also introduces a new attack surface. Recent work [25] exposes a weakness of Gaussian representations: a data poisoning threat model can target the 3DGS victim model by exploiting its flexibility through a resource-targeting attack [3,6,32]. This attack only manipulates the training inputs, where 
+
+> arXiv:2603.12796v1 [cs.CV] 13 Mar 2026
+
+2 Y. Chen, Y. Yu et al. Poisoned Input Image                    
+
+> Gaussian Overgrowth
+> Rendering Output
+> 3D Frequency Filter
+> Resource -Targeting Attack on Clean Image!
+> 2D Spectral Regularization 2D Defended Output
+> 3D Robust Growth
+> Pruning
+> Angular Distribution
+> Gaussian number: 0.496 M
+> Render speed : 124 FPS
+> GPU memory: 7358 MB
+> Render speed : 455 FPS
+> GPU memory: 3963 MB
+> Gaussian number: 0.973 M Gaussian number: 0.281 M
+> Defense  Poison  Clean
+> (a) Pipeline of Spectral Defense (b) Frequency Spectrum of Images
+> Visual Appearance Spectral Energy ( amplitude )Angular Distribution (phase)
+> num.: 0.496 M
+> num.: 0.973 M
+> num.: 0.281 M
+> 14
+> 12
+> 10
+> 8
+> 6
+> 4
+> 2
+> 14
+> 12
+> 10
+> 8
+> 6
+> 4
+> 2
+> 14
+> 12
+> 10
+> 8
+> 6
+> 4
+> 2
+> 270 °
+> 315 °
+> 0°
+> 45 °
+> 90 °
+> 135 °
+> 180 °
+> 225 °
+> 270 °
+> 315 °
+> 0°
+> 45 °
+> 90 °
+> 135 °
+> 180 °
+> 225 °
+> 270 °
+> 315 °
+> 0°
+> 45 °
+> 90 °
+> 135 °
+> 180 °
+> 225 °
+
+Fig. 1: Spectral defense against attack in 3DGS. (a) A resource-targeting attack poi-sons input images to trigger excessive Gaussian growth, leading to redundant splats and degrading renderings. Our defense operates jointly in 3D and 2D domains, where 3D frequency filter prunes Gaussians with abnormally high-frequency responses to sup-press attack-induced overgrowth, and 2D spectral regularization constrains the angular distribution of energy to reduce anisotropic noise. (b) Frequency spectrum reveals spec-tral energy and angular distribution to distinguish frequency components of images. 
+
+poisoned images contain subtle noisy patterns that mislead the 3DGS optimiza-tion into excessive Gaussian growth. Thus, the overgrowth perturbs 3DGS with extreme computational consumption and rendering slowdowns. To defend against the attack, a straightforward idea [25] is smoothing poi-soned images or imposing universal Gaussian thresholds. These strategies reveal drawbacks: image smoothing destroys essential detailed structures, while uni-versal Gaussian thresholds fail to generalize across scenes, thereby being overly strict for some scenes and insufficient for others. Inspired by efficiency-oriented 3DGS [7, 9, 23, 24], a natural extension is to explore pruning strategies during training. Yet, when applied to poisoned inputs, these clean-input-based prun-ing methods become unreliable due to the difficulty of distinguishing fine details from malicious noisy textures, where maintaining Gaussians from attack-induced components is inherently challenging. In addition, since the training supervision is poisoned, images contain noise when guiding the reconstruction, thereby re-sulting in accuracy degradation. These limitations highlight the need for a prin-cipled defense that selectively suppresses poisoned overgrowth without harming the natural structure of the scene. In this paper, we explore the underlying perspective beyond spatial appear-ance. Our insight builds on the observation in Fig. 1(b): poisoning attacks exploit the adaptive growth of 3DGS by injecting stealthy perturbations that, while visually subtle, create distinct spectral discrepancies between poisoned images and clean ones. As observed, poisoned images exhibit abnormal amplification in high-frequency regions and directional anisotropy in the Fourier domain, devi-ating from the clean distribution. However, these spectral distortions are subtle in pixel space, making spatial detection unreliable. As a result, these spectral Spectral Defense 3
+
+distortions drive the optimizer to inflate noisy high-frequency components in an attempt to match the poisoned inputs during training, ultimately causing unstable Gaussian overgrowth. This observation suggests that the root cause of overgrowth lies not in spatial structures, but in spectral behaviors. Motivated by these, we address the attacks from a spectral perspective, identifying ab-normally high-frequency responses as underlying driving factors. Yet, directly suppressing high frequencies is insufficient, as natural scene details also contain legitimate high-frequency components, and naive filtering would degrade recon-struction fidelity. Therefore, we examine how stealthy perturbations distort the spectral behavior of the training data, and design a spectral defense under strong poisoning attacks in 3DGS. Specifically, our spectral defense operates jointly on the 3D Gaussians and 2D renderings in Fig. 1(a). At the 3D level, we introduce a frequency-aware importance measure that links Gaussian covariance to its spectral response, en-abling selective filtering of Gaussians exhibiting abnormally high-frequency am-plification. This enables 3DGS to adaptively prune redundant splats, thereby suppressing attack-induced overgrowth. At the 2D level, we distinguish and reg-ulate the high-frequency energy by exploiting the observation that clean im-ages exhibit approximately isotropic high-frequency structures with even angu-lar distributions, whereas poisoned renderings introduce anisotropic artifacts. In this way, our regularization penalizes such directional anisotropy and encourages isotropic distributions, allowing the defended spectrum to progressively restore clean spectral behaviors in Fig. 1(b). By preserving naturally isotropic high-frequency structures while suppressing attack-induced anisotropy, our method stabilizes Gaussian growth and enables robust 3DGS reconstruction under poi-soning attacks. Our contributions are summarized as follows: 
+
+– We present the first defense against the resource-targeting attack in 3DGS. 
+
+– Our spectral defense develops a 3D frequency filter that suppresses Gaussian overgrowth and a 2D spectral regularization that constrains noisy patterns. 
+
+– We conduct experiments on clean, attack, and defense settings, suppressing overgrowth by up to 5.92 ×, reducing peak memory by up to 3.66 ×, improving rendering speed by up to 4.34 ×, and preserving rendering quality. 
+
+2 Related Work 
+
+Efficient 3D Gaussian Splatting. 3D Gaussian Splatting (3DGS) has rapidly become a main representation for real-time 3D reconstruction and rendering due to its explicit structure, differentiable rasterization, and high rendering fi-delity [16]. The success of 3DGS has spurred widespread adoption across 3D generation [5, 33], SLAM and mapping [10, 34], avatar reconstruction [36], and dynamic scene modeling [22]. Moreover, a series of methods have explored com-pressed and lightweight 3DGS, where some approaches quantize Gaussian at-tributes using codebooks [20, 29] and spatially neighboring relationships [4, 23]. To reduce the model size, a parallel line of work focuses on pruning Gaus-sian primitives, such as learnable masking strategies [24, 38] and scoring strate-4 Y. Chen, Y. Yu et al. 
+
+gies [7–9], to remove redundant Gaussians and achieve more compact represen-tations during training. While these efficiency-oriented strategies are fundamen-tally designed for compression and acceleration rather than robustness, they lack mechanisms to distinguish adversarially induced Gaussians. 
+
+Security Challenges on 3D Representations. The security challenges on 3D representations have attracted attention, and studies primarily examine adver-sarial vulnerabilities in neural radiance fields, showing that subtle perturbations can distort geometry, manipulate semantic attributes, or inject scene-level arti-facts [11,13]. More efforts have explored poisoning-based threats, where carefully crafted inputs can poison the training process or manipulate view-dependent ap-pearance [12, 14]. Within this landscape, 3DGS [16] inherits new security chal-lenges due to its dense Gaussian primitives in 3D representations. 3DGS is vul-nerable to both accuracy-targeting [15, 37] and resource-targeting [25] adver-saries, motivating the need for secure 3D reconstruction pipelines. Poison-Splat [25] presents the first resource-targeting attack on computation cost in 3DGS, showing that poisoned images drastically trigger adversarial over-densification of Gaussians. Existing 3D defense methods do not apply to 3DGS, as they neither address adversarial densification nor operate on Gaussian primitives. Besides, some approaches broadly rely on adversarial training [19, 30], which requires clean supervision and is incompatible with a practical scenario under poisoned images. The defense research targeting 3D Gaussians remains largely unexplored, and we propose a mechanism for 3DGS that suppresses adversarial attacks. 
+
+3 Preliminary 
+
+3D Gaussian Splatting. 3DGS [16] uses multi-view images to reconstruct 3D scenes consisting of a set of learnable 3D Gaussians G = {Gi}. G is initially constructed from SfM point clouds [31], and each Gaussian Gi is parameterized by position μi ∈ R3, covariance matrix Σi ∈ R3×3, color ci ∈ R3, and opacity 
+
+αi ∈ [0 , 1] to define the Gaussian transparency. To optimize these parameters, 3D Gaussians are rendered as 2D images through α-blending [16], where the color ˙C of each pixel is computed by N overlapping Gaussians in front-to-back depth order, and the product of the opacity represents the influence of previous Gaussians within the same pixel. Based on ˙C, the rendered image ˙V is supervised by the Ground Truth image V , where the two sets of images are defined as 
+
+˙V = { ˙Vk}Kk=1 and V = {Vk}Kk=1 containing K camera views. 3DGS training minimizes the difference between these two sets, employing L1 loss and LD-SSIM 
+
+loss (Structural Similarity Index Measure) with a hyperparameter λ:
+
+min  
+
+> G
+
+L( ˙V, V) = (1 − λ)L1( ˙V, V) + λLD-SSIM ( ˙V, V), (1) where adaptive densification is performed to add or remove Gaussians to ensure high-quality reconstruction of 3DGS during training optimization. 
+
+Resource-Targeting Attack of 3DGS. A security problem of 3DGS is re-vealed by recent attack, Poison-splat [25], which poisons input images for over-consumption, drastically increasing the training time and memory cost, referred Spectral Defense 5
+
+to as the resource-targeting attack. The attack disrupts normal 3DGS by ad-dressing a max-min bi-level optimization problem: 
+
+Vp = arg max 
+
+> Vp
+
+C(G∗) s.t. G∗ = arg min 
+
+> G
+
+L( ˙V, Vp), (2) where C(G) is the computation cost metric designed by the attack and G∗ rep-resents the proxy 3DGS model trained on poisoned images Vp = {V pk }Kk=1 . The attack strength ϵ has ϵ-ball constraint [27] to balance destructiveness and stealth-iness. Through the tailored objective approximation and proxy model rendering from the attack, the victim receives poisoned images and conducts 3DGS train-ing without awareness that the images are poisoned, thus tampering with the training cost. Notably, the attack is effective with full access to 3DGS details, making naive defense methods ineffective against the strong attack. Rather than relying on reactive post-processing defenses, we design a defense-oriented prun-ing mechanism that proactively regulates Gaussian growth during training. 
+
+4 Spectral Defense for 3DGS 
+
+Recent attacks on 3DGS exploit its adaptive complexity : small and stealthy per-turbations increase total variation across views, forcing the optimizer to explain spurious high-frequency artifacts and causing excessive Gaussian growth with little change in visual appearance. Motivated by this failure mode, we design a defense that directly targets the frequency behavior of both the 3D represen-tation and its 2D renderings. At the 3D level , we introduce a frequency-aware importance that links each Gaussian’s covariance to its high-frequency contribu-tion, enabling selective removal of attack-induced and over-densified splats while retaining genuine geometry. At the 2D level , we regularize the angular distribu-tion of high-frequency energy to penalize anisotropic artifacts while preserving natural edges and textures. These components constrain the adversary’s abil-ity to grow poisoned high-frequency structures, stabilizing 3DGS training under strong poisoning. 
+
+4.1 3D Frequency Filter 
+
+Our first component operates directly in the 3D parameter space of Gaussians and removes adversarially redundant splats before they propagate through the scene representation. Rather than treating pruning as a mere efficiency trick, we use it as a security primitive that suppresses attack-induced structures. Con-cretely, we link each Gaussian’s covariance to its high-frequency response via a Fourier characterization, define a frequency-aware importance for individual splats, and apply a periodic pruning rule during 3DGS training to discard Gaus-sians with abnormally strong high-frequency responses while largely preserving those that encode genuine geometry. 
+
+Gaussian Frequency Representation. For a 3D Gaussian G with covariance matrix Σ and center μ, its spatial-domain form G(x) has Σ encoding both ori-entation and scale. The spatial variable x ∈ R3 and frequency variable t ∈ R36 Y. Chen, Y. Yu et al. 
+
+form a pair, and its Fourier response F(t) describes how the energy of G(x)
+
+is distributed over frequencies. The resulting spectrum can be decomposed in terms of amplitude and phase components: 
+
+γ(t) = (2 π) 32 |Σ| 12 exp   − 2π2t⊤Σt , θ(t) = −2πt ⊤μ,  (3) where γ(t) is the amplitude attenuation and θ(t) is the phase shift. Here, Σ
+
+fully determines that smaller eigenvalues experience weaker attenuation and thus stronger high-frequency response, whereas μ only induces a linear phase term and does not affect the spectral distribution. Consequently, the frequency char-acteristics of each Gaussian are entirely governed by its covariance, providing a natural frequency-domain descriptor. Step-by-step equations of G(x) and F(t)
+
+with derivations of γ(t) and θ(t) are detailed in the supplementary material. 
+
+Frequency-Aware Scoring for Gaussian Pruning. To quantify the fre-quency contributions of 3D Gaussians, we construct a scalar scoring mecha-nism that drives frequency-aware pruning , removing redundant high-frequency components while preserving meaningful structural detail. Intuitively, Gaussians with extremely strong high-frequency responses are downweighted, as they often correspond to poisoned regions encouraged by the attack. Using the amplitude term in (3), we define a high-frequency attenuation score: 
+
+S(G) = exp( −2π2t2σ2min ), (4) where σmin is the smallest eigenvalue of the covariance Σ, controlling the narrow-est spatial spread of the Gaussian: a smaller σmin yields a stronger high-frequency response. We evaluate (4) at a fixed cutoff frequency t to measure the expected high-frequency mass of each Gaussian under a common spectral reference, avoid-ing ambiguities that can arise from adaptive or scene-dependent thresholds. We then map this attenuation score to a high-frequency importance weight: 
+
+W(G) =  1 − S (G)α, (5) where α > 0 controls the non-linear amplification. In this formulation, splats with excessively large S(G), indicating strong high-frequency responses, are as-signed low weights, whereas Gaussians contributing moderate and structurally relevant high-frequency contents retain higher weights. 
+
+4.2 2D Spectral Regularization 
+
+While the 3D frequency filter suppresses adversarially redundant Gaussians in parameter space, the victim model is still optimized on poisoned views and may converge to renderings with poisoned artifacts. To further stabilize the image-domain behavior, we introduce a 2D Spectral Regularization scheme that op-erates on the Fourier spectra of rendered images and explicitly controls their 
+
+directional high-frequency statistics . Concretely, this component (i) isolates a 
+
+high-frequency band of interest, (ii) aggregates spectral energy over angular sec-tors to obtain an orientation-wise distribution , and (iii) defines an entropy-based Spectral Defense 7
+
+anisotropy loss that penalizes over-concentrated directional patterns while leav-ing natural, isotropic textures largely unaffected. In effect, the regularization acts as a frequency-domain prior on the rendered outputs, discouraging attack-induced directional noise and promoting perceptually consistent reconstructions. 
+
+Spectral Energy Characterization. We analyze the spectral structure of rendered views via a 2D frequency decomposition. Given a poisoned image V p,its rendered image ˙V p is produced by differentiable rendering, where each pixel is indexed by spatial coordinates (h, w ). We apply a 2D discrete Fourier transform (DFT) to obtain the frequency response ˙F(u, v ), where (u, v ) denote discrete frequency indices. The complex-valued response ˙F(u, v ) can be expressed in terms of amplitude ˙γ(u, v ) and phase ˙θ(u, v ). We provide detailed equations in the supplementary material. The amplitude spectrum ˙γ(u, v ) encodes the spectral energy over frequencies in Fig. 2. In practice, attack-induced rendering artifacts tend to appear as pronounced responses concentrated along narrow angular directions at higher frequencies, rather than in the low-frequency region. We focus on a band of coefficients corresponding to high-frequency content by thresholds ˙γmin and ˙γmax :
+
+E(u, v ) =  ˙F(u, v ) ˙γmin ≤ ˙γ(u, v ) ≤ ˙γmax . (6) This band-pass selection concentrates on high frequencies with substantial en-ergy and serves as the basis for our subsequent angular energy regularization. 
+
+Angular Distribution. To capture the directional structure of high-frequency energy E(u, v ), we analyze how this energy is distributed over orientations in the frequency plane, providing a measure of directional smoothness and spectral anisotropy. We discretize the angular domain [−π, π ) into B uniformly spaced bins, and let the b-th angular sector be:  
+
+> 2πb B
+
+≤ ˙θb < 2π(b+1)  
+
+> B
+
+, (7) where each sector ˙θb collects spectral coefficients whose frequency vectors fall within this angular range. For each bin, we aggregate the high-frequency en-ergy from E(u, v ) in (6) to obtain an angular energy density Eb and a discrete probability distribution {P b}Bb=1 over orientations: 
+
+Eb = X 
+
+> (u,v )∈˙θb
+
+E(u, v ), Pb = Eb
+
+P 
+
+> j
+
+Ej
+
+. (8) Intuitively, a clean image in Fig. 1(b) exhibits approximately isotropic content, and the energy spreads relatively evenly across all angular bins, where Pb is close to flat. In contrast, attack-induced directional artifacts as noisy patterns cause the high frequencies to concentrate within a narrow set of orientations, making 
+
+Pb sharply peaked in specific bins with anisotropy content, while our defense restores the distribution similar to the clean reference. 
+
+Anisotropy Loss. Given the angular distribution, we quantify its directional concentration H in [0 , log B] and attain its maximum log B when Pb = 1 /B for 8 Y. Chen, Y. Yu et al. mean amplitude  5           
+
+> 4
+> 3
+> 2
+> 1
+> 0
+> mean amplitude  5
+> 4
+> 3
+> 2
+> 1
+> 0
+> mean amplitude  4
+> 3
+> 2
+> 1
+> 0
+> clean poisoned defended
+> clean poisoned defended
+> clean poisoned defended
+> clean pattern poisoned pattern defended pattern clean energy poisoned energy defended energy high -frequency energy
+> 14
+> 12
+> 10
+> 8
+> 6
+> 4
+> 2
+> 12
+> 10
+> 8
+> 6
+> 4
+> 2
+> 12
+> 10
+> 8
+> 6
+> 4
+> 2
+
+Fig. 2: Spectral energy over frequencies under clean, poisoned, and defended settings. 
+
+Algorithm 1 Spectral defense in 3DGS training 
+
+1: for iteration t = 1 , 2, . . . do 
+
+2: Poisoned views Vp = {V pk }Kk=1 with camera poses 3: Render ˙Vp = { ˙V pk }Kk=1 from G
+
+4: if t mod Tprune = 0 then 
+
+5: Randomly sample K∗ camera views 6: for each G ∈ G do 
+
+7: Compute W(G) in (5); Set score (G) as W(G) multiplied by hit (G)
+
+8: end for 
+
+9: Prune ρ Gaussians according to score (G)
+
+10: end if 
+
+11: Compute anisotropy loss in (10), reconstruction loss and total variation loss 12: Update G by minimizing the total loss in (12) 13: end for 
+
+all b. The H is maximal when the high-frequency energy is distributed uniformly across all directions defined as isotropic, and minimal when it collapses into sparse dominant orientations defined as anisotropic. To make the regularization comparable across scenes and training iterations, we normalize it by its upper bound log B to be in [0 , 1] as: 
+
+H = −
+
+BX
+
+b=1 
+
+Pb log Pb, norm( H) = H
+
+log B , (9) with 1 for isotropic response and 0 for anisotropic response with extreme direc-tions. We define the anisotropy loss: 
+
+min 
+
+G Lani ( ˙Vp) = 1 − norm( H), (10) where ˙Vp = { ˙V pk }Kk=1 is the set of rendered poisoned views and the loss is com-puted per view and averaged over K viewpoints. This regularizer penalizes low-entropy, directionally concentrated spectra, suppressing streaking and banding artifacts without over-smoothing the images. Spectral Defense 9
+
+4.3 Overall Pipeline 
+
+We integrate the 3D frequency filter and image-domain spectral regularizer into a unified training procedure for adversarially robust 3DGS, as in Algorithm 1. 
+
+Frequency-aware Pruning in Parameter Space. Based on the analysis in Section 4.1, each Gaussian G ∈ G is assigned a high-frequency importance 
+
+W(G) via (5). To incorporate geometric visibility, we project Gaussians into the image plane and count how often they are intersected by training rays, following the ray-hit indicator hit (G) [7]. Instead of exhaustively using all K views, we ran-domly sample K∗ representative camera poses at each pruning step to balance the coverage and computational cost. For each Gaussian, we form a combined score (G) as W(G) · hit (G), which reflects both its spectral contribution and its spatial support across the scene. Gaussians with low scores are rarely ob-served yet exhibit strong high-frequency behavior, defined as attack-induced. At a fixed pruning interval Tprune as 100 by default setting, we sort {score (G)}G∈G 
+
+and prune the lowest ρ Gaussians, where ρ is a percent. This periodic pruning removes redundant splats while preserving spectrally important components. 
+
+Spectral Regularization in Image Space. In parallel, we enforce the 2D spectral prior from Section 4.2 at every training iteration. Let ˙Vp = { ˙V pk }Kk=1 
+
+denote the set of rendered poisoned views. For each ˙V pk , we compute the spec-trum ˙Fk, extract the high-frequency band Ek(u, v ) in (6), derive the angular distribution {P k,b }Bb=1 and normalized entropy norm( Hk), and then obtain an anisotropy loss Lani ( ˙V pk ) as in (10). Aggregating over the K rendered views yields the frequency-domain regularizer as: 
+
+Lfreq ( ˙Vp) = 1
+
+K
+
+> K
+
+X
+
+> k=1
+
+Lani ( ˙V pk ), (11) which penalizes the low-entropy, directionally-biased spectra corresponding to streaking and banding artifacts, while leaving isotropic high-frequency content largely unaffected. We further include a total variation loss Ltv ( ˙Vp) [25] to pro-mote local smoothness and suppress pixel-level noise. 
+
+Joint Optimization and Training Loop. Let Vp denote the target and poi-soned views, and L( ˙Vp, Vp) is the standard 3DGS reconstruction loss including the photometric and structural similarity terms. The overall objective combines reconstruction and frequency-domain priors: 
+
+min 
+
+> G
+
+
+
+L( ˙Vp, Vp) + λ Lfreq ( ˙Vp) + Ltv ( ˙Vp)
+
+, (12) where λ is a loss weight. As in Algorithm 1, each iteration updates the Gaussian set G by minimizing (12), and every Tprune steps performs frequency-aware prun-ing based on score (G). This joint optimization stabilizes the rendered frequency distribution and suppresses anisotropic high-frequency noise, while the 3D fre-quency filter prevents adversarial densification of splats in parameter space. 10 Y. Chen, Y. Yu et al. 
+
+Table 1: Training statistics on all scenes from the Tanks and Temples (TT), NeRF-Synthetic (NS), and Mip-NeRF 360 (MIP) datasets under clean, poison, and defense settings. We report the maximum Gaussian number (M), peak GPU memory (MB), and training time (min). 
+
+Metric Max Gaussian Number (M) ↓ Peak GPU Memory (MB) ↓ Training Time (min) ↓
+
+Setting clean poison defense clean poison defense clean poison defense TT-Auditorium 0.692 2.740 3.96 ×↑ 0.907 3.02 ×↓ 4918 15280 3.11 ×↑ 7633 2.00 ×↓ 10.91 18.88 1.73 ×↑ 15.27 1.24 ×↓
+
+TT-Ballroom 3.123 4.007 1.28 ×↑ 1.983 2.02 ×↓ 9902 11510 1.16 ×↑ 7075 1.63 ×↓ 20.41 23.32 1.14 ×↑ 19.81 1.18 ×↓
+
+TT-Barn 0.998 1.853 1.86 ×↑ 0.903 2.05 ×↓ 6801 9594 1.41 ×↑ 6569 1.46 ×↓ 11.26 14.70 1.31 ×↑ 12.33 1.19 ×↓
+
+TT-Caterpillar 1.272 1.877 1.48 ×↑ 0.738 2.54 ×↓ 6279 7589 1.21 ×↑ 5398 1.41 ×↓ 11.83 14.02 1.19 ×↑ 13.70 1.02 ×↓
+
+TT-Church 2.312 3.342 1.45 ×↑ 1.292 2.59 ×↓ 9032 11405 1.26 ×↑ 7534 1.51 ×↓ 16.86 20.24 1.20 ×↑ 16.08 1.26 ×↓
+
+TT-Courthouse 0.600 0.726 1.21 ×↑ 0.626 1.16 ×↓ 10476 12196 1.16 ×↑ 10349 1.18 ×↓ 11.33 12.02 1.06 ×↑ 11.72 1.03 ×↓
+
+TT-Courtroom 2.950 5.403 1.83 ×↑ 1.903 2.84 ×↓ 9028 14562 1.61 ×↑ 8102 1.80 ×↓ 17.70 27.67 1.56 ×↑ 22.23 1.24 ×↓
+
+TT-Family 2.119 3.696 1.74 ×↑ 1.298 2.85 ×↓ 6140 9994 1.63 ×↑ 5314 1.88 ×↓ 13.49 20.27 1.50 ×↑ 16.49 1.23 ×↓
+
+TT-Francis 0.765 1.638 2.14 ×↑ 0.705 2.32 ×↓ 4835 6246 1.29 ×↑ 4713 1.33 ×↓ 9.99 13.02 1.30 ×↑ 10.65 1.22 ×↓
+
+TT-Horse 1.296 2.513 1.94 ×↑ 0.954 2.63 ×↓ 4542 7159 1.58 ×↑ 4430 1.62 ×↓ 11.74 16.37 1.39 ×↑ 13.97 1.17 ×↓
+
+TT-Ignatius 3.198 3.935 1.23 ×↑ 1.380 2.85 ×↓ 9150 11115 1.21 ×↑ 6414 1.73 ×↓ 17.69 20.98 1.19 ×↑ 15.02 1.40 ×↓
+
+TT-Lighthouse 0.834 1.144 1.37 ×↑ 0.565 2.02 ×↓ 6751 8168 1.21 ×↑ 6129 1.33 ×↓ 12.03 13.17 1.09 ×↑ 12.52 1.05 ×↓
+
+TT-M60 1.631 2.990 1.83 ×↑ 0.946 3.16 ×↓ 7375 10373 1.41 ×↑ 6787 1.53 ×↓ 13.44 18.62 1.39 ×↑ 14.32 1.30 ×↓
+
+TT-Meetingroom 1.256 2.885 2.30 ×↑ 1.144 2.52 ×↓ 6543 10108 1.54 ×↑ 6361 1.59 ×↓ 12.07 18.43 1.53 ×↑ 14.63 1.26 ×↓
+
+TT-Museum 4.470 7.220 1.62 ×↑ 2.431 2.97 ×↓ 12308 18372 1.49 ×↑ 9684 1.90 ×↓ 23.13 34.06 1.47 ×↑ 28.01 1.22 ×↓
+
+TT-Palace 0.703 0.716 1.02 ×↑ 0.570 1.26 ×↓ 7154 7410 1.04 ×↑ 6447 1.15 ×↓ 11.38 11.93 1.05 ×↑ 10.21 1.17 ×↓
+
+TT-Panther 1.782 3.444 1.93 ×↑ 1.155 2.98 ×↓ 7497 11290 1.51 ×↑ 7001 1.61 ×↓ 13.56 20.63 1.52 ×↑ 17.13 1.20 ×↓
+
+TT-Playground 2.279 4.262 1.87 ×↑ 1.728 2.47 ×↓ 7659 11712 1.53 ×↑ 7597 1.54 ×↓ 15.85 24.23 1.53 ×↑ 19.07 1.27 ×↓
+
+TT-Temple 0.871 1.349 1.55 ×↑ 0.652 2.07 ×↓ 5840 13600 2.33 ×↑ 4887 2.78 ×↓ 11.59 14.36 1.24 ×↑ 12.32 1.17 ×↓
+
+TT-Train 1.118 1.334 1.19 ×↑ 0.500 2.67 ×↓ 5674 15805 2.79 ×↑ 4324 3.66 ×↓ 11.83 13.17 1.11 ×↑ 12.68 1.04 ×↓
+
+TT-Truck 2.509 3.597 1.43 ×↑ 1.306 2.75 ×↓ 7655 13304 1.74 ×↑ 6155 2.16 ×↓ 15.77 21.82 1.38 ×↑ 16.20 1.35 ×↓
+
+Average 1.751 2.889 1.65 ×↑ 1.128 2.56 ×↓ 7408 11276 1.52 ×↑ 6614 1.70 ×↓ 13.99 18.66 1.33 ×↑ 15.45 1.21 ×↓
+
+NS-chair 0.496 0.973 1.96 ×↑ 0.281 3.46 ×↓ 2848 7358 2.58 ×↑ 3963 1.86 ×↓ 7.16 11.08 1.55 ×↑ 9.23 1.20 ×↓
+
+NS-drums 0.391 0.701 1.79 ×↑ 0.234 3.00 ×↓ 2538 7078 2.79 ×↑ 3061 2.31 ×↓ 6.06 9.76 1.61 ×↑ 7.71 1.27 ×↓
+
+NS-ficus 0.259 0.273 1.05 ×↑ 0.181 1.51 ×↓ 2263 3120 1.38 ×↑ 2827 1.10 ×↓ 5.92 6.17 1.04 ×↑ 6.08 1.01 ×↓
+
+NS-hotdog 0.184 1.129 6.14 ×↑ 0.304 3.71 ×↓ 2318 28124 12 .13 ×↑ 7781 3.61 ×↓ 6.53 13.48 2.06 ×↑ 11.03 1.22 ×↓
+
+NS-lego 0.353 0.829 2.35 ×↑ 0.287 2.89 ×↓ 2668 9024 3.38 ×↑ 5179 1.74 ×↓ 6.48 10.48 1.62 ×↑ 9.19 1.14 ×↓
+
+NS-materials 0.165 0.425 2.58 ×↑ 0.219 1.94 ×↓ 2214 3544 1.60 ×↑ 2798 1.27 ×↓ 5.93 7.99 1.35 ×↑ 6.82 1.17 ×↓
+
+NS-mic 0.207 0.366 1.77 ×↑ 0.299 1.22 ×↓ 2361 4826 2.04 ×↑ 2958 1.63 ×↓ 5.65 8.12 1.44 ×↑ 6.90 1.18 ×↓
+
+NS-ship 0.273 1.063 3.89 ×↑ 0.380 2.80 ×↓ 2892 15589 5.39 ×↑ 5167 3.02 ×↓ 6.68 12.57 1.88 ×↑ 10.87 1.16 ×↓
+
+Average 0.291 0.720 2.47 ×↑ 0.273 2.64 ×↓ 2513 9833 3.91 ×↑ 4217 2.33 ×↓ 6.30 9.96 1.58 ×↑ 8.48 1.17 ×↓
+
+MIP-bicycle 5.782 10.068 1.74 ×↑ 1.874 5.37 ×↓ 17533 25865 1.48 ×↑ 11201 2.31 ×↓ 33.79 50.76 1.50 ×↑ 33.18 1.53 ×↓
+
+MIP-bonsai 1.273 6.139 4.82 ×↑ 1.037 5.92 ×↓ 10067 19080 1.90 ×↑ 12182 1.57 ×↓ 17.02 33.72 1.98 ×↑ 27.85 1.21 ×↓
+
+MIP-counter 1.199 4.599 3.84 ×↑ 0.875 5.26 ×↓ 10272 30332 2.95 ×↑ 11873 2.55 ×↓ 19.99 34.22 1.71 ×↑ 30.54 1.12 ×↓
+
+MIP-flowers 3.489 5.098 1.46 ×↑ 1.335 3.82 ×↓ 11356 15073 1.33 ×↑ 8150 1.85 ×↓ 24.07 30.54 1.27 ×↑ 28.46 1.07 ×↓
+
+MIP-garden 5.698 7.724 1.36 ×↑ 1.691 4.57 ×↓ 16896 22238 1.32 ×↑ 9668 2.30 ×↓ 34.13 45.49 1.33 ×↑ 28.54 1.59 ×↓
+
+MIP-kitchen 1.755 6.442 3.67 ×↑ 1.714 3.76 ×↓ 11088 20864 1.88 ×↑ 11840 1.76 ×↓ 22.07 42.51 1.93 ×↑ 31.78 1.34 ×↓
+
+MIP-room 1.536 7.269 4.73 ×↑ 1.966 3.70 ×↓ 11502 45749 3.98 ×↑ 14626 3.13 ×↓ 20.43 48.01 2.35 ×↑ 35.77 1.34 ×↓
+
+MIP-stump 4.491 10.232 2.28 ×↑ 3.503 2.92 ×↓ 12937 24784 1.92 ×↑ 12367 2.00 ×↓ 26.90 46.36 1.72 ×↑ 37.34 1.24 ×↓
+
+MIP-treehill 3.495 5.838 1.67 ×↑ 2.889 2.02 ×↓ 10943 16022 1.46 ×↑ 11514 1.39 ×↓ 23.71 33.47 1.41 ×↑ 28.73 1.16 ×↓
+
+Average 3.191 7.045 2.21 ×↑ 1.876 3.76 ×↓ 12510 24445 1.95 ×↑ 11491 2.13 ×↓ 24.68 40.56 1.64 ×↑ 31.35 1.29 ×↓
+
+5 Experiments 
+
+Datasets and Evaluation Metrics. We conduct experiments on three 3D datasets: Tanks and Temples [17], NeRF-Synthetic [28], and Mip-NeRF360 [2]. Tanks and Temples (TT) dataset has 21 realistic 3D captures of both indoor and outdoor environments. NeRF-Synthetic (NS) consists of 8 synthetic objects ren-dered from multiple viewpoints for synthetic 3D reconstruction. Mip-NeRF360 (MIP) includes 9 real-world scenes with complex central regions and detailed surrounding backgrounds, providing a more challenging setup for large-scale re-construction. All datasets are sampled with seven evenly distributed views for training and others for testing from every eight-view clip. We report computa-tion efficiency and reconstruction accuracy. Compared with clean data training, the poisoned data training has larger increases in the number of Gaussians, higher GPU memory consumption, and extended training time. Thus, our de-fense approach primarily reduces the computational cost of 3DGS in the context of computation cost attacks. We report the rendering speed by Frames Per Sec-Spectral Defense 11 poison UT ∇ LG ∇ PUP ∇ defense (ours) GT 
+
+> counter  bonsai  playground  barn
+
+Fig. 3: Qualitative comparison under the poison setting across representative scenes. 
+
+Table 2: Rendering performance on partial scenes from the TT, NS, and MIP datasets, where the results of all scenes are provided in the supplementary materials. We use SSIM and PSNR to measure the visual fidelity of reconstruction compared with various pruning methods, which are retrained based on poisoned images and evaluated on clean images, including UT ▽, LG ▽, PUP ▽, and defense (ours).                                                                                                      
+
+> Metric SSIM ↑PSNR ↑
+> Setting poison UT ▽[25] LG ▽[7] PUP ▽[9] defense poison UT ▽[25] LG ▽[7] PUP ▽[9] defense TT-Barn 0.64 0.68 0.65 0.64 0.71 25.29 24.08 25.03 25.14 25.90
+> TT-Church 0.65 0.64 0.68 0.64 0.70 22.52 18.77 22.45 21.56 22.82
+> TT-Panther 0.60 0.60 0.61 0.61 0.69 25.25 17.02 25.09 24.57 25.79
+> NS-chair 0.22 0.22 0.22 0.23 0.23 24.60 24.57 24.93 24.82 25.00
+> NS-hotdog 0.26 0.26 0.27 0.26 0.28 27.00 27.08 27.02 26.82 27.66
+> NS-materials 0.22 0.21 0.22 0.22 0.23 25.93 25.86 25.92 25.91 26.02
+> MIP-bonsai 0.64 0.75 0.67 0.69 0.84 27.14 22.68 27.05 26.81 29.07
+> MIP-garden 0.65 0.47 0.64 0.64 0.73 24.63 18.99 24.05 23.77 25.13
+> MIP-treehill 0.54 0.44 0.54 0.54 0.57 22.32 18.26 22.34 22.15 22.65
+
+ond (FPS), Peak Signal-to-Noise Ratio (PSNR), and Structural Similarity Index Measure (SSIM) for rendering quality. 
+
+Implementation Details. Our defense experiments are conducted based on the official implementation of Poison-splat [25], which simulates victim behavior from 3D Gaussian Splatting [16] with designed attacks. We compare a straight-forward defense method of imposing universal Gaussian thresholds [25], and conduct 3DGS pruning methods [7, 9] on the poisoned data training. We adopt the default hyper-parameters provided in the original implementation, as they are demonstrated to be effective across diverse datasets and scenes. The attack strength ϵ is constrained to 16 /255 by default. We set t as 8 and α as 2. We set the view sampling number K∗ as 48 and with bin number B as 36 for 2D frequency regularization. The frequency thresholds are ˙γmin as 0.3 and ˙γmax as 
+
+0.9. In addition, small scenes from the NS dataset benefit from a mild pruning ratio of ρ as 3.0% and loss weight λ as 4. Large scenes from TT dataset has ρ
+
+as 4.5% with λ as 4, and complex scenes from MIP dataset has ρ as 5.0% with 
+
+λ as 5. All experiments are conducted on a single NVIDIA RTX A6000 GPU. 12 Y. Chen, Y. Yu et al. 
+
+Table 3: Rendering speed of baselines and our defense method under poison setting.                                             
+
+> Metric FPS ↑
+> Setting poison LG ▽[7] PUP ▽[9] defense TT-Barn 120 199 1.66 ×↑184 1.53 ×↑236 1.97 ×↑
+> TT-Church 94 138 1.47 ×↑144 1.53 ×↑220 2.36 ×↑
+> TT-Panther 88 178 2.03 ×↑157 1.80 ×↑194 2.22 ×↑
+> NS-chair 124 416 3.36 ×↑400 3.23 ×↑455 3.67 ×↑
+> NS-hotdog 91 196 2.16 ×↑235 2.59 ×↑252 2.77 ×↑
+> NS-materials 132 341 2.59 ×↑275 2.09 ×↑357 2.71 ×↑
+> MIP-bicycle 38 88 2.34 ×↑104 2.74 ×↑107 2.84 ×↑
+> MIP-garden 48 178 3.73 ×↑187 3.91 ×↑208 4.34 ×↑
+> MIP-treehill 58 158 2.75 ×↑168 2.91 ×↑206 3.58 ×↑
+
+Table 4: The effects on clean inputs. We use clean (def.) as clean with defense.                                             
+
+> Metric NUM (M) ↓GPU (MB) ↓
+> Setting clean clean (def.) clean clean (def.) MIP-bicycle 5.782 1.339 4.32 ×↓17533 9583 1.83 ×↓
+> MIP-bonsai 1.273 0.594 2.14 ×↓10067 9594 1.05 ×↓
+> MIP-counter 1.199 0.552 2.17 ×↓10272 8534 1.20 ×↓
+> MIP-flowers 3.489 1.086 3.21 ×↓11356 7543 1.51 ×↓
+> MIP-garden 5.698 1.386 4.11 ×↓16896 8478 1.99 ×↓
+> MIP-kitchen 1.755 0.613 2.86 ×↓11088 10083 1.10 ×↓
+> MIP-room 1.536 0.840 1.83 ×↓11502 10829 1.06 ×↓
+> MIP-stump 4.491 1.126 3.99 ×↓12937 6733 1.92 ×↓
+> MIP-treehill 3.495 1.018 3.43 ×↓10943 6754 1.62 ×↓
+
+Table 5: Black-box attack results on Scaffold-GS [26] as the victim system to demon-strate our defense generalization ability against unknown black-box victim systems.                                                                                                 
+
+> Metric Max Gaussian Number (M) ↓Peak GPU Memory (MB) ↓Training Time (min) ↓
+> Setting clean poison defense clean poison defense clean poison defense MIP-bicycle 9.205 17.401 1.89 ×↑4.223 4.12 ×↓15058 18261 1.21 ×↑12101 1.51 ×↓35.02 40.05 1.14 ×↑34.42 1.16 ×↓
+> MIP-bonsai 4.231 11.108 2.63 ×↑2.011 5.52 ×↓9979 13959 1.40 ×↑8294 1.68 ×↓29.65 34.60 1.17 ×↑29.41 1.18 ×↓
+> MIP-counter 2.855 6.506 2.28 ×↑1.738 3.74 ×↓11549 20755 1.80 ×↑9575 2.17 ×↓34.56 38.63 1.12 ×↑32.76 1.18 ×↓
+> MIP-flowers 7.075 11.361 1.61 ×↑5.197 2.19 ×↓9611 12603 1.31 ×↑6230 2.02 ×↓31.96 34.66 1.08 ×↑32.03 1.08 ×↓
+> MIP-garden 7.587 11.795 1.55 ×↑4.201 2.81 ×↓10449 15775 1.51 ×↑8437 1.87 ×↓33.46 40.15 1.20 ×↑33.89 1.18 ×↓
+> MIP-kitchen 3.303 6.632 2.01 ×↑2.218 2.99 ×↓12588 16900 1.34 ×↑11784 1.43 ×↓35.70 40.88 1.15 ×↑33.56 1.22 ×↓
+> MIP-room 2.747 10.247 3.73 ×↑3.332 3.08 ×↓13043 14612 1.12 ×↑13162 1.11 ×↓30.97 40.42 1.31 ×↑33.21 1.22 ×↓
+> MIP-stump 7.013 15.681 2.24 ×↑5.400 2.90 ×↓9047 15539 1.72 ×↑7838 1.98 ×↓29.71 34.86 1.17 ×↑32.85 1.06 ×↓
+> MIP-treehill 7.821 12.260 1.57 ×↑6.142 2.00 ×↓9639 12809 1.33 ×↑7886 1.62 ×↓31.08 36.53 1.18 ×↑31.93 1.14 ×↓
+
+5.1 Main Results 
+
+We evaluate the training cost, accuracy, and rendering efficiency for novel view synthesis against the attack. Experiments are based on clean, poison, and defense settings across indoor and outdoor scenes on three datasets, including Tanks and Temples (TT), NeRF-Synthetic (NS), and Mip-NeRF360 (MIP). We compare our defense with other efficiency-oriented baselines, including universal threshold to control Gaussian number [25] as UT ▽, LightGaussian [7] as LG ▽, and PUP 3D-GS [9] as PUP ▽, where ▽ denotes that we implement these methods under the poison setting. All results are conducted by averaging three individual runs. 
+
+Quantitative Evaluation. The quantitative results on the indoor and out-door scenes are summarized in Table 1, Table 2, and Table 3. By evaluating training statistics, the main performance is assessed on the computation cost in Table 1, reporting Gaussian number, GPU memory usage, and training time. Across all datasets, the poison setting exhibits a substantial increase in the Gaussian number and GPU memory, leading to unstable convergence and over-reconstructed densification in 3DGS. Our method effectively suppresses this re-dundancy, achieving obvious reductions to nearly restore the clean setting to indicate our defense efficiency. In addition, the Table 2 further details the accu-racy under different approaches, where we evaluate the rendering performance in terms of SSIM and PSNR during the test. Specifically, the naive Gaussian number defense UT ▽ has a universal threshold of 0.8M by default. We also im-plement other pruning baselines containing LG ▽ and PUP ▽ by following their default settings. Because the victim model is trained on the poison setting and has no access to clean inputs, our defense method aims to keep crucial Gaussian contents through the 3D frequency filter. Our approach effectively suppresses the noise textures introduced during poisoning, enabling the model to reconstruct Spectral Defense 13 
+
+Table 6: Ablation on the reference frequency t with the exponent α.                             
+
+> NS-chair NUM GPU FPS SSIM PSNR
+> t= 4 α= 4 0.295 3985 460 0.21 24.85
+> t= 6 α= 3 0.306 4015 434 0.21 24.92
+> t= 8 α= 2 0.281 3963 455 0.23 25.00
+> t= 10 α= 1 0.272 3882 449 0.22 24.43
+
+Table 7: Ablation on the prune ratio ρ with the view sampling number K∗.                 
+
+> NS-chair NUM GPU FPS SSIM PSNR Pruning 2.0 %with 32 0.339 4298 423 0.23 24.87 Pruning 3.0 %with 48 0.281 3963 455 0.23 25.00 Pruning 4.0 %with 56 0.209 3721 450 0.22 24.91 Pruning 5.0 %with 72 0.155 3698 467 0.21 24.54
+
+Table 8: Ablation on the thresholds through lower bound ˙γmin and upper bound ˙γmax .                 
+
+> TT-Barn [0 .28 ,0.92] [0 .30 ,0.90] [0 .35 ,0.85] [0 .40 ,0.85]
+> NUM 0.922 0.903 0.908 0.953 GPU 6834 6569 6613 7002 PSNR 25.75 25.90 25.73 25.88
+
+Table 9: Ablation on the number of bins B in the angular distribution.                     
+
+> TT-Barn 12 24 36 48 72
+> NUM 0.903 0.911 0.903 0.938 0.962 GPU 6571 6827 6569 6901 7123 PSNR 25.63 25.71 25.90 25.81 25.88
+
+clean details even without clean supervision. This is reflected by consistently higher PSNR, such as 25 .00 on NS-chair and 29 .07 on MIP-bonsai. Meanwhile, the restored Gaussian sparsity also enhances rendering speed, and we report cor-responding FPS in Table 3. Our method consistently increases rendering speed over the poisoned setting, achieving FPS improvements ranging from moder-ate gains to substantial boosts, such as TT-Barn from 120 to 236 . We achieve higher improvements compared with two pruning baselines, which also partially recover the rendering performance. In addition, we evaluate our defense effects under clean inputs and black-box attacks in Table 4 and Table 5, respectively. Table 4 reports defense effects under clean inputs to demonstrate our competitive rendering quality. Table 5 reports black-box attack results on Scaffold-GS [26] as the victim system, which can further demonstrate the robust generalization ability of our defense method under poison setting against unknown black-box victim systems. Overall, our method filters adversarially redundant Gaussians, confirming its effectiveness in reducing redundant Gaussians and restoring effi-cient rendering. The complete results revolving SSIM, PSNR, and FPS across all scenes on poison inputs, and the defense effects under clean inputs and black-box attacks are provided in our supplementary materials. 
+
+Qualitative Visualization. In Fig. 3, we observe that existing pruning ap-proaches retain strong high-frequency noise to lose fine details based on TT-Barn, TT-Playground, MIP-bonsai, and MIP-counter datasets. In contrast, our spectral defense effectively removes poisoned patterns and restores natural edges, yielding reconstructions visually closer to the ground truth (GT) across scenes. 
+
+5.2 Ablations 
+
+We conduct ablations to investigate the effects of design choices based on NS-chair, TT-Barn, and MIP-bonsai datasets. We analyze the evaluation metrics, including NUM as the Gaussian number, GPU as the peak computational mem-ory, FPS as rendering speed, and SSIM and PSNR as visual quality. 
+
+Effect of 3D Frequency Filter. We analyze 3D frequency filter by varying the reference frequency t and exponent α based on NS-chair. As summarized in Table 6, we investigate the reference frequency from 4 to 10 with the exponent 14 Y. Chen, Y. Yu et al. 
+
+Table 10: Ablation under different attack strengths. We report poison/defense results.                       
+
+> Attack ϵMetric NUM GPU Strength:
+> 8/255
+> NS-chair 0.672/0.284 5094/3021 NS-drums 0.495/0.210 4739/3006 NS-lego 0.485/0.271 4664/3108 Strength:
+> 24 /255
+> NS-chair 1.158/0.665 14223/6340 NS-drums 0.839/0.367 12658/5907 NS-lego 1.107/0.496 16296/7525 Strength:
+> ∞
+> NS-chair 4.223/1.855 47425/28518 NS-drums 3.998/1.936 47386/30723 NS-lego 4.100/1.921 47811/32090
+
+Table 11: Ablation on loss weight to balance the overall training loss.                                        
+
+> λTT-Barn NS-chair MIP-bonsai NUM PSNR NUM PSNR NUM PSNR 01.553 25.17 0.477 24.73 1.712 27.59 11.416 25.12 0.421 24.86 1.454 28.01 21.349 25.03 0.395 24.52 1.390 29.02 31.121 25.62 0.329 24.91 1.228 28.65 40.903 25.90 0.281 25.00 1.106 28.52 50.877 25.54 0.236 24.31 1.037 29.07
+
+within 1, 2, 3, and 4. The results remain stable across a range of settings, and the best result is achieved at t as 8 and α as 2. We also examine the pruning ratio 
+
+ρ and view sampling number K∗ in Table 7. The results reveal that a higher 
+
+ρ aggressively suppresses Gaussian growth, and the best trade-off is achieved at ρ as 3% with K∗ as 48 , which consistently delivers strong SSIM and PSNR while comparatively keeping reasonable Gaussian number and memory cost. This confirms that moderate frequency filtering effectively removes redundant high-frequency Gaussians to preserve reconstruction accuracy. 
+
+Effect of 2D Spectral Regularization. We ablate 2D spectral regulariza-tion by evaluating frequency thresholds ˙γmin and ˙γmax and the number of an-gular bins B using the scene from TT-Barn. As shown in Table 8 and Table 9 across all settings, the differences in Gaussian number, GPU memory, and PSNR remain small, indicating that the method is largely insensitive to its hyper-parameter settings. For the frequency thresholds, values between 0.3 and 0.9
+
+consistently yield slightly better fidelity while keeping a compact model size. For the anisotropy control, we constrain directional high-frequency structures by using the number of angular bins B as 36 , where a larger ˙γmax includes more high-frequency energy, and a larger B sharpens the angular histogram. Overall, these results confirm that the 2D spectral regularization is stable and robust, with weak dependency on the specific hyper-parameter choices. 
+
+Effect of Various Attack Strengths. In addition to default attack strength with ϵ as 16 /255 , we report poison/defense results on constrained attack 8/255 
+
+and 24 /255 , and unconstrained attack ∞. Table 10 provides various perturba-tions under different attack strengths, demonstrating our defense effects. 
+
+Effect of Loss Weight. Table 11 analyzes the influence of loss weight λ on three representative scenes from TT-Barn, NS-chair, and MIP-bonsai. Increas-ing λ consistently reduces the number of Gaussians by suppressing poisoned overgrowth, while slightly improving PSNR. For the MIP-bonsai, a large loss weight continues to prune Gaussians effectively, and λ as 5 provides a strong suppression without sacrificing fidelity. However, a large λ over-suppresses nat-ural patterns on small scene details, causing a slight PSNR drop, particularly on the NS-chair. The intermediate setting for NS-chair is λ as 4, providing the most balanced performance. Spectral Defense 15 
+
+6 Conclusion 
+
+We address the defense approach to the resource-targeting attack that triggers poisoned Gaussian overgrowth in 3DGS. By proposing a spectral defense, our 3D frequency filter and 2D spectral regularization realize selective pruning and anisotropic suppression, establishing the first robust defense framework for secure and efficient 3DGS. 16 Y. Chen, Y. Yu et al. 
+
+References 
+
+1. Bao, Y., Ding, T., Huo, J., Liu, Y., Li, Y., Li, W., Gao, Y., Luo, J.: 3d gaussian splatting: Survey, technologies, challenges, and opportunities. IEEE Trans. Circuit Syst. Video Technol. (2025) 2. Barron, J.T., Mildenhall, B., Verbin, D., Srinivasan, P.P., Hedman, P.: Mip-nerf 360: Unbounded anti-aliased neural radiance fields. In: IEEE Conf. Comput. Vis. Pattern Recog. pp. 5470–5479 (2022) 3. Chen, S., Chen, H., Haque, M., Liu, C., Yang, W.: The dark side of dynamic routing neural networks: Towards efficiency backdoor injection. In: IEEE Conf. Comput. Vis. Pattern Recog. pp. 24585–24594 (2023) 4. Chen, Y., Wu, Q., Lin, W., Harandi, M., Cai, J.: Hac: Hash-grid assisted context for 3d gaussian splatting compression. In: European Conference on Computer Vision. pp. 422–438. Springer (2024) 5. Chen, Z., Wang, F., Wang, Y., Liu, H.: Text-to-3d using gaussian splatting. In: IEEE Conf. Comput. Vis. Pattern Recog. pp. 21401–21412 (2024) 6. Cinà, A.E., Demontis, A., Biggio, B., Roli, F., Pelillo, M.: Energy-latency attacks via sponge poisoning. Information Sciences 702 , 121905 (2025) 7. Fan, Z., Wang, K., Wen, K., Zhu, Z., Xu, D., Wang, Z., et al.: Lightgaussian: Unbounded 3d gaussian compression with 15x reduction and 200+ fps. In: Adv. Neural Inform. Process. Syst. vol. 37, pp. 140138–140158 (2024) 8. Fang, G., Wang, B.: Mini-splatting: Representing scenes with a constrained number of gaussians. In: Eur. Conf. Comput. Vis. pp. 165–181 (2024) 9. Hanson, A., Tu, A., Singla, V., Jayawardhana, M., Zwicker, M., Goldstein, T.: Pup 3d-gs: Principled uncertainty pruning for 3d gaussian splatting. In: IEEE Conf. Comput. Vis. Pattern Recog. pp. 5949–5958 (2025) 10. Homeyer, C., Begiristain, L., Schnörr, C.: Droid-splat combining end-to-end slam with 3d gaussian splatting. In: Int. Conf. Comput. Vis. pp. 2767–2777 (2025) 11. Horváth, A., Józsa, C.M.: Targeted adversarial attacks on generalizable neural radiance fields. In: Int. Conf. Comput. Vis. pp. 3718–3727 (2023) 12. Huang, Y., Dong, Y., Ruan, S., Yang, X., Su, H., Wei, X.: Towards transferable targeted 3d adversarial attack in the physical world. In: IEEE Conf. Comput. Vis. Pattern Recog. pp. 24512–24522 (2024) 13. Jiang, W., Zhang, H., Wang, X., Guo, Z., Wang, H.: Nerfail: Neural radiance fields-based multiview adversarial attack. In: AAAI Conf. on Artificial Intelligence. pp. 21197–21205 (2024) 14. Jiang, W., Zhang, H., Zhao, S., Guo, Z., Wang, H.: Ipa-nerf: Illusory poisoning attack against neural radiance fields. arXiv preprint arXiv:2407.11921 (2024) 15. Ke, B.H., Xie, Y.Z., Liu, Y.L., Chiu, W.C.: Stealthattack: Robust 3d gaussian splatting poisoning via density-guided illusions. In: Int. Conf. Comput. Vis. pp. 27400–27411 (2025) 16. Kerbl, B., Kopanas, G., Leimkühler, T., Drettakis, G.: 3d gaussian splatting for real-time radiance field rendering. ACM Trans. Graph. 42 (4), 139–1 (2023) 17. Knapitsch, A., Park, J., Zhou, Q.Y., Koltun, V.: Tanks and temples: Benchmarking large-scale scene reconstruction. ACM Trans. Graph. 36 (4), 1–13 (2017) 18. Kong, H., Yang, X., Wang, X.: Rogsplat: Robust gaussian splatting via generative priors. In: Int. Conf. Comput. Vis. pp. 25735–25745 (2025) 19. Kuang, H., Liu, H., Lin, X., Ji, R.: Defense against adversarial attacks using topol-ogy aligning adversarial training. IEEE Trans. on Information Forensics and Secu-rity 19 , 3659–3673 (2024) Spectral Defense 17 20. Lee, J.C., Rho, D., Sun, X., Ko, J.H., Park, E.: Compact 3d gaussian representation for radiance field. In: IEEE Conf. Comput. Vis. Pattern Recog. pp. 21719–21728 (2024) 21. Lei, X., Wang, M., Zhou, W., Li, H.: Gaussnav: Gaussian splatting for visual navigation. IEEE Trans. Pattern Anal. Mach. Intell. (2025) 22. Li, X., Petersson, L., Rolland, V.: 3d gaussian representations with motion trajec-tory field for monocular dynamic scene reconstruction. In: Int. Conf. Comput. Vis. pp. 6430–6439 (2025) 23. Liu, X., Wu, X., Zhang, P., Wang, S., Li, Z., Kwong, S.: Compgs: Efficient 3d scene representation via compressed gaussian splatting. In: ACM Int. Conf. Multimedia. pp. 2936–2944 (2024) 24. Liu, Y., Zhong, Z., Zhan, Y., Xu, S., Sun, X.: Maskgaussian: Adaptive 3d gaussian representation from probabilistic masks. In: IEEE Conf. Comput. Vis. Pattern Recog. pp. 681–690 (2025) 25. Lu, J., Zhang, Y., Shen, Q., Wang, X., Yan, S.: Poison-splat: Computation cost attack on 3d gaussian splatting. In: Int. Conf. Learn. Represent. (2025) 26. Lu, T., Yu, M., Xu, L., Xiangli, Y., Wang, L., Lin, D., Dai, B.: Scaffold-gs: Struc-tured 3d gaussians for view-adaptive rendering. In: IEEE Conf. Comput. Vis. Pat-tern Recog. pp. 20654–20664 (2024) 27. Madry, A., Makelov, A., Schmidt, L., Tsipras, D., Vladu, A.: Towards deep learning models resistant to adversarial attacks. In: Int. Conf. Learn. Represent. (2018) 28. Mildenhall, B., Srinivasan, P.P., Tancik, M., Barron, J.T., Ramamoorthi, R., Ng, R.: Nerf: Representing scenes as neural radiance fields for view synthesis. Commun. ACM 65 (1), 99–106 (2021) 29. Niedermayr, S., Stumpfegger, J., Westermann, R.: Compressed 3d gaussian splat-ting for accelerated novel view synthesis. In: IEEE Conf. Comput. Vis. Pattern Recog. pp. 10349–10358 (2024) 30. Ruan, S., Dong, Y., Su, H., Peng, J., Chen, N., Wei, X.: Towards viewpoint-invariant visual recognition via adversarial training. In: Int. Conf. Comput. Vis. pp. 4709–4719 (2023) 31. Schonberger, J.L., Frahm, J.M.: Structure-from-motion revisited. In: IEEE Conf. Comput. Vis. Pattern Recog. pp. 4104–4113 (2016) 32. Shumailov, I., Zhao, Y., Bates, D., Papernot, N., Mullins, R., Anderson, R.: Sponge examples: Energy-latency attacks on neural networks. In: IEEE EuroS&P. pp. 212– 231 (2021) 33. Tang, J., Chen, Z., Chen, X., Wang, T., Zeng, G., Liu, Z.: Lgm: Large multi-view gaussian model for high-resolution 3d content creation. In: Eur. Conf. Comput. Vis. pp. 1–18 (2024) 34. Wen, T., Liu, Z., Fang, Y.: Segs-slam: Structure-enhanced 3d gaussian splatting slam with appearance embedding. In: Int. Conf. Comput. Vis. pp. 28103–28113 (2025) 35. Xu, H., Peng, S., Wang, F., Blum, H., Barath, D., Geiger, A., Pollefeys, M.: Depth-splat: Connecting gaussian splatting and depth. In: IEEE Conf. Comput. Vis. Pat-tern Recog. pp. 16453–16463 (2025) 36. Xu, W., Zhan, Y., Zhong, Z., Sun, X.: Sequential gaussian avatars with hierarchical motion context. In: Int. Conf. Comput. Vis. pp. 13592–13603 (2025) 37. Zeybey, A., Ergezer, M., Nguyen, T.: Gaussian splatting under attack: Investigating adversarial noise in 3d objects. arXiv preprint arXiv:2412.02803 (2024) 38. Zhang, Z., Song, T., Lee, Y., Yang, L., Peng, C., Chellappa, R., Fan, D.: Lp-3dgs: Learning to prune 3d gaussian splatting. In: Adv. Neural Inform. Process. Syst. pp. 122434–122457 (2024) 18 Y. Chen, Y. Yu et al. 39. Zhang, Z., Huang, B., Jiang, H., Zhou, L., Xiang, X., Shen, S.: Quadratic gaussian splatting: High quality surface reconstruction with second-order geometric primi-tives. In: Int. Conf. Comput. Vis. pp. 28260–28270 (2025)
