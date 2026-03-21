@@ -1,0 +1,412 @@
+Title: Learning Latent Proxies for Controllable Single-Image Relighting
+
+URL Source: https://arxiv.org/pdf/2603.15555v1
+
+Published Time: Tue, 17 Mar 2026 05:27:30 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# Learning Latent Proxies for Controllable Single-Image Relighting 
+
+# Haoze Zheng 1∗, Zihao Wang 1∗, Xianfeng Wu 1∗, Yajing Bai 1, Yexin Liu 1,Yun Li 2, Xiaogang Xu 3†, Harry Yang 1†
+
+> 1
+
+# HKUST 2HKPolyU 3CUHK 
+
+> ∗
+
+Equal contribution †Corresponding authors 
+
+{hzhengay, yangharry }@connect.ust.hk, xiaogangxu00@gmail.com 
+
+Figure 1. Our method enables precise and continuous control over illumination, including light direction (e.g., 60 ◦ down or right), 
+
+intensity (e.g., dimmed by 200 lux or brightened by 50 lux), and color temperature (e.g., shifted to 1800K or +2000K). Given only a single source image, the model produces physically consistent relighting while preserving fine textures, specular highlights, and material appearance. The examples illustrate how directional, photometric, and chromatic adjustments are faithfully reflected in the output. (Note: The bottom-left image was captured with a mobile phone and cropped before processing.) 
+
+# Abstract 
+
+Single-image relighting is highly under-constrained: small illumination changes can produce large, nonlinear varia-tions in shading, shadows, and specularities, while geome-try and materials remain unobserved. Existing diffusion-based approaches either rely on intrinsic or G-buffer pipelines that require dense and fragile supervision, or operate purely in latent space without physical ground-ing, making fine-grained control of direction, intensity, and color unreliable. We observe that a full intrinsic decom-position is unnecessary and redundant for accurate relight-ing. Instead, sparse but physically meaningful cues, indi-cating where illumination should change and how materi-als should respond, are sufficient to guide a diffusion model. Based on this insight, we introduce LightCtrl that integrates physical priors at two levels: a few-shot latent proxy en-coder that extracts compact material-geometry cues from limited PBR supervision, and a lighting-aware mask that identifies sensitive illumination regions and steers the de-noiser toward shading relevant pixels. To compensate for scarce PBR data, we refine the proxy branch using a DPO-based objective that enforces physical consistency in the predicted cues. We also present ScaLight , a large scale object-level dataset with systematically varied illumination and complete cameralight metadata, enabling physically consistent and controllable training. Across object and scene level benchmarks, our method achieves photometri-cally faithful relighting with accurate continuous control, surpassing prior diffusion and intrinsic-based baselines, in-cluding gains of up to +2.4 dB PSNR and 35% lower RMSE under controlled lighting shifts. 
+
+# 1. Introduction 
+
+Relighting a single image under novel illumination is fun-damentally ill-posed: shadows, specularities, and diffuse shading depend on geometry and materials that are not ob-servable from a single RGB input. Small changes in light-ing direction, intensity, or color can therefore induce large, nonlinear variations in appearance, while na¨ ıve generative 
+
+> arXiv:2603.15555v1 [cs.CV] 16 Mar 2026
+
+models often hallucinate geometry or drift in surface color. These challenges make high quality relighting require not only visual plausibility, but also fine-grained controllability 
+
+and physical consistency .A number of recent works attempt to introduce control-lability into diffusion-based relighting, but each addresses only part of the problem. IC-Light [41] fine-tunes a pre-trained diffusion model for light-conditioned generation and performs well on portraits; however, its limited physical modeling limits generalization to complex scenes and di-verse materials. LBM [5] interpolates between lighting con-ditions in latent space, producing smooth transitions but of-fering little physical grounding and weak disentanglement of direction or intensity. LumiNet [35] embeds relight-ing into a latent-intrinsic representation, which improves scene level transfer but trades off interpretability and strug-gles with precise control over color and direction. Neural LightRig [11] incorporates physical priors via a multi-stage G-buffer pipeline, yet its dependence on dense PBR super-vision makes it fragile and expensive to scale. These meth-ods reveal a persistent gap: strong diffusion priors alone are insufficient for fine-grained lighting control, while physi-cally grounded pipelines require heavy supervision. These limitations motivate our approach: instead of pur-suing full intrinsic decomposition or relying solely on latent diffusion, we aim for a middle ground that retains physical meaningfulness without heavy supervision. Our key obser-vation is that precise relighting does not require complete G-buffers; rather, sparse and spatially targeted physical cues are sufficient to constrain a diffusion model. This motivates our design of a lightweight latent proxy encoder, a lighting-aware mask, and a DPO-refined proxy branch, which col-lectively provide fine-grained and physically consistent il-lumination control with markedly lower annotation cost. We present LightCtrl , a diffusion-based relighting framework that unifies scalable generative modeling with lightweight physical guidance. Our key insight is that pre-cise illumination manipulation does not require full intrinsic reconstruction nor unconstrained latent diffusion; instead, injecting a minimal set of physically meaningful cues into the generative backbone is sufficient to achieve stable and controllable relighting. To this end, we first construct a large scale object level dataset, ScaLight , using a simple yet efficient rendering pipeline that systematically varies light-ing direction, intensity, and color while maintaining con-sistent geometry and materials. We fully fine-tune a Sta-ble Diffusion-based [23] backbone on this dataset to learn generalizable light transport priors. On top of this back-bone, we introduce an implicit PBR Encoder, a lightweight few-shot module that predicts a compact latent proxy of material and geometric cues, providing just enough struc-ture to guide illumination changes without requiring dense G-buffer supervision. To further enhance spatial selectiv-ity during denoising, we incorporate a lighting-aware mask module that modulates attention on illumination-sensitive regions across timesteps. Finally, to mitigate the scarcity of PBR-supervised samples and ensure robustness under ex-treme lighting manipulations, we apply DPO-based [27] post training to the PBR Encoder, significantly improv-ing its physical consistency. By combining these modules, LightCtrl enables precise and robust illumination editing that preserves material appearance and geometry across a broad range of inputs. In summary, our main contributions are as follows: • We propose LightCtrl , a diffusion-based relighting framework that integrates minimal but physically mean-ingful priors via a few-shot latent proxy, a lighting-aware mask, and DPO refinement to achieve fine-grained and physically consistent illumination control without requir-ing dense intrinsic supervision. • We construct ScaLight , a large scale object-level dataset with systematically varied illumination and complete camera–light metadata, enabling controllable, physically consistent training and serving as a comprehensive bench-mark for future relighting research. • We demonstrate substantial improvements over intrinsic-based and diffusion baselines on both object and scene-level benchmarks, achieving state-of-the-art RMSE and PSNR as well as the highest user-study preference rate, especially under fine-grained changes in lighting direc-tion, intensity, and color temperature. 
+
+# 2. Related work 
+
+Physics and Intrinsic Guided Relighting. Early relight-ing methods relied on inverse rendering and intrinsic de-composition, explicitly estimating geometry, albedo, and il-lumination to reconstruct physically consistent lighting [1, 16]. While physically interpretable, these methods required strong supervision and often failed to generalize under com-plex, high-frequency lighting conditions. With the rise of diffusion [9, 12, 18, 20, 29, 30] and foundation models [34], recent works have shown remarkable capability in modeling illumination and appearance in a data-driven manner. Zeng et al. [40] proposed RGB ↔X, a two-stage framework that disentangles intrinsic scene representations from RGB in-puts to enable realistic and controllable relighting, while Neural Gaffer [13] further integrates explicit light trans-port modeling into a diffusion process, demonstrating the benefits of physics-guided constraints in achieving realistic and various illumination control. IllumiNeRF [42] intro-duces a 3D relighting framework that combines lighting-conditioned diffusion with NeRF [24] reconstruction, cir-cumventing explicit inverse rendering. Unlike the previ-ous methods, it leverages diffusion-generated relit views to build a lighting-aware NeRF for novel-view relighting. Careaga etc. [4] present a self-supervised relighting frame-Figure 2. Overview of LightCtrl and the object-level rendering pipeline. Our model integrates a few-shot latent proxy, a lighting-aware mask, and a DPO-refined PBR encoder to condition the UNet during denoising. The implicit PBR encoder extracts physically-based latent proxy features tphys , which are concatenated with image tokens timage and light condition tokens tlight to guide the diffusion process. A lighting mask predictor takes the lighting change ∆ℓ as input to produce a spatially-aware attention mask for the UNet. The output column shows relit results under three different lighting configurations ( ∆ℓ1, ∆ℓ2, ∆ℓ3), demonstrating the model’s ability to produce diverse and physically plausible relighting effects from a single input image. 
+
+work that enables explicit, physically-based control [21] over light sources by integrating differentiable rendering with neural networks trained on real photographs. These methods demonstrate the effectiveness of explicit modeling, yet their reliance on physical features motivates a shift to-ward implicit, end-to-end illumination learning. 
+
+Implicit and End-to-End Relighting Leveraging power-ful generative models [15, 26, 33, 34, 36] to synthesize large-scale, illumination-diverse data can significantly en-hance a model’s ability to learn light control in a self-supervised manner. Building on this idea, IC-Light [41] employs a diffusion-based framework trained on a mas-sive synthetic dataset, achieving impressive relighting qual-ity and generalization without relying on intrinsic decom-position. Similar data-driven relighting strategies in recent works [10, 22, 25, 37, 38, 43] further indicate that high-quality, illumination-diverse datasets are crucial for this task. While these data-driven diffusion methods rely on large-scale synthetic supervision, more recent works shift toward implicit modeling to learn illumination control di-rectly from image features. LumiNet [35] follows this di-rection by introducing a latent intrinsic representation that enables continuous and fine-grained relighting under indoor scenarios. Similarly, Ren etc. [28] formulates relighting as a joint optimization problem in a unified latent space. How-ever, these methods still face limitations, large-scale ap-proaches often require complex data construction pipelines, while simpler latent frameworks lack precise controllability over lighting attributes such as intensity, color, and direc-tion. Our method mitigates the redundancy of two-stage or intrinsic-based frameworks by adopting a lightweight, few-shot training paradigm. It achieves superior light control with a much simpler data construction process, surpassing state-of-the-art methods in both efficiency and precision. 
+
+# 3. Method 
+
+Given a source image x ℓs 
+
+> s
+
+and a reference image x ℓt 
+
+> r
+
+cap-tured under different illumination conditions, we compute a 
+
+relative lighting representation ∆ℓ that encodes the geomet-ric and photometric differences between the light sources (e.g., direction, intensity, temperature). Our relighting model, LightCtrl , then synthesizes the appearance of the source object under the target illumination: 
+
+ˆx ℓt 
+
+> s
+
+= fθ
+
+ x ℓs 
+
+> s
+
+, ∆ℓ. (1) This formulation explicitly conditions the model on the source appearance and the reference-derived lighting shift, enabling controllable and consistent relighting. Prior approaches often estimate full intrinsic compo-nents as diffusion conditioning, requiring dense G-buffer supervision and complex inverse-rendering optimization pipelines that frequently miss high-frequency effects. In ad-dition, these methods typically rely on curated assets with physically modeled materials, making data acquisition ex-pensive and limiting scalability. Sec. 3.1 introduces a few-shot latent proxy that provides compact material–geometry priors from sparse PBR sig-nals. Sec. 3.2 presents a lighting-aware mask that iden-tifies sensitive lighting regions and guides spatial condi-tioning during denoising. Sec. 3.3 describes a DPO-based post-training stage that refines the proxy branch for im-proved physical consistency under sparse supervision. Fi-nally, Sec. 4 details the construction of our illumination-controlled object-level dataset, which enables scalable, di-verse, and physically consistent training. 
+
+3.1. Few-shot Latent Proxy Conditioning 
+
+Single-image relighting is severely under constrained, and diffusion models often alter geometry or material appear-ance when illumination changes are large. Intrinsic-based two-stage pipelines alleviate this issue but require dense G-buffer supervision and suffer from stage misalignment, while purely latent approaches provide little physical struc-ture and thus weak controllability. We seek an alternative that retains physical cues without full intrinsic reconstruc-tion. To this end, we introduce a lightweight encoder–decoder 
+
+Eϕ that predicts a compact latent proxy ˆB = {a, n, r, m } ∈ 
+
+RH×W ×8 containing albedo, normals, roughness, and metallicity from the source image xℓs 
+
+> s
+
+. Unlike full intrinsic recovery, the proxy is learned in a few-shot manner: only a small subset of training images contains PBR supervision, and the proxy branch is updated using the loss 
+
+Lproxy = λa∥a − ˆa∥1 + λn
+
+ 1 − ⟨ n, ˆn⟩
+
++ λr ∥r − ˆr∥1 + λm BCE( m, ˆm),
+
+(2) which captures the natural smoothness of albedo/roughness, unit-normal consistency, and quasi-binary metallic behav-ior. This sparse supervision stabilizes the proxy while al-lowing the main diffusion model to train on the full unla-beled dataset. The predicted proxy maps are then spatially pooled and projected into a single conditioning token 
+
+tproxy = fproj (Eϕ(xℓs 
+
+> s
+
+)) ∈ R1×768 , (3) which is injected into the denoiser alongside appearance and lighting tokens. This latent proxy token supplies ma-terial and geometry-aware priors that constrain the denois-ing trajectory, providing the physical structure needed for precise illumination control without requiring full intrinsic decomposition. 
+
+3.2. Lighting-Aware Mask Prediction 
+
+Illumination changes typically affect only a small subset of pixels, such as shadow boundaries or specular regions, while most areas preserve the intrinsic appearance. With-out spatial guidance, a diffusion model tends to distribute edits across the entire image, potentially altering albedo-consistent regions and destabilizing geometry. To address this, we introduce a lighting-aware mask that highlights re-gions where illumination-driven changes are expected. Given a source–target pair (xℓs 
+
+> s
+
+, x ℓt 
+
+> r
+
+), we derive a soft ground-truth mask Mgt based on radiometric differences in linear luminance Ys and Yt:
+
+Mgt = N  α log Yt − log Ys + (1 − α) Drobust (Ys, Y t) ,
+
+(4) where Drobust compensates for exposure variations and 
+
+N (·) normalizes the result into a stable [0 , 1] soft mask. This yields a concise estimate of illumination-sensitive re-gions while suppressing texture-only differences. At training time, the model cannot access the target im-age, so a lightweight predictor mθ infers the mask from the source appearance and the relative lighting encoding: 
+
+Mθ = mθ (xℓs 
+
+> s
+
+, ∆ℓ). (5) The predictor is trained using a combination of binary cross-entropy and Dice loss against Mgt .To emphasize illumination-variant regions during diffu-sion, we transform the ground truth mask into a spatial weight map W , which modulates the noise reconstruction loss. This encourages the denoiser to allocate greater capac-ity to pixels influenced by lighting changes while preserving stability in illumination-invariant regions. 
+
+3.3. Post-Training for Latent Encoder 
+
+While the few-shot proxy provides essential mate-rial–geometry cues, the encoder is still trained from sparse PBR supervision and may lack the reliability required for precise illumination control. In particular, errors in albedo or normals can propagate into the conditioning pathway and lead to inconsistent relighting. To stabilize the proxy, we perform a DPO-style post-training stage that refines the PBREncoder Eϕ while freezing the main backbone. For each supervised sample, the GrounTruth PBR maps 
+
+ypos serve as the preferred target, and the current encoder output yneg = Eϕ(xℓs 
+
+> s
+
+) provides a less-preferred alternative. We compute a physics-based reward difference 
+
+∆r = r(ypos ) − r(yneg ), (6) where r(·) aggregates albedo and roughness L1, normal an-gular deviation, and metallic BCE. A frozen reference encoder Eϕref provides stable like-lihood estimates for (ypos , y neg ), and the PBREncoder is updated using a DPO objective that increases the likeli-hood of higher-reward predictions. This post-training step Table 1. Comparison with other object-level datasets. ScaLight                            
+
+> features large-scale scalability, detailed camera and light meta-data (recording exact camera and illumination parameters), and fully controllable lighting setups (supporting diverse and flexible lighting effects). Symbols: ✓full; ∼limited; ×none.
+> Dataset #Objects Lighting Control Pose / Light
+> OpenIllumi [17] 64 ∼×
+> OWL [32] 8∼∼
+> Rene [31] 20 ∼×
+> LightProp [11] 80K+ ✓×
+> ScaLight (Ours) 300K+ ✓✓
+
+strengthens the physical consistency of the latent proxy un-der sparse supervision, improving the stability and control-lability of downstream relighting without modifying the dif-fusion model itself. Given the noisy latent zt at timestep t, the denoiser is conditioned on the source appearance token timg , the relative-lighting token tlight , and the few-shot proxy token 
+
+tphys , which respectively encode appearance, target illumi-nation, and lightweight material–geometry cues. Our final diffusion objective is 
+
+Ldiff = W ⊙  ϵ − ϵθ (zt, t | timg , t light , t phys ) 22, (7) where ϵ is the ground truth noise and W is the lighting-aware spatial weight map that emphasizes illumination-sensitive regions predicted by our mask module. 
+
+# 4. Dataset 
+
+To enable controllable relighting and physically grounded appearance learning, we introduce ScaLight , a large-scale synthetic dataset of objects rendered under systematically varied illumination. Unlike existing scene-level datasets with fixed or weakly controlled lighting, ScaLight focuses on per-object rendering with consistent geometry and ma-terial across lighting changes, providing clean supervision for learning reflectance–shading behavior. Objects are pro-cedurally sampled from diverse 3D asset repositories [6– 8, 14] and rendered using a physically based pipeline with configurable directional, point, and environment lights. This fully automated setup scales easily and enables effi-cient generation of high-quality relighting pairs with mini-mal human intervention. We randomly sample multiple camera viewpoints on a hemisphere around each object and render every view un-der a variety of lighting configurations by perturbing the position, orientation, energy, temperature, and color of light sources. Each rendered frame is accompanied by com-plete metadata, including camera pose and all illumina-tion parameters, which supports both relighting tasks and    
+
+> Table 2. Scene-level relighting comparison on the MIIW testset.
+> Bold indicates the best performance.
+
+Method RMSE ↓ SSIM ↑ PSNR ↑
+
+RGB ↔X [40] 0.389 0.425 8.25 IC-Light [41] 0.413 0.337 7.94 LumiNet [35] 0.139 0.904 17.20 
+
+Ours 0.167 0.655 18.30 
+
+explicit illumination disentanglement. Figure 2 provides an overview of this rendering process, where controlled camera–light sampling yields consistent, multi-view, multi-illumination observations. Formally, each rendered sample in ScaLight can be represented as 
+
+D = {(xℓj 
+
+> i
+
+, π i, ℓ j ) | i = 1 . . .N o, j = 1 . . .N ℓ}, (8) where xℓj 
+
+> i
+
+denotes the rendering of object i under illu-mination ℓj , and πi and ℓj represent the associated camera pose and light configuration. A small subset of objects ad-ditionally includes material annotations (ai, n i, r i, m i) for weak supervision, enabling few-shot learning of intrinsic cues in our proxy encoder. This formulation naturally sup-ports sampling of relighting pairs (xℓs 
+
+> i
+
+, x ℓt 
+
+> i
+
+) with a known illumination difference ∆ℓ = ℓt − ℓs, which we use for both supervised and self-supervised objectives. ScaLight contains over 300K controllable 3D objects and more than 1M rendered images (details in the ap-pendix), covering a wide range of lighting variations. For each object, we sample multiple viewpoints and render it under diverse combinations of directional, point, and area lights [3], varying light position, orientation, inten-sity, color, and temperature. This systematic parameteri-zation provides dense illumination sampling while preserv-ing fixed geometry and materials, making ScaLight a scal-able and physically consistent benchmark for relighting. Table 1 further compares ScaLight with existing object-level datasets, highlighting its substantially larger scale and richer illumination diversity. To evaluate generalization be-yond controlled synthetic settings, we additionally incorpo-rate the MIIW scene-level relighting dataset [25]. Together, ScaLight and MIIW allow LightCtrl to be trained and eval-uated under both controlled multi-illumination supervision and realistic real-world conditions. 
+
+# 5. Experiment 
+
+We evaluate LightCtrl on both synthetic and real-world datasets to assess its performance in controllable relighting and illumination transfer. In Sec. 5.1 , we report standard quantitative metrics (RMSE, SSIM, PSNR) under diverse lighting changes to measure photometric accuracy. Sec. 5.2 
+
+presents qualitative comparisons on synthetic and in-the-wild images, highlighting visual fidelity and fine-grained il-Table 3. Quantitative comparison on relit color output under three lighting variations. All metrics are computed on the normalized RGB range [−1, 1] . Temperature : correlated color temperature (CCT) shift; Position : light direction/placement change (yaw/pitch); 
+
+Energy : light intensity scaling. 
+
+Method Label Temperature (CCT shift) Position (yaw/pitch) Energy (intensity) 
+
+RMSE ↓ SSIM ↑ PSNR ↑ RMSE ↓ SSIM ↑ PSNR ↑ RMSE ↓ SSIM ↑ PSNR ↑
+
+IC-Light [41] text 0.397 0.346 8.21 0.375 0.363 8.65 0.380 0.382 8.63 DreamLight [19] text 0.349 0.559 9.40 0.221 0.662 13.3 0.221 0.671 13.5 x2rgb [40] G-buffer 0.472 0.493 7.81 0.487 0.592 8.32 0.484 0.676 8.89 LBM [5] image 0.064 0.957 27.8 0.084 0.936 23.1 0.073 0.956 25.3 Luminet [35] image 0.172 0.848 15.8 0.146 0.847 17.8 0.164 0.825 16.2 Ours (w/o proxy) Light Info 0.062 0.953 28.1 0.087 0.931 22.4 0.171 0.902 18.0 Ours (w/o mask) Light Info 0.073 0.937 27.8 0.102 0.865 20.5 0.126 0.907 23.2 Ours (w/o dpo) Light Info 0.114 0.840 22.8 0.163 0.854 19.8 0.194 0.825 17.5 Ours (full) Light Info 0.053 0.974 30.2 0.074 0.929 25.6 0.083 0.988 27.1 GT  with DPO  w/o DPO  rgb2x  Neural_Lightrig 
+
+> Albedo Normal
+
+Figure 3. Visual comparison of intrinsic decomposition on a chair object. From left to right: ground-truth (GT), our method with DPO, our method without DPO, rgb2x [40], and Neu-ral Lightrig [11]. The DPO fine-tuning clearly suppresses arti-facts and produces more accurate albedo and normal predictions, demonstrating the effectiveness of our DPO strategy. 
+
+lumination control. Sec. 5.3 provides ablation studies exam-ining the contribution of each component in our framework, including the few-shot latent proxy and lighting-aware con-ditioning. 
+
+5.1. Quantitative Evaluation 
+
+Since existing benchmarks lack precise illumination con-trol, we evaluate on a controlled subset of ScaLight , which provides physically consistent lighting and material annota-tions. We compute metrics on a held-out set of 1.5K unseen objects rendered under diverse lighting directions, intensi-ties, and color temperatures. Following standard practice, we report PSNR, RMSE, and SSIM to assess relighting ac-curacy. As shown in Table 3, our method achieves superior overall quantitative performance. Notably, while LumiNet attains a higher SSIM score, this discrepancy reflects a fundamental perception-distortion trade-off. Pixel-aligned metrics like SSIM inherently favor conservative structural preservation, often rewarding models that retain original Input Image  Randomly Sampled Images 
+
+Figure 4. Qualitative results on in-the-wild images. Our model produces realistic relighting on Internet and product photos (right). Hand-captured examples confirm robust generalization to uncon-trolled lighting. 
+
+shading or produce blurry averages (akin to style trans-fer). In contrast, LightCtrl executes flexible and precise illumination commands that require significant structural changes, such as synthesizing novel, sharp cast shadows. While this physically correct behavior naturally incurs an SSIM penalty[2] compared to conservative approaches, our method ultimately achieves more photorealistic and pho-tometrically consistent relighting. Overall, these results demonstrate the effectiveness of our approach while requir-ing only sparse PBR supervision during training. Beyond object-level evaluation, we further validate scene-level performance on indoor benchmarks with com-plex geometry and cluttered layouts (e.g., MIIW [25]). These datasets contain real photographs captured under di-verse illumination setups, providing a challenging testbed Input  GT  Ours IC -Light  Qwen Image Edit  RGB -X DiLight Net Figure 5. Object-level relighting comparison. Given a single input image (left), we compare our method against IC-Light, Qwen Image Edit, RGB-X, and DiLightNet. Competing methods often introduce strong color shifts, texture distortions, or inconsistent shading, while our approach produces well-relighting results that preserve materials, geometry, and object identity. These examples demonstrate our model’s superior ability to perform physically plausible object-centric relighting. Table 4. User preference study ( N = 35 ). We evaluate human preference separately on complex real-world scenes (MIIW and RWR) and controlled objects (ScaLight). Our method significantly outperforms existing baselines, achieving the highest preference rate in both settings.            
+
+> Method User Preference Rate (↑)
+> Scene-Level Object-Level
+> LumiNet [35] 12.83% 4.3% IC-Light [41] 9.37% 11.45% NanoBanana 22.07% 2.8%
+> Ours 55.73% 81.45%
+
+for global light transport, shadows, and interreflections. We report scene-level RMSE, SSIM, and PSNR across all methods, and show that our model generalizes from object-centric training to full scenes, consistently outperforming intrinsic-based and diffusion baselines in both relighting ac-curacy and perceptual quality. 
+
+5.2. Qualitative Evaluation 
+
+We first evaluate LightCtrl on a held-out subset of Sca-Light , which provides object-centric images rendered un-der systematically varied illumination. Across changes in light direction, intensity, and color temperature, LightC-trl preserves shading discontinuities, specular structure, and fine-scale material cues, while maintaining consistent albedo appearance. Compared with intrinsic-based ap-proaches [13, 40] and latent-only diffusion models [35, 41], we observe fewer color shifts, reduced oversmoothing, and more stable reproduction of high-frequency surface details. These results suggest that the combination of the few-shot latent proxy and mask-guided conditioning provides effec-tive spatial guidance for modeling illumination changes at fine granularity. To assess generalization beyond object-centric settings, we further evaluate on the MIIW dataset, which contains real indoor scenes with complex geometry, clutter, and mixed materials. Despite being trained primarily on syn-thetic object-level data, LightCtrl produces illumination ad-justments that are consistent with global scene structure, with shadows and highlights adapting coherently across sur-faces. In comparison, existing relighting methods such as IC-Light [41], RGB2X [40], and LumiNet [35] exhibit more frequent artifacts—including shadow discontinuities or attenuation of surface texture—under the same evalua-tion protocol. These observations indicate that it transfers Input  GT  Ours  ChatGPT Image  LumiNet  IC -Light Figure 6. Scene-level relighting comparison on indoor environments. From left to right: input, ground-truth relighting, our method, ChatGPT Image, and LumiNet. Our approach produces realistic global illumination and consistent local shading, especially around the reflective light probes highlighted by red boxes, whereas the generative baselines tend to make color shifts or over-smoothed shading. 
+
+illumination behavior to novel real scenes more reliably. Finally, we test LightCtrl on in-the-wild images cap-tured with handheld mobile devices, which exhibit uncon-trolled backgrounds, clutter, and varying exposure. Across diverse examples, our model generates relit outputs with plausible shadow relocation and highlight behavior, while maintaining overall material appearance. Although these settings are substantially farther from the training distribu-tion, LightCtrl retains stable performance, demonstrating robustness under real-world variability. To quantitatively validate this perceptual realism, we conducted a compre-hensive user preference study. As detailed in Table 4, partic-ipants overwhelmingly favored our approach over state-of-the-art baselines, with LightCtrl achieving the highest pref-erence rates in both controlled object level (81.45%) and complex scene level (55.73%) evaluations. 
+
+5.3. Ablation Study 
+
+We analyze the impact of each component in LightCtrl, namely the few-shot latent proxy, the lighting-aware mask, and the DPO post-training stage. Object-level results under different illumination variations are summarized in Table 3, and intrinsic predictions are visualized in Fig. 3. 
+
+Few-shot Latent Proxy. Removing the proxy ( w/o proxy ) leads to consistent degradation in RMSE and PSNR across temperature, position, and energy changes, with the largest gaps appearing under color-temperature and inten-sity shifts. SSIM also decreases for temperature and energy, while remaining comparable for position. These trends indicate that the proxy supplies material and geometry-dependent cues that help the model maintain stable shading and reflectance when illumination varies. 
+
+Lighting-aware Mask. Without the mask ( w/o mask ), performance drops on all three lighting variations: RMSE increases and both SSIM and PSNR decrease relative to the full model. Visually, the model tends to over-edit re-gions whose appearance should remain invariant, leading to smoother albedo and weakened shadow boundaries. The mask thus provides effective spatial guidance, steering the denoiser toward illumination-sensitive pixels while better preserving appearance-invariant areas. 
+
+DPO Post-training. Disabling DPO ( w/o dpo ) results in the largest performance loss among all ablations, with noticeably higher RMSE and lower PSNR/SSIM for every lighting variation. As shown in Fig. 3, the encoder with-out DPO produces noisier albedo and distorted normals, whereas DPO-refined proxies are cleaner and more physi-cally plausible. This confirms that the post-training stage is crucial for stabilizing intrinsic cues under sparse supervi-sion and improving downstream relighting quality. Overall, these ablations confirm that each component ad-dresses a distinct challenge, proxy guidance for material Figure 7. Targeted real-scene failure analysis on MIIW and RWR [39], showing representative errors in shadow recasting, structure preservation, and highlight-heavy regions. 
+
+awareness, masking for spatial selectivity, and DPO for in-trinsic stability, and that all three contribute synergistically to LightCtrl’s relighting performance. 
+
+# 6. Limitations 
+
+Although LightCtrl improves controllable relighting under diverse conditions, its strongest evidence is still concen-trated in synthetic, object-centric settings. When transferred to cluttered real scenes with complex global illumination, the control behavior becomes less robust and the quality gain is more mixed. In particular, performance on real-scene benchmarks reflects a practical trade-off: the model preserves stable appearance cues in many cases, but it is still sensitive to long-range light transport and strong spec-ular interactions. As shown in Fig. 7, a primary failure mode is inaccu-rate global cast-shadow recasting. The model can usually handle local shading changes, but it may miss sharp long-range shadows between distant objects and supporting sur-faces, especially under large viewpoint-dependent lighting changes. This is consistent with our proxy design: because the conditioning signal is inferred from sparse single-view cues instead of dense multi-view geometry or explicit occlu-sion reasoning, the denoiser may default to smooth ambient adjustments rather than physically precise shadow intersec-tions. A second limitation appears in high-frequency geome-try and highlight-heavy regions. Under strong illumina-tion contrast or concentrated specular highlights, fine struc-tural details can be over-smoothed, and local textures may be partially washed out. In these cases, the latent proxy does not always provide enough high-frequency constraints to separate true geometry variation from illumination vari-ation, which leads to flattened relief and detail loss around bright reflections. Despite these issues, color consistency is comparatively stable, suggesting that the proxy still anchors albedo better than purely latent editing baselines. Future work will focus on improving robustness in ex-actly these regimes by strengthening global light-transport reasoning, introducing richer geometry/occlusion supervi-sion, and adding control-specific diagnostics for shadow ac-curacy, structural fidelity, and highlight preservation. We believe this direction is important for narrowing the remain-ing gap between object-centric training and reliable real-scene controllability. 
+
+# References                         
+
+> [1] Jonathan T. Barron and Jitendra Malik. Shape, illumination, and reflectance from shading. TPAMI , 2015. 2 [2] Yochai Blau and Tomer Michaeli. The perception-distortion tradeoff. In CVPR , 2018. 6 [3] Blender Online Community. Blender - a 3D modelling and rendering package .Blender Foundation, Blender Institute, Amsterdam, 2025. 5 [4] Chris Careaga and Ya˘ gız Aksoy. Physically controllable re-lighting of photographs. In SIGGRAPH , 2025. 2 [5] Cl´ ement Chadebec, Onur Tasar, Sanjeev Sreetharan, and Benjamin Aubin. Lbm: Latent bridge matching for fast image-to-image translation. In ICCV , 2025. 2, 6 [6] Jasmine Collins, Shubham Goel, Kenan Deng, Achlesh-war Luthra, Leon Xu, Erhan Gundogdu, Xi Zhang, Tomas F. Yago Vicente, Thomas Dideriksen, Himanshu Arora, Matthieu Guillaumin, and Jitendra Malik. Abo: Dataset and benchmarks for real-world 3d object understanding. In
+> CVPR , 2022. 5 [7] Matt Deitke, Ruoshi Liu, Matthew Wallingford, Huong Ngo, Oscar Michel, Aditya Kusupati, Alan Fan, Christian Laforte, Vikram Voleti, Samir Yitzhak Gadre, Eli VanderBilt, Anirud-dha Kembhavi, Carl Vondrick, Georgia Gkioxari, Kiana Ehsani, Ludwig Schmidt, and Ali Farhadi. Objaverse-xl: A universe of 10m+ 3d objects. In NeurIPS , 2023. [8] Matt Deitke, Dustin Schwenk, Jordi Salvador, Luca Weihs, Oscar Michel, Eli VanderBilt, Ludwig Schmidt, Kiana Ehsani, Aniruddha Kembhavi, and Ali Farhadi. Objaverse: A universe of annotated 3d objects. In CVPR , 2023. 5 [9] Yi Du, Zhipeng Zhao, Shaoshu Su, Sharath Golluri, Haoze Zheng, Runmao Yao, and Chen Wang. SuperPC: A single diffusion model for point cloud completion, upsampling, de-noising, and colorization. In CVPR , 2025. 2 [10] Yotam Erel, Rishabh Dabral, Vladislav Golyanik, Amit H. Bermano, and Christian Theobalt. Practilight: Practical light control using foundational diffusion models. ACM TOG ,2025. 3 [11] Zexin He, Tengfei Wang, Xin Huang, Xingang Pan, and Zi-wei Liu. Neural lightrig: Unlocking accurate object normal and material estimation with multi-light diffusion. In CVPR ,2025. 2, 5, 6
+
+[12] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising diffu-sion probabilistic models. In NeurIPS , 2020. 2 [13] Haian Jin, Yuan Li, Fujun Luan, Yuanbo Xiangli, Sai Bi, Kai Zhang, Zexiang Xu, Jin Sun, and Noah Snavely. Neu-ral gaffer: Relighting any object via diffusion. In NeurIPS ,2024. 2, 7 [14] Mukul Khanna, Yongsen Mao, Hanxiao Jiang, Sanjay Haresh, Brennan Shacklett, Dhruv Batra, Alexander Clegg, Eric Undersander, Angel X. Chang, and Manolis Savva. Habitat synthetic scenes dataset (hssd-200): An analysis of 3d scene scale and realism tradeoffs for objectgoal naviga-tion. In CVPR , 2024. 5 [15] Black Forest Labs, Stephen Batifol, Andreas Blattmann, Frederic Boesel, Saksham Consul, Cyril Diagne, Tim Dock-horn, Jack English, Zion English, Patrick Esser, Sumith Ku-lal, Kyle Lacey, Yam Levi, Cheng Li, Dominik Lorenz, Jonas M¨ uller, Dustin Podell, Robin Rombach, Harry Saini, Axel Sauer, and Luke Smith. Flux.1 kontext: Flow matching for in-context image generation and editing in latent space. 
+
+arxiv , 2025. 3 [16] Yingqi Lin, Xiaogang Xu, Jiafei Wu, Yan Han, and Zhe Liu. Geometric-aware low-light image and video enhancement via depth guidance. TIP , 2025. 2 [17] Isabella Liu, Linghao Chen, Ziyang Fu, Liwen Wu, Haian Jin, Zhong Li, Chin Ming Ryan Wong3, Yi Xu, Ravi Ra-mamoorthi1, Zexiang Xu, and Hao Su. Openillumination: A multi-illumination dataset for inverse rendering evaluation on real objects. In NeurIPS , 2023. 5 [18] Ropeway Liu, Hangjie Yuan, Bo Dong, Jiazheng Xing, Jin-wang Wang, Rui Zhao, Yan Xing, Weihua Chen, and Fan Wang. Unilumos: Fast and unified image and video relight-ing with physics-plausible feedback. In NeurIPS , 2025. 2 [19] Yong Liu, Wenpeng Xiao, Qianqian Wang, Junlin Chen, Shiyin Wang, Yitong Wang, Xinglong Wu, and Yansong Tang. Dreamlight: Towards harmonious and consistent im-age relighting. In NeurIPS , 2025. 6 [20] Cheng Lu, Yuhao Zhou, Fan Bao, Jianfei Chen, Chongxuan Li, and Jun Zhu. Dpm-solver: A fast ode solver for diffusion probabilistic model sampling in around 10 steps. In NeurIPS ,2022. 2 [21] Nadav Magar, Amir Hertz, Eric Tabellion, Yael Pritch, Alex Rav-Acha, Ariel Shamir, and Yedid Hoshen. Lightlab: Con-trolling light sources in images with diffusion models. In 
+
+SIGGRAPH , 2025. 3 [22] Yiqun Mei, He Zhang, Xuaner Zhang, Jianming Zhang, Zhixin Shu, Yilin Wang, Zijun Wei, Shi Yan, HyunJoon Jung, and Vishal M. Patel. Lightpainter: Interactive portrait relighting with freehand scribble. In CVPR , 2023. 3 [23] Chenlin Meng, Yutong He, Yang Song, Jiaming Song, Jia-jun Wu, Jun-Yan Zhu, and Stefano Ermon. Sdedit: Guided image synthesis and editing with stochastic differential equa-tions, 2022. 2 [24] Ben Mildenhall, Pratul P. Srinivasan, Matthew Tancik, Jonathan T. Barron, Ravi Ramamoorthi, and Ren Ng. Nerf: Representing scenes as neural radiance fields for view syn-thesis. In ECCV , 2020. 2 [25] Lukas Murmann, Michael Gharbi, Miika Aittala, and Fredo Durand. A multi-illumination dataset of indoor object ap-pearance. In ICCV , 2019. 3, 5, 6 [26] William Peebles and Saining Xie. Scalable diffusion models with transformers. In ICCV , 2023. 3 [27] Rafael Rafailov, Archit Sharma, Eric Mitchell, Stefano Er-mon, Christopher D. Manning, and Chelsea Finn. Direct preference optimization: Your language model is secretly a reward model. In NeurIPS , 2023. 2 [28] Kerui Ren, Jiayang Bai, Linning Xu, Lihan Jiang, Jiangmiao Pang, Mulin Yu, and Bo Dai. Mv-colight: Efficient object compositing with consistent lighting and shadow generation. In NeurIPS , 2025. 3 [29] Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Bj¨ orn Ommer. High-resolution image syn-thesis with latent diffusion models. In CVPR , 2022. 2 [30] Jiaming Song, Chenlin Meng, and Stefano Ermon. Denois-ing diffusion implicit models. In ICLR , 2021. 2 [31] Marco Toschi, Riccardo De Matteo, Riccardo Spezialetti, Daniele De Gregorio, Luigi Di Stefano, and Samuele Salti. Relight my nerf: A dataset for novel view synthesis and re-lighting of real world objects. In CVPR , 2023. 5 [32] Benjamin Ummenhofer, Sanskar Agrawal, Rene Sepulveda, Yixing Lao, Kai Zhang, Tianhang Cheng, Stephan Richter, Shenlong Wang, and German Ros. Objects with lighting: A real-world dataset for evaluating reconstruction and render-ing for object relighting. In 3DV , 2024. 5 [33] Yiyang Wang, Xi Chen, Xiaogang Xu, Sihui Ji, Yu Liu, Yu-jun Shen, and Hengshuang Zhao. Diffdoctor: Diagnosing image diffusion models before treating. In ICCV , 2025. 3 [34] Chenfei Wu, Jiahao Li, Jingren Zhou, Junyang Lin, Kaiyuan Gao, Kun Yan, Sheng ming Yin, Shuai Bai, Xiao Xu, Yilei Chen, Yuxiang Chen, Zecheng Tang, Zekai Zhang, Zhengyi Wang, An Yang, Bowen Yu, Chen Cheng, Dayiheng Liu, De-qing Li, Hang Zhang, Hao Meng, Hu Wei, Jingyuan Ni, Kai Chen, Kuan Cao, Liang Peng, Lin Qu, Minggang Wu, Peng Wang, Shuting Yu, Tingkun Wen, Wensen Feng, Xiaoxiao Xu, Yi Wang, Yichang Zhang, Yongqiang Zhu, Yujia Wu, Yuxuan Cai, and Zenan Liu. Qwen-image technical report. 
+
+arxiv , 2025. 2, 3 [35] Xiaoyan Xing, Konrad Groh, Sezer Karaoglu, Theo Gevers, and Anand Bhattad. Luminet: Latent intrinsics meets diffu-sion models for indoor scene relighting. In CVPR , 2025. 2, 3, 5, 6, 7 [36] Xiaogang Xu, Yi Wang, Liwei Wang, Bei Yu, and Jiaya Jia. Conditional temporal variational autoencoder for action video prediction. IJCV , 2023. 3 [37] Xiaogang Xu, Jiafei Wu, Qingsen Yan, Jiequan Cui, Richang Hong, and Bei Yu. Learnable feature patches and vectors for boosting low-light image enhancement without external knowledge. In ICCV , 2025. 3 [38] Xiaogang Xu, Kun Zhou, Tao Hu, Jiafei Wu, Ruixing Wang, Hao Peng, and Bei Yu. Low-light video enhancement via spatial-temporal consistent decomposition. In IJCAI , 2025. 3[39] Yixiong Yang, Hassan Ahmed Sial, Ramon Baldrich, and Maria Vanrell. Relighting from a single image: Datasets and deep intrinsic-based architecture. TMM , 2025. 9 [40] Zheng Zeng, Valentin Deschaintre, Iliyan Georgiev, Yannick Hold-Geoffroy, Yiwei Hu, Fujun Luan, Ling-Qi Yan, and Miloˇ s Haˇ san. Rgb-x: Image decomposition and synthesis us-ing material- and lighting-aware diffusion models. In ACM SIGGRAPH , 2024. 2, 5, 6, 7 [41] Lvmin Zhang, Anyi Rao, and Maneesh Agrawala. Scaling in-the-wild training for diffusion-based illumination harmo-nization and editing by imposing consistent light transport. In ICLR , 2025. 2, 3, 5, 6, 7 [42] Xiaoming Zhao, Pratul P. Srinivasan, Dor Verbin, Keunhong Park, Ricardo Martin Brualla, and Philipp Henzler. IllumiN-eRF: 3D Relighting Without Inverse Rendering. In NeurIPS ,2024. 2 [43] Yujie Zhou, Jiazi Bu, Pengyang Ling, Pan Zhang, Tong Wu, Qidong Huang, Jinsong Li, Xiaoyi Dong, Yuhang Zang, Yuhang Cao, Anyi Rao, Jiaqi Wang, and Li Niu. Light-a-video: Training-free video relighting via progressive light fusion. In ICCV , 2025. 3 This section provides additional implementation details for LightCtrl that are omitted from the main paper for clar-ity. We first describe how the relative illumination encod-ing ∆ℓ is constructed from physically meaningful lighting parameters, with emphasis on the conversion from user-specified yaw–pitch edits to the spherical-harmonic (SH) representation used by the model. We then elaborate on the design of the lighting-aware mask and its conversion into a spatial weighting scheme for denoising. Finally, we detail how appearance, lighting, and proxy tokens are integrated into the conditioning architecture to achieve controllable re-lighting. 
+
+# A. Relative Illumination Encoding ∆ℓ
+
+Our illumination encoding is designed to support intuitive user control while remaining stable for learning. In prac-tice, lighting edits are specified in a 2D yaw–pitch space— a natural interface for rotating a directional light around an object. However, diffusion models operate on vector-valued embeddings, not angles. We therefore convert yaw–pitch edits into a physically meaningful representation through the following steps: 
+
+Step 1: From yaw–pitch control to 3D light direction. 
+
+Given a source lighting configuration with angular param-eters (θs, ϕ s) and a user-specified edit defining a target il-lumination (θt, ϕ t), we map each pair into a unit direction vector in the camera coordinate frame: 
+
+ω(θ, ϕ ) = 
+
+
+
+cos θ sin ϕ
+
+sin θ sin ϕ
+
+cos ϕ
+
+ .
+
+This produces the source and target directions ωs and ωt,whose difference encodes how illumination rotates around the object. 
+
+Step 2: SH projection of lighting direction. To obtain a smooth, rotation-aware embedding, we project each direc-tion onto a real spherical-harmonic (SH) basis up to second order ( l ≤ 2), yielding 9 coefficients per light: 
+
+sSH (ω) = Y 00 (ω), Y −11 (ω), . . . , Y 22 (ω).
+
+Low-order SH provides a continuous angular represen-tation in which small yaw–pitch edits correspond to small changes in coefficient space. This avoids the discontinuities and periodic ambiguities associated with raw angle differ-ences. 
+
+Step 3: Constructing the relative lighting embedding. 
+
+Since relighting depends only on how illumination changes,       
+
+> Figure 8. Illustration of our controllable lighting formulation. A lighting edit is first defined in yaw–pitch space (e.g., Light A →
+> Light B with ∆yaw = 90 ◦,∆pitch = 0 ◦). These angular param-eters are mapped to unit vectors on the hemisphere, then projected onto a low-order spherical-harmonic (SH) basis. The resulting SH difference ∆sSH forms the directional component of our relative illumination encoding ∆ℓ.
+
+not on its absolute parameters, we use the difference be-tween SH encodings: 
+
+∆sSH = sSH (ωt) − sSH (ωs).
+
+We compute photometric and chromatic differences in the same manner: the relative intensity is simply the log-intensity difference ∆ log E = log Et − log Es, and the rel-ative color temperature is the normalized scalar difference 
+
+∆τ = τt − τs. These quantities measure how much the lighting becomes brighter/dimmer or warmer/ cooler, with-out encoding their absolute values. The full relative illumi-nation vector is therefore 
+
+∆ℓ = ∆sSH , ∆ log E, ∆τ ,
+
+which is mapped through a small MLP to produce the light-ing token tlight . This representation provides an intuitive parameterization for user edits while remaining physically interpretable and numerically stable for diffusion training. 
+
+# B. Lighting-aware Mask Design 
+
+A key challenge in controllable relighting is that illumi-nation changes are inherently spatially selective: specular highlights shift according to the light direction, shadows migrate across surfaces, and soft shading gradients adjust smoothly, while most of the object’s appearance—including albedo and fine geometry cues—remains unchanged. If a diffusion model is trained without spatial guidance, it tends to distribute lighting edits broadly across the image, un-intentionally altering material properties or introducing in-consistent shading. Changes in lighting should not prompt the model to mod-ify intrinsic appearance. However, diffusion models often struggle to distinguish illumination-driven variations from texture changes, especially when trained on diverse lighting setups. A spatial mask offers a practical way to communi-cate “where the model should change things” versus “where it should stay invariant.” This encourages the model to treat material appearance as stable, while letting highlights, cast shadows, and shading gradients adapt fluidly to ∆ℓ.Instead of relying on explicit geometric supervision or perfect shadow segmentation—which would require heavy manual annotation—our mask is derived directly from pho-tometric observations. We compare the luminance fields of the source and target images under logarithmic scal-ing, which suppresses exposure differences and emphasizes shading variation. A robust, multi-kernel smoothing oper-ation then extracts a soft spatial map that highlights areas where illumination behavior changes noticeably. This produces a mask Mgt that is: smooth enough to guide diffusion without introducing high-frequency arti-facts, responsive to both hard shadow boundaries and soft shading shifts, and fully generated without human annota-tion. 
+
+# C. Conditioning Architecture and Tokens 
+
+Our diffusion backbone follows a U-Net–based architec-ture with cross-attention layers at each resolution. LightC-trl provides three complementary conditioning signals— appearance, illumination, and proxy cues—which are in-jected into the model through a unified token-based inter-face. Each token type is encoded into a fixed-dimensional embedding and consumed by cross-attention during denois-ing. 
+
+Appearance token. The source image xℓs 
+
+> s
+
+is first encoded by a frozen vision encoder Fimg (a CLIP-ViT variant), pro-ducing 
+
+timg = Fimg (xℓs 
+
+> s
+
+) ∈ R1×d,
+
+which captures the coarse geometry and view-dependent texture cues that should remain invariant under relighting. This token serves as the primary identity anchor throughout the diffusion process. 
+
+Lighting token. The relative illumination encoding ∆ℓ
+
+(Sec. A) is mapped through a lightweight MLP, 
+
+tlight = MLP ℓ(∆ ℓ) ∈ R1×d,
+
+providing a compact representation of directional, ener-getic, and chromatic lighting changes. This token deter-mines the intended shading and highlight appearance at each denoising timestep. 
+
+Proxy (PBR) token. The latent proxy estimated by the PBREncoder, ˆB = Eϕ(xℓs 
+
+> s
+
+), is spatially pooled and linearly projected: 
+
+tpbr = Wpbr · Pool   ˆB ∈ R1×d.
+
+This token introduces soft material and geometry priors in-ferred from sparse PBR supervision, compensating for the under-constrained nature of single-image relighting. 
+
+Token fusion in cross-attention. At each U-Net block, the conditioning tokens are concatenated into a unified se-quence: 
+
+T = timg , t light , t pbr 
+
+ ∈ R3×d.
+
+Given a latent feature map zt at diffusion step t, the cross-attention operation is: 
+
+Attn( zt, T ) = softmax 
+
+ (Qz t)( KT )⊤
+
+√d
+
+
+
+(V T ),
+
+where Q, K, V are learned linear projections. This formu-lation lets the model dynamically select which conditioning stream to attend to at each spatial location. In early layers, 
+
+timg dominates to preserve object identity, while deeper lay-ers increasingly rely on tlight and tpbr to synthesize correct shading, specularity, and global illumination changes. 
+
+Mask-weighted fusion. From Sec. B, a spatial mask 
+
+Mθ ∈ [0 , 1] H×W identifies illumination-sensitive regions. We therefore modulate cross-attention using: 
+
+Attn ⋆(zt, T ) = (1 − Mθ ) ⊙ Attn base (zt, t img )+ Mθ ⊙ Attn full (zt, T ).
+
+so that stable regions rely primarily on appearance cues while illumination- variant areas receive full conditioning. This mechanism prevents unnecessary texture distortion and preserves material fidelity under large lighting edits. Overall, the combination of appearance, lighting, and proxy tokens enables LightCtrl to achieve fine-grained, dis-entangled relighting while maintaining strong geometric and photometric consistency. 
+
+# D. Training Details 
+
+All experiments are conducted on 4 ×NVIDIA H800 GPUs using mixed-precision (fp16) training. We optimize LightCtrl with the AdamW optimizer, using an initial learn-ing rate of 1 × 10 −4, β1=0 .9, β2=0 .999 , and a weight de-cay of 1 × 10 −2. The batch size is set to 16 per GPU (64 to-tal), and the model is trained for 400K diffusion steps using a constant-with-warmup schedule with 5K warm-up steps. We adopt a DDIM noise scheduler with 1000 timesteps and follow the standard v-prediction objective. Unless other-wise stated, all models are selected using the best validation performance on the held-out ScaLight split. We also evaluated LightCtrl on one NVIDIA H800(CUDA 12.2) using bf16 precision optimiza-tion. Results demonstrate high efficiency: the model (∼1.2B parameters) generates a 512 × 512 image in just 
+
+∼0.84s (50 steps) with a peak memory usage of 2.53GB .
+
+# E. Implementation Details of the DPO Mecha-nism 
+
+Our pipeline initializes with joint training using large-scale relighting pairs without ground-truth (GT) intrinsic supervi-sion. While this implicit learning establishes strong gener-ative priors, it can occasionally entangle material and light-ing representations. To robustify the latent proxy encoder, we introduce a post-training stage using sparse PBR su-pervision, where only ∼3% of the training data contains explicit annotations. Under such extreme label sparsity, we find that standard Supervised Fine-Tuning (SFT) suffers from severe generalization issues. Specifically, SFT merely demonstrates the “correct” state and often leads the model to overfit, causing it to memorize lighting artifacts such as baking cast shadows into the predicted albedo. To overcome this, we adopt Direct Preference Opti-mization (DPO) over SFT. DPO leverages a contrastive signal, teaching the model not just what constitutes valid physical consistency, but crucially, what destroys it. Implementation-wise, we construct preference pairs dy-namically during training. We define the preferred positive sample ypos using the GT PBR maps. For the rejected nega-tive sample yneg , we use the model’s own current prediction (i.e., yneg = Eϕ(xℓs 
+
+> s
+
+)). Because yneg is generated by the network itself, it inherently contains the specific artifacts and entangled shading that the model is prone to making. By constructing pairs in this manner, the training process explicitly penalizes the exact failure modes the model natu-rally produces. 
+
+# F. Impact of PBR Supervision Scale 
+
+To quantify how the amount of PBR-supervised data influ-ences the quality of our latent proxy and overall relighting performance, we conduct a controlled study using different sizes of PBR annotations while keeping all other training settings fixed. Specifically, we train LightCtrl with {1K, 3K, 6K, 9K } PBR-supervised samples randomly drawn from ScaLight, and evaluate on the same held-out object-level test set. Another 3K samples is collected in the Obja-verse datasets. Since the PBR encoder is the primary source of mate-
+
+> Table 5. Effect of PBR supervision scale on relighting quality. In-creasing PBR annotations steadily improves performance, yet our experiments show that even sparse supervision provides meaning-ful benefits for relighting tasks.
+
+#PBR Samples RMSE ↓ SSIM ↑ PSNR ↑
+
+1K 0.468 0.487 12.8 3K 0.421 0.534 14.7 6K 0.331 0.612 19.3 9K 0.194 0.873 23.5 12K 0.105 0.921 28.6 
+
+rial and geometry priors, increasing the number of PBR-supervised examples naturally improves the fidelity of shad-ing transfer and relighting accuracy. However, as shown in Table 5, the gains diminish beyond roughly 9K supervised samples, indicating clear marginal returns. This saturation suggests that dense intrinsic annotations are unnecessary: even relatively sparse supervision is sufficient to provide stable material cues for the diffusion model and yield high-quality, controllable relighting. 
+
+# G. Additional Qualitative Results 
+
+For completeness, we provide additional qualitative exam-ples that complement the results shown in the main paper. Figures 9, 10, 11, 12, 13, 14, 15 and 16 illustrate more relighting outcomes under controlled edits of (i) light po-sition (yaw–pitch), (ii) illumination intensity, and (iii) color temperature. These samples demonstrate that LightCtrl pro-duces smooth, photometrically consistent transitions across continuous lighting variations. Finally, additional figures present additional scene-level results on both synthetic en-vironments and real-world images from MIIW. 
+
+# H. Conclusion 
+
+In this supplementary document, we provided additional technical details of LightCtrl, including the formulation of our relative illumination encoding, the construction and training of the lighting-aware mask, and the integration of proxy, appearance, and lighting tokens within the condi-tioning architecture. We further described implementation specifics such as training schedules and hardware, and pre-sented additional qualitative examples covering light posi-tion, intensity, color temperature, and scene-level relight-ing. Together, these materials complement the main paper by offering deeper insight into the design choices behind LightCtrl and by demonstrating its robustness under a wide range of controlled illumination conditions. Figure 9. Qualitative relighting results on ScaLight under varying light positions . Left: reference image; middle: ground-truth relit image; right: LightCtrl prediction. 
+
+Figure 10. Qualitative relighting results on ScaLight under varying light positions .Figure 11. Qualitative relighting results on ScaLight under varying light intensity . Left: reference image; middle: ground-truth relit image; right: LightCtrl prediction. 
+
+Figure 12. Qualitative relighting results on ScaLight under varying light intensity .Figure 13. Qualitative relighting results on ScaLight under varying light temperature . Left: reference image; middle: ground-truth relit image; right: LightCtrl prediction. 
+
+Figure 14. Qualitative relighting results on ScaLight under varying light temperature Figure 15. Qualitative relighting results on MIIW . Left: reference image; middle: ground-truth relit image; right: LightCtrl prediction. 
+
+Figure 16. Qualitative relighting results on MIIW . Left: reference image; middle: ground-truth relit image; right: LightCtrl prediction.

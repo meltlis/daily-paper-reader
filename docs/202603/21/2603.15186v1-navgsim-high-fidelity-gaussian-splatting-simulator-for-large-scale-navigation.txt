@@ -1,0 +1,415 @@
+Title: NavGSim: High-Fidelity Gaussian Splatting Simulator for Large-Scale Navigation
+
+URL Source: https://arxiv.org/pdf/2603.15186v1
+
+Published Time: Tue, 17 Mar 2026 05:59:50 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# NavGSim: High-Fidelity Gaussian Splatting Simulator for Large-Scale Navigation 
+
+Jiahang Liu 1,2,∗ Yuanxing Duan 2,∗ Jiazhao Zhang 1,2,∗
+
+Minghan Li 2 Shaoan Wang 1 Zhizheng Zhang 2,3,† He Wang 1,2,3,†
+
+> 1
+
+Peking University 2Galbot 3BAAI Python  C++/CUDA 
+
+# Agent  NavGSim 
+
+Action 
+
+Events 
+
+# NavGSim APIs 
+
+Rendering  Path Planner 
+
+> High -level APIs
+
+Photo -realistic Rendering  Path Planner  Collision Check 
+
+Fig. 1: NavGSim ’s agent-simulator architecture. Users interact with the system through an upper-level python API interface, which provides access to the core functionalities of NavGSim. 
+
+Abstract — Simulating realistic environments for robots is widely recognized as a critical challenge in robot learning, particularly in terms of rendering and physical simulation. This challenge becomes even more pronounced in navigation tasks, where trajectories often extend across multiple rooms or even entire floors. In this work, we present NavGSim, a Gaussian Splatting-based simulator designed to generate high-fidelity, large-scale navigation environments. Built upon a hierarchical 3D Gaussian Splatting framework, NavGSim enables photorealistic rendering in expansive scenes spanning hundreds of square meters. To simulate navigation collisions, we introduce a Gaussian Splatting-based slice technique that directly extracts navigable areas from reconstructed Gaus-sians. Additionally, for ease of use, we provide comprehensive NavGSim APIs supporting multi-GPU development, including tools for custom scene reconstruction, robot configuration, policy training, and evaluation. To evaluate NavGSim’s ef-fectiveness, we train a Vision-Language-Action (VLA) model using trajectories collected from the NavGSim and assess its performance in both simulated and real-world environments. Our results demonstrate that NavGSim significantly enhances the VLA model’s scene understanding, enabling the policy to handle diverse navigation queries effectively. NavGSim is publicly available at: https://github.com/2003jiahang/NavGSim 
+
+I. I NTRODUCTION 
+
+Simulating realistic environments is widely regarded as a key component of robot learning[1], [2], providing aplayground for robots to acquire diverse skills. Existing    
+
+> ∗Equal Contribution, †Equal Advising
+
+robotics simulators cover a broad range of applications, including locomotion[3], [4], manipulation[5], [6], [7], and navigation[8], [9]. Notably, unlike locomotion and manipula-tion tasks, navigation tasks are distinguished by their require-ment for high-fidelity, large-scale scene environments—often spanning multiple rooms or even an entire floor. To simulate such large-scale environments, existing navigation simulators (e.g., Habitat [10] and AI2-THOR [11]) rely on reconstructed or synthetic meshes. However, these approaches often result in unrealistic visual rendering. While artists can construct highly realistic scenes in game engines like Unreal or Unity, creating large-scale environments still requires significant effort. In recent years, significant advancements have been made in achieving realistic rendering in navigation sim-ulators through the application of 3D Gaussian splatting (3DGS) [12]. 3DGS, which provides high-quality visual rendering, has gained traction in various domains, including navigation, due to its ability to easily reconstruct real-world environments by moving a camera and LiDAR around the environment.Recent works [13], [14], [15], [16], [17], [18] have leveraged 3DGS to enhance the fidelity and scalability of navigation tasks. Building on these innovations, we proposed NavGSim, a 3D Gaussian Splatting-based simulator designed for high-fidelity, large-scale navigation tasks. Our method extends hierarchical 3D Gaussian Splatting techniques[19] and in-
+
+> arXiv:2603.15186v1 [cs.RO] 16 Mar 2026
+
+corporates Gaussian-based collision simulation. Specifically, NavGSim organizes 3D Gaussians into a multi-level hier-archical structure, enabling adaptive level-of-detail (LOD) rendering that dynamically balances visual fidelity and com-putational efficiency during navigation. To support realistic collision detection, Gaussian ellipsoids are sliced by multi-ple horizontal planes, and the resulting intersection regions define the object’s occupancy representation on each plane. Consequently, NavGSim converts reconstructed scenes into navigable areas, enabling efficient collision checking and path planning. Building on NavGSim, we introduce NavGSim-API, a Python library for custom scene reconstruction, robot con-figuration, policy training, and evaluation. Our API enables researchers to reconstruct scenes from their own posed RGB images. The resulting 3D Gaussian Splatting scenes are fully compatible with NavGSim and support core navigation simulator functionalities, as demonstrated in prior work [10], [11]. To evaluate the advantages of NavGSim over existing mesh-based navigation simulators, we fine-tune a vision-language-action (VLA) model [20] using navigation samples collected directly from NavGSim. We gather 4.5K navigation samples to reach 9 annotated targets. Our results show that the fine-tuned VLA model achieves superior navigation performance in NavGSim and demonstrates strong generaliz-ability in real-world environments by effectively interpreting environmental cues to complete navigation tasks. We hope NavGSim will benefit the research community by enabling the construction of customized navigation simulators for diverse applications. II. R ELATED WORKS 
+
+Navigation Simulator. Navigation simulators[21], [11], [10], [22], [23], [24], [25], [26], [27] play a crucial role in embodied AI and robot learning by offering control-lable environments for navigation tasks such as Vision-and-language navigation[28], [29], Object Goal Navigation[30], [31], Embodied Question Answering[32], [33] and more. Classic simulators such as Gazebo [21], AI2-THOR [11] and Habitat [10] provide various levels of realism and interactivity. Note that, the scene environments of navigation simulators often span across multi rooms or one floor. To balance the rendering quality and efficiency, existing naviga-tion simulators adopt conventional rendering techniques[34], [35] with reconstrued meshes[36], [37], [38] or synthetic meshes[11], [39], which may limit visual fidelity. In contrast, NavGSim leverages 3D Gaussian Splatting, enabling more realistic and scalable simulations. 
+
+Gaussian Splatting for Robots. 3D Gaussian Splatting (3DGS) [12] has recently emerged as a compelling alter-native to traditional methods like NeRF[40]. It models a scene with a set of 3D Gaussian kernels that jointly encode density, color, and opacity. As a significant advancement in 3D reconstruction, 3DGS has high-quality reconstruction re-sults while keeping real-time rendering performance, offering a powerful tool for bridging real-world data to simulated environments, i.e., Real2Sim[41], [42]. For navigation tasks, the required reconstructed environments often span multiple rooms or even entire floors. Although numerous previous works [43], [44], [45], [46] have addressed large-scale scene reconstruction, they cannot be directly applied to navigation tasks, which involve complex layouts with diverse geometries and heavy occlusions. To address this gap, Hierarchical 3D Gaussian Splatting (H3DGS) [19] proposes a hierarchical region-wise reconstruction framework that spatially decom-poses the environment and renders it at multiple levels of detail. This design supports efficient and high-fidelity simulation over large, complex spaces. class  NavGSim:               
+
+> def __init__(self, handler ):
+> self. handler =handler
+> self. handler .launch()
+> self.info = {}
+> def reset(self):
+> self. handler .reset()
+> self._update_info()
+> def step(self, action):
+> self. handler .step(action)
+> self._update_info()
+> def render(self, camera):
+> return self. handler .render(camera)
+> def path_planner(self, goal):
+> return self. handler .path_planner(goal)
+> def collision_check(self, states):
+> return self. handler .collision_check(states)
+> def close(self):
+> self. handler .close()
+> def _update_info(self):
+> states = self. handler .get_states()
+> self.info["obs"] = self. handler .get_obs()
+> self.info["states"] = states
+> self.info["success"] = self._get_success(states)
+> self.info["done"] = self._get_done(states )
+
+Fig. 2: NavGSim’s sample code III. N AV GS IM PLATFORM 
+
+A. NavGSim Architecture 
+
+Fig. 1 illustrates NavGSim, a modular and scalable simu-lator for large-scale navigation tasks with photo-realistic ren-dering path planning, and collision detection. These capabil-ities are accessible through a simple Python API, supporting the entire pipeline from scene reconstruction to embodied agent training. The usage of APIs is illustrated in Code 2. Together, these components form a unified architecture that balances visual realism, navigational reasoning, and ease of use. z   
+
+> z=Z i
+> z=Z i+1
+> z=Z i+2
+> （A）Gaussian -Splatting Slicing
+> （B）Combined Slicing
+> ZiZi+2 Zi+1 ZCombined
+> Zoom -in View
+> I
+> III
+> III
+> I
+> II
+> Gaussian Slicing Navigable Area Visualization
+> II
+
+Fig. 3: Illustration of Gaussian Slicing for Navigable Areas . The left image shows the 3D Sofa model projected onto multiple horizontal Z-planes ( Zi, Zi+1 , Zi+2 ) at fixed height intervals. Each plane contains a 2D Gaussian slice that represents the projection of the Sofa at that particular height. These slices are combined to form a 2D collision map, with the right image showing the entire scene’s 2-D occupancy map that serves as geometric prior information for downstream tasks such as navigation cost-map construction or collision checking. NavGSim leverages a Hierarchical 3D Gaussian Splat-ting [19] (H3DGS) engine Sec. III-B that models indoor scenes as a hierarchy of anisotropic 3D Gaussians. This enables high-quality, real-time rendering from arbitrary view-points using only camera intrinsics and extrinsics. To support navigation, we further introduce a planar GS-slice technique Sec. III-C that extracts floor-level traversable regions directly from the 3D Gaussian field. This slice provides a dense and accurate approximation of collision volumes, enabling fast and efficient collision check and path planning during simu-lation. Lastly, to facilitate scene annotation, we developed an interactive visualization interface, allowing users to browse the reconstructed scene and label specific objects during their exploration. 
+
+B. Hierarchical 3D Gaussian Splatting scenes 
+
+NavGSim utilizes an H3DGS representation for scene modeling and real-time rendering, which is built around a tree-based structure where each node corresponds to a spatial region. Leaf nodes encode fine-grained visual details using dense sets of anisotropic Gaussians, while internal nodes aggregate and abstract these details into coarser levels of representation. This hierarchical structure supports Level-of-Detail (LOD) rendering by dynamically selecting Gaussians from different levels and smoothly interpolating transition regions. To handle large scenes, such as entire floors or multi-room layouts, we adopt a divide-and-conquer strategy. The input image set is divided into spatial chunks, each optimized independently. After local models are trained, a global hierarchy is built by merging and optimizing the chunks, including node cleanup and alignment. We show our reconstruction results in Fig. 5. This approach enables NavSim to process scenes spanning hundreds to thousands of square meters using multiple GPUs in parallel. Ensuring both rendering speed and quality, this 3DGS-based representation also provides the foundation for collision detection in the navigation simulator. 
+
+C. GS-based Navigation collision simulation 
+
+To support efficient and realistic collision detection, NavGSim uses a multi-slice Gaussian projection method, which leverages the continuous and probabilistic nature of 3D Gaussian fields, while avoiding the problem of directly projecting 3D ellipses to 2D. Inspired by 4D-Rotor-GS [47], which slices 4DGS by different time planes, we define a set of horizontal slicing planes at fixed height intervals (e.g., every 10 cm in the robot’s height range) parallel to the floor. Each plane intersects the 3D Gaussian field, and for each Gaussian component, we analytically compute its sliced 2D Gaussian based on its position and 3D covariance. This slicing process is illustrated in Fig. 3. Specifically, we define the description of 3D Gaussian: 
+
+G3D (x) = e− 12 (x −μ)T Σ−13D (x −μ), (1) 
+
+Σ−13D =
+
+
+
+cxx cxy cxz 
+
+cxy cyy cyz 
+
+cxz cyz czz 
+
+ , (2) where x = ( x, y, z ). Then, given a height z, the sliced 2D Gaussian is obtained as (detailed derivation in the Supple-mentary Material): 
+
+G2D (x , z ) = e− 12 λ(z−μz )2
+
+e[x −μ(z)] T Σ−12D [x −μ(z)] , (3) where x = ( x, y ),
+
+αc xx + βc xy = cxz 
+
+αc xy + βc yy = cyz 
+
+, Σ−12D =
+
+cxx cxy 
+
+cxy cyy 
+
+
+
+, (4) 𝑥 0 ⋯ 𝑥 5    
+
+> 𝑦 0⋯𝑦 5
+> 𝜃 0⋯𝜃 5
+
+“Find the 
+
+television” 
+
+Vision Encoder  Language Encoder 
+
+# Large Language Model 
+
+> ⋯
+> Visual Token
+> Trajectory
+> Language Token
+> Predicted Token
+
+Image you are a robot 
+
+⋯
+
+you r task is {task}     
+
+> (Visual Observation) (Navigation Instruction )
+> Instruction
+> Captured Video
+
+Fig. 4: VLA-NavGSim architecture . Our VLA model takes multiple frames of images and language instructions as input. The images are processed by a Vision Encoder to extract visual features. The resulting visual tokens, along with the language tokens, are fed into the LLM to generate a predicted token. This token is then passed through a lightweight MLP to generate a trajectory. 
+
+λ = czz − α2cxx − β2cyy − 2αβc xy , (5) 
+
+μ (z) = ( μx, μ y )T − (z − μz ) ( α, β )T . (6) In Equation 3, we introduced a decay term, denoted as 
+
+λ (z − μz )2, which determines the size of the 2D Gaussian slice. When z = μz , the maximum 2D slice of the Gaussian is achieved, and as z moves further away from μz , the slice gradually shrinks. Simultaneously, μ(z) also varies with z,influencing the position of the 2D Gaussian. Although 3D Gaussian Splatting serves as a probabilistic representation and cannot precisely capture the volume, due to the small size of our Gaussian volumes, we are able to limit the error in the collision volume to within a 5 cm range.” IV. N AV GS IM FOR VLA 
+
+A. VLA architecture 
+
+We extend an existing navigation Vision-Language-Action (VLA) model called Uni-NaVid [48], with trajectory output. Uni-NaVid is a unified video-language model tailored for long-horizon embodied navigation, which fuses visual ob-servations and natural language instructions to predict agent actions. In this work, we adapt and extend Uni-NaVid to enable continuous trajectory prediction, which is essential for realistic navigation in high-fidelity environments. 
+
+Visual Encoding and Token Compression. The model processes a sequence of egocentric RGB frames and anavigation instruction to enable effective multi-modal inference. Each frame is first encoded by an EVA-CLIP[49] vision encoder, which divides it into 16 × 16 non-overlapping patches, producing 256 visual tokens. To ensure computational efficiency during long-horizon navigation, we adopt the online token merging technique from Uni-NaVid, which temporally organizes visual tokens into three categories: current tokens from the most recent frame with the highest spatial resolution, short-term tokens from the past 64 frames with grid pooling, and long-term tokens from earlier frames with aggressively pooling and token merging based on a cosine similarity threshold. These compressed visual tokens are then projected into the language embedding space via a Cross-Modality Projector (2-layer MLP) to match the latent space of the Vicuna-7B LLM[50]. The navigation instruction is tokenized and embedded using the same LLM. Finally, the visual and language tokens are concatenated into a unified input sequence: {Long term tokens }{Short term tokens } { Current tokens } <NAV> 
+
+{Instruction } , allowing the LLM to jointly attend to both visual observations and instructions. 
+
+Modified Output Representation. Unlike the original Uni-NaVid design, which outputs discrete action tokens, inspired by [51], we reformulate the prediction target to suit continuous trajectory planning. Specifically, the LLM performs only a single autoregressive step, and we extract the hidden state from its final layer as the condition, which is subsequently passed through an MLP-based action head to predict the agent’s future trajectory in the form: (x, y, θ ) ∈
+
+R3, where (x, y ) and θ denote the agent’s position and yaw angle in its current coordinate frame, respectively. Compared to the discrete action space used in Uni-NaVid, our contin-uous trajectory output enables smoother and more realistic motion, better aligning with the requirements of large-scale real-world or simulated environments, where discretization may lead to unnatural movements or overshooting. 
+
+B. Data Collection 
+
+We collect a diverse set of 4,500 navigation trajectories within the NavGSim simulator. Each trajectory starts from a randomly sampled navigable position and heads toward a semantically meaningful goal, ensuring broad coverage of spatial configurations and behaviors. 
+
+Targets Annotation. Within the reconstructed environ-ment, we manually annotate 9 semantic landmarks ( e. g. ,6K images   
+
+> 691. 8square meters
+> Scene Top View
+> Real -world images
+> Hierarchical 3D Gaussian Splatting Rendering images (Ours)
+
+Fig. 5: Visualisation of reconstructed Gaussian Splatting and rendering examples. (Left) We illustrate the process of subdividing the scene into spatial chunks using H3DGS for efficient reconstruction. (Right) We compare rendering results of NavGsim with real-world image at seven distinct viewpoints (A-F). elevator, television, meeting room, etc.) as navigation goals. For each goal, we collect 200 expert trajectories generated by a shortest-path planner. Each trajectory starts from a randomly sampled position and rotation and ends at the selected specified landmark, ensuring a wide variety of spatial configurations and path topologies. To address the compounding error problem in policy inference, we employ the DAgger algorithm [52] to iteratively augment the dataset. In each round of DAgger, the agent navigates using its own policy, while an expert policy provides supervision at each step. In this work, we conduct two rounds of DAgger, collect-ing 150 additional trajectories per landmark in each round, resulting in a total of 2,700 trajectories. This significantly enhances the robustness and diversity of the training dataset. 
+
+Imitation Data Collection . Initially, the dataset is con-structed using trajectories generated by a shortest-path plan-ner operating under idealized simulation conditions. Al-though this supervised data helps the model learn fun-damental navigation priors, we observe a significant drop in performance during inference. Specifically, the model tends to accumulate small prediction errors over time, which eventually lead to navigation failure—particularly in long-horizon tasks or cluttered environments. 
+
+Dagger Data Collection . To address this issue, we in-corporate Dataset Aggregation (DAgger)[52], a technique that iteratively refines the model by collecting data under its own policy. During rollout, the agent executes its predicted actions, and trajectory collection is terminated under one of the following conditions: (1) the agent collides with the envi-ronment for n consecutive steps (we set n=8); (2) the number of inference steps exceeds a predefined budget; (3) the agent successfully reaches the goal. For each collected trajectory, the expert policy is queried to provide corrective supervision when the agent’s behavior diverges. This enables the model to learn from its own failure cases, improving robustness in out-of-distribution states and enhancing recovery capabilities. Together, these strategies yield a training corpus that combines expert planning, DAgger-augmented behavior, and multi-modal supervision. This hybrid approach equips the VLA model with both accurate motion prediction and high-level scene comprehension, enabling reliable long-horizon navigation in complex environments. V. E XPERIMENTS 
+
+We evaluate the effectiveness of NavGSim in both sim-ulation and real-world environments through comprehensive experiments. Our goal is to validate whether the trained VLA model can generalize to novel start positions, maintain high success rates during long-horizon navigation, and transfer its policy effectively from simulation to the real world. 
+
+A. Experimental Setup 
+
+Gaussian Splatting Scene Construction. To evaluate NavGSim, we constructed a realistic large-scale indoor sim-ulation environment of an office factory, covering approxi-mately 700 m 2. We used a handheld LiDAR-RGB camera device to perform a walk-through scan of the entire scene, capturing multi-view images and LiDAR point clouds along natural human trajectories. These data were then processed using our H3DGS pipeline to reconstruct a photorealistic 3D environment. 
+
+Training Details of VLA. We train the VLA model using a combination of supervised learning and DAgger-augmented imitation data, as described in Sec. IV-B. To further improve generalization, we also incorporate video question-answering (VQA) data from publicly available datasets[53], [54], [55] into the training process. During training, the vision encoder (EVA-CLIP [49]) is frozen to preserve its pre-trained visual features, while the large language model (Vicuna-7B [50]) is fully fine-tuned along with the cross-modal projection layers and the trajectory regression head. Training is conducted on a cluster of 16 NVIDIA H800 GPUs for 20 hours, totaling 320 GPU-hours. Find the 
+
+> television
+> Find the
+> elevator
+> Find the
+> sofa
+
+Fig. 6: Visualization of real-world results. Visualization First-person perspective display of real-world testing. 
+
+Real-World Deployment and Evaluation. We deploy our NavGSim-trained VLA agent on a Unitree Go2 quadruped robot in office environments, using a front-facing RGB camera to stream egocentric vision via WebSocket to an NVIDIA A100 server. The purely simulated-trained model fuses real-time visual data with language instructions to generate navigation waypoints, achieving 8 Hz closed-loop control through the robot’s onboard planner (Unitree exten-sion dock). This modular architecture decouples semantic planning from low-level execution while maintaining respon-siveness, with physical deployment demonstrations captured in Fig. 6. 
+
+Metrics. During evaluation, we randomly sample initial positions and orientations and measure the success rate of navigation to the 9 annotated landmarks and two unannotated novel objects. A trajectory is considered successful if the agent stops within 1.5 meters of the target. We use two metrics: Success Rate (SR) and Distance to Goal (DTG). 
+
+B. Performance Analysis NVIDIA A100  
+
+> Trajectories
+> Observations
+> Pocket Wi -Fi Real Scene
+> Docking Station
+
+Fig. 7: Real machine deployment architecture The agent interacts with the server via the Internet. 
+
+Performance on simulator and real-world environ-ments. . We evaluate the navigation performance of the NavGSim-trained VLA model across both simulated and real-world environments. Table I summarizes the naviga-tion success rates and stop distances across seen and un-seen targets in the simulation environment. The model demonstrates strong performance on seen landmarks such as Television (100.0%) and Laboratory (100.0%), achieving precise and efficient trajectories as indicated by low stop distances. Furthermore, it generalizes effectively to unseen targets, with success rates of 78.3% on Table and 83.3% on Sofa , suggesting robust spatial understanding and goal generalization beyond the training distribution. In real-world deployment, despite the presence of sensor noise and domain discrepancies, the trained model maintains high success rates on key targets, demonstrating the model’s ability to transfer navigation skills learned in simulation to physical environments. See the Supplemental Material for the results video. 
+
+Comparison of rendering quality . Moreover, we com-pare the training performance in a simulator built on original 3DGS. As shown in Table II, the rendering quality of the original 3DGS simulator is lower than that built by H3DGS. Although the model performs reasonably well in simulation, its low-quality rendering results in a significant performance gap when transferred to the real world, resulting a sharp decrease (81% ↓) in real-world performance. These results confirm the practical feasibility of sim-to-real transfer enabled by the NavGSim framework. 
+
+Influence of training strategy . We compared the pro-gression of the success rate in different training stages for models trained with and without pre-training, as shown in Figure 8. The model utilizing pretraining shows significantly accelerated learning and higher final success rates, achieving over 90% success after two rounds of DAgger. In contrast, models trained from scratch exhibit slower improvement and plateau at substantially lower performance levels. This com-parison highlights the critical role of pretraining in improving data efficiency, reducing compounding errors, and enabling more effective long-term navigation policy learning.The pre-trained models leverage previously learned features, allowing them to make faster adjustments and achieve a higher success rate much earlier in the training process. Target Category Target H3DGS / 3DGS                                                         
+
+> Sim SR(%) ↑Sim DTG(m) ↓Real SR(%) ↑
+> Annotated Targets
+> Pantry 96.7 / 83.3 0.61 / 1.75 66.7 / 0.00
+> Elevator 98.3 / 83.3 0.58 / 2.73 71.4 / 16.7
+> Restroom 96.7 / 86.1 1.77 / 2.10 73.3 / 23.1
+> Television 100 / 91.6 0.39 / 1.28 73.3 / 18.1
+> Laboratory 100 / 83.3 0.30 / 1.64 75.0 / 18.1
+> Meeting Room I100 / 80.6 0.88 / 2.62 80.0 / 23.1
+> Meeting Room II 100 / 77.8 0.50 / 3.82 63.0 / 15.4
+> Reception Room 98.3 / 72.2 1.21 / 4.29 63.3 / 9.10
+> Water Dispenser 95.0 / 69.4 1.92 / 5.42 57.1 / 0.00
+> Avg 98.3 / 80.8 0.91 / 2.85 69.2 / 13.7 Novel Targets
+> Table 78.3 / 52.8 3.91 / 7.62 68.8 / 16.7
+> Sofa 83.3 / 55.6 2.56 / 6.97 70.4 / 0.00
+> Avg 80.8 / 54.2 3.23 / 7.29 69.6 / 8.35
+
+TABLE I: Comparison of different rendering techniques . We report navigation performance across seen and unseen targets in the simulator and real-world environments.          
+
+> Method PSNR ↑LPIPS ↓SSIM ↑
+> H3DGS 25.396 0.274 0.866 3DGS [12] 23.221 0.426 0.789
+
+TABLE II: Comparison on different methods 
+
+Fig. 8: Performance on NavGSim with different training strategy . Success rate comparison with and without pretrain-ing across different training stages. VI. C ONCLUSIONS 
+
+In this work, we present NavGSim, a simulator based on Hierarchical Gaussian Splatting for high-fidelity, large-scale navigation. Compared to traditional mesh-based simulators, NavGSim achieves photorealistic rendering and precise colli-sion modeling via the proposed GS-Slice technique. We inte-grate NavGSim into a real2sim2real navigation pipeline, con-structing large-scale environments and adopting an adapted Uni-NaVid architecture with continuous pose regression. Ex-periments in both simulation and real-world settings demon-strate improved scene understanding for VLA models and effective sim-to-real transfer. By bridging high-quality scene reconstruction and embodied learning, NavGSim enables scalable and generalizable robot navigation. VII. L IMITATIONS 
+
+Despite its strengths, NavGSim still has several limita-tions. First, the hierarchical Gaussian plating pre-processing pipeline is time-consuming, especially for large-scale scenes, which limits the system’s flexibility in rapidly iterating over new environments. Second, the current simulator design does not support dynamic editing, such as interactively adding or removing objects after reconstruction. This constraint makes it less suitable for tasks requiring frequent scene modifica-tions or procedural generation. Addressing these limitations is crucial for enabling broader applicability in real-world robotics and simulation-intensive research workflows. Future work will explore faster scene reconstruction pipelines, dy-namic environment modeling, and more lightweight sim2real adaptation strategies to further improve scalability and prac-ticality. VIII. A PPENDIX 
+
+A. Stop indication. 
+
+In our approach, we output continuous trajectories, which, compared to discrete trajectories, provide smoother paths. However, a significant issue arises: we cannot explicitly instruct the model to output a ”stop” command. Therefore, an important challenge is how to gradually decelerate the model as it approaches the destination. To address this, we designed a velocity modulation model. When the agent enters a radius of 2 meters from the target, its speed gradually decreases until it reaches a stop within 10 centimeters of the target, as shown in Figure 9. During testing, if the agent’s velocity drops to 0.1 m/s, we consider this as the ”stop” point and halt the agent at that position. 
+
+B. Trajectory length. 
+
+When generating training trajectories, we randomly sam-ple starting points uniformly throughout the environment. Due to the diverse spatial distribution of target locations, the resulting trajectories naturally vary in length. Detailed statistics are presented in Table III. 0 0.1 0.5 1.0 1.5 2.0 2.0 
+
+> Distance to Target (m)
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> Velocity (m/s)
+> Speed Profile
+> Activation (0.1m)
+> Saturation (2.0m)
+> Max speed (0.5 m/s)
+
+Fig. 9: Robot Velocity vs Target Distance 
+
+C. Detailed derivation of Gaussian Slicing. 
+
+In this section, we provide the details about slicing the 2D Gaussian to obtain the slice at a given height z. The 2D Gaussian is sliced by intersecting it with a plane at height z,and we calculate the 2D center position and 2D covariance after being intercepted by the z-plane. First, we have the 3D covariance matrix represented by 
+
+Σ3D and the rotation R3D .
+
+Σ3D = R3D S3D ST 
+
+> 3D
+
+RT
+
+> 3D
+
+Σ−13D = R3D S−13D (S−13D )T RT
+
+> 3D
+
+Then we obtain the inverse of the 3D covariance matrix 
+
+Σ−13D , expressed as: 
+
+Σ−13D =
+
+cxx cxy cxz 
+
+cxy cyy cyz 
+
+cxz cyz czz 
+
+
+
+Since a 3D Gaussian can be expressed as: 
+
+G3D(x) = e− 12 x′T Σ−13D x = e− 12 B
+
+where x′ = x − (μx, μ y , μ z ). We get the following: 
+
+B = x′2cxx +y′2cyy +z′2czz +2 x′y′cxy +2 x′z′cxz +2 y′z′cyz 
+
+Then, solving for the 2D Gaussian slice at height z, we set: 
+
+B = cxx (x′ + αz ′)2
+
++ cyy (y′ + βz ′)2 + 2 cxy (x′ + αz ′)( y′ + βy ′)+  czz − cxx α2 − cyy β2 − 2cxy αβ z′2
+
+After that we get the equation: 
+
+αc xx + βc xy = cxz 
+
+αc xy + βc yy = cyz 
+
+After solving α, β , we obtain the position of 2D gaussian sliced at z:
+
+μx(z) = μx − α(z − μz )
+
+μy (z) = μy − β(z − μz )
+
+TABLE III: Average trajectory lengths for different tar-get categories. We report the average navigation trajectory length (in meters) across different indoor target locations. 
+
+Category Avg. Trajectory Length (m) 
+
+Pantry 19.89 
+
+Elevator 26.06 
+
+Restroom 24.29 
+
+Television 18.29 
+
+Laboratory 16.80 
+
+Meeting Room I 19.43 
+
+Meeting Room II 18.41 
+
+Reception Room 26.14 
+
+Water Dispenser 30.98 
+
+Overall Avg. 22.26 
+
+Finnally, the resulting 2D Gaussian slice equation can be written as: 
+
+G2D (x, z ) = e− 12 λ(z−μz )2
+
+e[x−μ(z)] T Σ−12D [x−μ(z)] 
+
+where: 
+
+Σ−12D =
+
+cxx cxy 
+
+cxy cyy 
+
+
+
+μ(z) = ( μx, μ y )T − (z − μz )
+
+αβ
+
+
+
+λ = czz − α2cxx − β2cyy − 2αβc xy 
+
+D. Real Word Deployment. 
+
+In figure 7, we present the complete robot hardware platform, which consists of the Unitree Go2 quadruped robot, equipped with an Intel RealSense D455 camera, portable Wi-Fi and a docking station. Due to computational con-straints, our model is deployed on a remote NVIDIA A100 server. During the test, images captured from the first-person perspective by RealScene are transmitted through portable Wi-Fi through the internet to establish communication with the server. These images are fed as input to the model, which returns the trajectory coordinates (x, y, θ). Finally, the trajectory data are converted into robot control signals through a local planning algorithm deployed at the docking station. In addition, to ensure safety during the experiment, we utilize radar data to avoid obstacles. REFERENCES [1] B. D. Argall, S. Chernova, M. Veloso, and B. Browning, “A survey of robot learning from demonstration,” Robotics and autonomous systems , vol. 57, no. 5, pp. 469–483, 2009. [2] A. A. Rusu, M. Veˇ cer´ ık, T. Roth¨ orl, N. Heess, R. Pascanu, and R. Hadsell, “Sim-to-real robot learning from pixels with progressive nets,” in Conference on robot learning . PMLR, 2017, pp. 262–270. [3] G. B. Margolis, G. Yang, K. Paigwar, T. Chen, and P. Agrawal, “Rapid locomotion via reinforcement learning,” The International Journal of Robotics Research , vol. 43, no. 4, pp. 572–587, 2024. [4] Y. Yang, T. Zhang, E. Coumans, J. Tan, and B. Boots, “Fast and efficient locomotion via learned gait transitions,” in Conference on Robot Learning . PMLR, 2022, pp. 773–783. [5] O. Kroemer, S. Niekum, and G. Konidaris, “A review of robot learning for manipulation: Challenges, representations, and algorithms,” Jour-nal of machine learning research , vol. 22, no. 30, pp. 1–82, 2021. [6] R. Liu, F. Nageotte, P. Zanne, M. de Mathelin, and B. Dresp-Langley, “Deep reinforcement learning for the control of robotic manipulation: a focussed mini-review,” Robotics , vol. 10, no. 1, p. 22, 2021. [7] L. Shao, T. Migimatsu, Q. Zhang, K. Yang, and J. Bohg, “Con-cept2robot: Learning manipulation concepts from instructions and hu-man demonstrations,” The International Journal of Robotics Research ,vol. 40, no. 12-14, pp. 1419–1434, 2021. [8] X. Xiao, B. Liu, G. Warnell, and P. Stone, “Motion planning and control for mobile robot navigation using machine learning: a survey,” 
+
+Autonomous Robots , vol. 46, no. 5, pp. 569–597, 2022. [9] K. Zhu and T. Zhang, “Deep reinforcement learning based mo-bile robot navigation: A review,” Tsinghua Science and Technology ,vol. 26, no. 5, pp. 674–691, 2021. [10] M. Savva, A. Kadian, O. Maksymets, Y. Zhao, E. Wijmans, B. Jain, J. Straub, J. Liu, V. Koltun, J. Malik et al. , “Habitat: A platform for embodied ai research,” in Proceedings of the IEEE/CVF international conference on computer vision , 2019, pp. 9339–9347. [11] E. Kolve, R. Mottaghi, W. Han, E. VanderBilt, L. Weihs, A. Herrasti, M. Deitke, K. Ehsani, D. Gordon, Y. Zhu et al. , “Ai2-thor: An interac-tive 3d environment for visual ai,” arXiv preprint arXiv:1712.05474 ,2017. [12] B. Kerbl, G. Kopanas, T. Leimk¨ uhler, and G. Drettakis, “3d gaussian splatting for real-time radiance field rendering.” ACM Trans. Graph. ,vol. 42, no. 4, pp. 139–1, 2023. [13] H. He, Y. Ma, W. Wu, and B. Zhou, “From seeing to experiencing: Scaling navigation foundation models with reinforcement learning,” 
+
+arXiv preprint arXiv:2507.22028 , 2025. [14] Y. Deng, S. Yuan, G. C. R. Bethala, A. Tzes, Y.-S. Liu, and Y. Fang, “Hierarchical scoring with 3d gaussian splatting for instance image-goal navigation,” arXiv preprint arXiv:2506.07338 , 2025. [15] D. Ong, Y. Tao, V. Murali, I. Spasojevic, V. Kumar, and P. Chaud-hari, “Gaussian splatting as a unified representation for autonomy in unstructured environments,” arXiv preprint arXiv:2505.11794 , 2025. [16] K. Honda, T. Ishita, Y. Yoshimura, and R. Yonetani, “Gsplatvnm: Point-of-view synthesis for visual navigation models using gaussian splatting,” arXiv preprint arXiv:2503.05152 , 2025. [17] D. Ong, Y. Tao, V. Murali, I. Spasojevic, V. Kumar, and P. Chaud-hari, “Atlas navigator: Active task-driven language-embedded gaussian splatting,” arXiv preprint arXiv:2502.20386 , 2025. [18] V. Ress, J. Meyer, W. Zhang, D. Skuddis, U. Soergel, and N. Haala, “3d gaussian splatting aided localization for large and complex indoor-environments,” arXiv preprint arXiv:2502.13803 , 2025. [19] B. Kerbl, A. Meuleman, G. Kopanas, M. Wimmer, A. Lanvin, and G. Drettakis, “A hierarchical 3d gaussian representation for real-time rendering of very large datasets,” ACM Transactions on Graphics (TOG) , vol. 43, no. 4, pp. 1–15, 2024. [20] J. Zhang, K. Wang, S. Wang, M. Li, H. Liu, S. Wei, Z. Wang, Z. Zhang, and H. Wang, “Uni-navid: A video-based vision-language-action model for unifying embodied navigation tasks,” arXiv preprint arXiv:2412.06224 , 2024. [21] N. Koenig and A. Howard, “Design and use paradigms for gazebo, an open-source multi-robot simulator,” in 2004 IEEE/RSJ international conference on intelligent robots and systems (IROS)(IEEE Cat. No. 04CH37566) , vol. 3. Ieee, 2004, pp. 2149–2154. [22] C. Beattie, J. Z. Leibo, D. Teplyashin, T. Ward, M. Wainwright, H. K¨ uttler, A. Lefrancq, S. Green, V. Vald´ es, A. Sadik et al. ,“Deepmind lab,” arXiv preprint arXiv:1612.03801 , 2016. [23] C. Yan, D. Misra, A. Bennnett, A. Walsman, Y. Bisk, and Y. Artzi, “Chalet: Cornell house agent learning environment,” arXiv preprint arXiv:1801.07357 , 2018. [24] X. Puig, K. Ra, M. Boben, J. Li, T. Wang, S. Fidler, and A. Tor-ralba, “Virtualhome: Simulating household activities via programs,” in 
+
+Proceedings of the IEEE conference on computer vision and pattern recognition , 2018, pp. 8494–8502. [25] X. Gao, R. Gong, T. Shu, X. Xie, S. Wang, and S.-C. Zhu, “Vrkitchen: an interactive 3d virtual environment for task-oriented learning,” arXiv preprint arXiv:1903.05757 , 2019. [26] F. Xiang, Y. Qin, K. Mo, Y. Xia, H. Zhu, F. Liu, M. Liu, H. Jiang, Y. Yuan, H. Wang et al. , “Sapien: A simulated part-based interactive environment,” in Proceedings of the IEEE/CVF conference on com-puter vision and pattern recognition , 2020, pp. 11 097–11 107. [27] C. Gan, J. Schwartz, S. Alter, D. Mrowca, M. Schrimpf, J. Traer, J. De Freitas, J. Kubilius, A. Bhandwaldar, N. Haber et al. , “Three-dworld: A platform for interactive multi-modal physical simulation,” 
+
+arXiv preprint arXiv:2007.04954 , 2020. [28] P. Anderson, Q. Wu, D. Teney, J. Bruce, M. Johnson, N. S¨ underhauf, I. Reid, S. Gould, and A. Van Den Hengel, “Vision-and-language nav-igation: Interpreting visually-grounded navigation instructions in real environments,” in Proceedings of the IEEE conference on computer vision and pattern recognition , 2018, pp. 3674–3683. [29] J. Krantz, E. Wijmans, A. Majumdar, D. Batra, and S. Lee, “Beyond the nav-graph: Vision-and-language navigation in continuous environ-ments,” in Computer Vision–ECCV 2020: 16th European Conference, Glasgow, UK, August 23–28, 2020, Proceedings, Part XXVIII 16 .Springer, 2020, pp. 104–120. [30] D. S. Chaplot, D. P. Gandhi, A. Gupta, and R. R. Salakhutdinov, “Object goal navigation using goal-oriented semantic exploration,” 
+
+Advances in Neural Information Processing Systems , vol. 33, pp. 4247–4258, 2020. [31] A. Majumdar, G. Aggarwal, B. Devnani, J. Hoffman, and D. Batra, “Zson: Zero-shot object-goal navigation using multimodal goal embed-dings,” Advances in Neural Information Processing Systems , vol. 35, pp. 32 340–32 352, 2022. [32] A. Das, S. Datta, G. Gkioxari, S. Lee, D. Parikh, and D. Batra, “Em-bodied question answering,” in Proceedings of the IEEE conference on computer vision and pattern recognition , 2018, pp. 1–10. [33] A. Majumdar, A. Ajay, X. Zhang, P. Putta, S. Yenamandra, M. Henaff, S. Silwal, P. Mcvay, O. Maksymets, S. Arnaud et al. , “Openeqa: Embodied question answering in the era of foundation models,” in 
+
+Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2024, pp. 16 488–16 498. [34] H. Delingette, “General object reconstruction based on simplex meshes,” International journal of computer vision , vol. 32, pp. 111– 146, 1999. [35] D. Terzopoulos and M. Vasilescu, “Sampling and reconstruction with adaptive meshes.” in CVPR , vol. 91, 1991, pp. 70–75. [36] S. K. Ramakrishnan, A. Gokaslan, E. Wijmans, O. Maksymets, A. Clegg, J. Turner, E. Undersander, W. Galuba, A. Westbury, A. X. Chang et al. , “Habitat-matterport 3d dataset (hm3d): 1000 large-scale 3d environments for embodied ai,” arXiv preprint arXiv:2109.08238 ,2021. [37] A. Chang, A. Dai, T. Funkhouser, M. Halber, M. Niessner, M. Savva, S. Song, A. Zeng, and Y. Zhang, “Matterport3d: Learning from rgb-d data in indoor environments,” arXiv preprint arXiv:1709.06158 , 2017. [38] F. Xia, A. R. Zamir, Z. He, A. Sax, J. Malik, and S. Savarese, “Gibson env: Real-world perception for embodied agents,” in Proceedings of the IEEE conference on computer vision and pattern recognition ,2018, pp. 9068–9079. [39] E. H. T. Collaboration et al. , “Repair of groin hernia with syn-thetic mesh: meta-analysis of randomized controlled trials,” Annals of surgery , vol. 235, no. 3, pp. 322–332, 2002. [40] B. Mildenhall, P. P. Srinivasan, M. Tancik, J. T. Barron, R. Ramamoor-thi, and R. Ng, “Nerf: Representing scenes as neural radiance fields for view synthesis,” Communications of the ACM , vol. 65, no. 1, pp. 99–106, 2021. [41] D. Hahn, P. Banzet, J. M. Bern, and S. Coros, “Real2sim: Visco-elastic parameter estimation from dynamic motion,” ACM Transactions on Graphics (TOG) , vol. 38, no. 6, pp. 1–13, 2019. [42] D. Robinson, F. Haldi, P. Leroux, D. Perez, A. Rasheed, and U. Wilke, “Citysim: Comprehensive micro-simulation of resource flows for sus-tainable urban planning,” in Proceedings of the Eleventh International IBPSA Conference , 2009, pp. 1083–1090. [43] X. Ren, Y. Lu, H. Liang, Z. Wu, H. Ling, M. Chen, S. Fidler, F. Williams, and J. Huang, “Scube: Instant large-scale scene recon-struction using voxsplats,” arXiv preprint arXiv:2410.20030 , 2024. [44] Y. Liu, C. Luo, L. Fan, N. Wang, J. Peng, and Z. Zhang, “Citygaussian: Real-time high-quality large-scale scene rendering with gaussians,” in 
+
+European Conference on Computer Vision . Springer, 2024, pp. 265– 282. [45] Y. Liu, C. Luo, Z. Mao, J. Peng, and Z. Zhang, “Citygaussianv2: Efficient and geometrically accurate reconstruction for large-scale scenes,” arXiv preprint arXiv:2411.00771 , 2024. [46] J. Guo, S. Yang, Y. Huang, Y. Long, X. Xia, X. Su, B. Zhao, Z. Xie, and L. Nie, “Utilgen: Utility-centric generative data augmentation with dual-level task adaptation,” arXiv preprint arXiv:2510.24262 , 2025. [47] Y. Duan, F. Wei, Q. Dai, Y. He, W. Chen, and B. Chen, “4d-rotor gaussian splatting: towards efficient novel view synthesis for dynamic scenes,” in ACM SIGGRAPH 2024 Conference Papers , 2024, pp. 1–11. [48] J. Zhang, K. Wang, R. Xu, G. Zhou, Y. Hong, X. Fang, Q. Wu, Z. Zhang, and H. Wang, “Navid: Video-based vlm plans the next step for vision-and-language navigation,” arXiv preprint arXiv:2402.15852 ,2024. [49] Q. Sun, J. Wang, Q. Yu, Y. Cui, F. Zhang, X. Zhang, and X. Wang, “Eva-clip-18b: Scaling clip to 18 billion parameters,” arXiv preprint arXiv:2402.04252 , 2024. [50] W.-L. Chiang, Z. Li, Z. Lin, Y. Sheng, Z. Wu, H. Zhang, L. Zheng, S. Zhuang, Y. Zhuang, J. E. Gonzalez et al. , “Vicuna: An open-source chatbot impressing gpt-4 with 90%* chatgpt quality,” See https://vicuna. lmsys. org (accessed 14 April 2023) , vol. 2, no. 3, p. 6, 2023. [51] D. Shah, A. Sridhar, A. Bhorkar, N. Hirose, and S. Levine, “Gnm: A general navigation model to drive any robot,” in 2023 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2023, pp. 7226–7233. [52] S. Ross, G. Gordon, and D. Bagnell, “A reduction of imitation learning and structured prediction to no-regret online learning,” in Proceedings of the fourteenth international conference on artificial intelligence and statistics . JMLR Workshop and Conference Proceedings, 2011, pp. 627–635. [53] D. Azuma, T. Miyanishi, S. Kurita, and M. Kawanabe, “Scanqa: 3d question answering for spatial scene understanding,” in proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,2022, pp. 19 129–19 139. [54] T.-S. Chen, A. Siarohin, W. Menapace, E. Deyneka, H.-w. Chao, B. E. Jeon, Y. Fang, H.-Y. Lee, J. Ren, M.-H. Yang et al. , “Panda-70m: Captioning 70m videos with multiple cross-modality teachers,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2024, pp. 13 320–13 331. [55] Y. Li, C. Wang, and J. Jia, “Llama-vid: An image is worth 2 tokens in large language models,” in European Conference on Computer Vision .Springer, 2024, pp. 323–340.
