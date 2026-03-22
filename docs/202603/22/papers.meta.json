@@ -1,0 +1,37 @@
+{
+  "label": "2026-03-22",
+  "date": "2026-03-22",
+  "generated_at": "2026-03-22T19:51:30",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202603/22/2603.16404v1-near-light-photometric-stereo-with-symmetric-lights",
+      "section": "quick",
+      "title_en": "Near-light Photometric Stereo with Symmetric Lights",
+      "authors": "Lilika Makabe, Heng Guo, Hiroaki Santo, Fumio Okura, Yasuyuki Matsushita",
+      "date": "2026-03-17",
+      "pdf": "https://arxiv.org/pdf/2603.16404v1",
+      "score": "7.0",
+      "evidence": "用于表面法线和深度恢复的逆向渲染",
+      "tldr": "本研究针对近场光度立体视觉中非凸优化和初始化依赖的问题，提出了一种利用对称光源布局的线性求解方法。通过布置多组对称的近场光源对，该方法推导出了表面法线和深度的闭式解，无需预先初始化。此外，即使在空间偏移未校准的情况下，只要光源相对于任意点对称分布，该方法依然有效。实验证明，该方法在保持高精度形状恢复的同时，显著降低了对深度初始化和光源校准的要求。",
+      "tags": "query:3dgsir",
+      "abstract_en": "This paper describes a linear solution method for near-light photometric stereo by exploiting symmetric light source arrangements. Unlike conventional non-convex optimization approaches, by arranging multiple sets of symmetric nearby light source pairs, our method derives a closed-form solution for surface normal and depth without requiring initialization. In addition, our method works as long as the light sources are symmetrically distributed about an arbitrary point even when the entire spatial offset is uncalibrated. Experiments showcase the accuracy of shape recovery accuracy of our method, achieving comparable results to the state-of-the-art calibrated near-light photometric stereo method while significantly reducing requirements of careful depth initialization and light calibration.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202603/22/2603.16566v1-videomatgen-pbr-materials-through-joint-generative-modeling",
+      "section": "quick",
+      "title_en": "VideoMatGen: PBR Materials through Joint Generative Modeling",
+      "authors": "Jon Hasselgren, Zheng Zeng, Milos Hasan, Jacob Munkberg",
+      "date": "2026-03-17",
+      "pdf": "https://arxiv.org/pdf/2603.16566v1",
+      "score": "6.0",
+      "evidence": "为3D形状生成基于物理的材质",
+      "tldr": "VideoMatGen 是一种基于视频扩散 Transformer 的 3D 形状 PBR 材质生成方法。它通过文本和几何信息引导，利用自定义 VAE 将多种材质属性（颜色、粗糙度、金属度、高度图）编码至统一潜空间，实现了物理一致的多模态材质联合建模。该方法能为 3D 模型生成高质量、可直接用于创作工具的材质，显著提升了 3D 内容创作的效率与质量。",
+      "tags": "query:3dgsir",
+      "abstract_en": "We present a method for generating physically-based materials for 3D shapes based on a video diffusion transformer architecture. Our method is conditioned on input geometry and a text description, and jointly models multiple material properties (base color, roughness, metallicity, height map) to form physically plausible materials. We further introduce a custom variational auto-encoder which encodes multiple material modalities into a compact latent space, which enables joint generation of multiple modalities without increasing the number of tokens. Our pipeline generates high-quality materials for 3D shapes given a text prompt, compatible with common content creation tools.",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

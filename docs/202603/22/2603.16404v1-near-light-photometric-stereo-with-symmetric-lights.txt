@@ -1,0 +1,997 @@
+Title: Near-light Photometric Stereo with Symmetric Lights
+
+URL Source: https://arxiv.org/pdf/2603.16404v1
+
+Published Time: Wed, 18 Mar 2026 01:15:12 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# Near-light Photometric Stereo with Symmetric Lights 
+
+Lilika Makabe, Student Member, IEEE, Heng Guo, Hiroaki Santo, Member, IEEE, 
+
+Fumio Okura, Member, IEEE, and Yasuyuki Matsushita, Senior Member, IEEE 
+
+Abstract —This paper describes a linear solution method for near-light photometric stereo by exploiting symmetric light source arrangements. Unlike conventional non-convex optimization approaches, by arranging multiple sets of symmetric nearby light source pairs, our method derives a closed-form solution for surface normal and depth without requiring initialization. In addition, our method works as long as the light sources are symmetrically distributed about an arbitrary point even when the entire spatial offset is uncalibrated. Experiments showcase the accuracy of shape recovery accuracy of our method, achieving comparable results to the state-of-the-art calibrated near-light photometric stereo method while significantly reducing requirements of careful depth initialization and light calibration. 
+
+Index Terms —Near-light photometric stereo, Linear solution, Symmetric light distribution, Uncalibrated near-light position 
+
+✦
+
+1 INTRODUCTION 
+
+# PHOTOMETRIC stereo aims to estimate surface normals from images captured under varying lighting conditions. Most conventional settings employ the distant light source assump-tion, where point light sources are infinitely far away. Under a Lambertian assumption, this simplification allows a linear image formation model, leading to a closed-form solution for surface normals given three or more images taken under different lighting conditions [1]. In practice, light sources are located near the target scene, and the distant light source assumption breaks down, resulting in a near-light photometric stereo problem. Near-light photometric stereo remains challenging due to the variation of incident light directions and light fall-off effect, both depending on the scene point location. Even with the Lambertian reflectance assumption, the problem becomes non-linear since the surface normals and surface point locations need to be jointly determined. Prior approaches to near-light photometric stereo rely on non-convex optimization due to the non-linear nature of the prob-lem [7], [8], [9], [10], [14], [16]. These methods commonly require the initial guess of the scene point locations or a depth map with a calibrated camera. While these methods yield plausible surface shape recovery, the result is naturally susceptible to the initial guess because of the non-convexity. Liu et al . [11] proposes a ring-light setting for near-light photometric stereo to obtain a reliable initial guess of the scene point locations. However, even with the improved initial guess, the issue of being affected by the initial guess still remains. Thus, it is wanted a stable near-light photometric stereo method that is unaffected by the initial guess. This paper shows that a symmetric configuration of nearby point light sources yields novel constraints for making the problem tractable. Specifically, by positioning light sources on a plane that is perpendicular to the optical axis of the camera and symmet-rically around an arbitrary central point on the plane, as shown in Fig. 1, we derive a set of linear constraints for determining 
+
+• L. Makabe, H. Guo, H. Santo, F. Okura, and Y. Matsushita are with Graduate School of Information Science and Technology, Osaka University, Japan. E-mail: {lilika.makabe, heng.guo, santo.hiroaki, okura, yasumat }@ist.osaka-u.ac.jp Light arrangement examples 
+
+Target surface 
+
+camera 
+
+Symmetric light pairs 
+
+…
+
+light 
+
+Fig. 1: Examples of light source arrangement for our method. At least three pairs of symmetric point light sources are arranged to the image plane with a shared center. Our near-light photometric stereo achieves global minima in shape recovery using the pro-posed symmetric near-light configuration. surface normals and scene point locations based on the differences of the symmetric image measurements. More specifically, we show that three pairs of symmetric point lights, with at least one pair having a different radius than others (example configurations shown in Fig. 1 bottom), yield the constraints that are useful for uniquely reaching the optimal solution. Together with a linear relaxation of light fall-off effects [12], we develop a linear solution method for surface normals, scene point locations, and surface albedos, which is free from the initial guess. In addition, with our method, the light sources are only required to be partially calibrated, i.e. , their absolute positions are unneeded, but only the ratios of radii of symmetric light source pairs and angles between them are assumed to be known while the offset from the camera’s 
+
+> arXiv:2603.16404v1 [cs.CV] 17 Mar 2026
+
+TABLE 1: Comparison of photometric stereo methods under Lambertian reflectance. Our method assumes a more practical light model, requires less light calibration effort, and provides convex and linear optimization to achieve the global optima of surface normal and depth.                                                   
+
+> Light model Method Light calibration Light arrangement Optimization Additional requirements Distant [1] Calibrated N.A Convex N.A [2] Partially calibrated Axis-aligned symmetric Convex Constant albedo [3], [4], [5] Partially calibrated Ring Convex Integrability [6] Uncalibrated N.A. Convex Integrability, diffuse maxima detection Near [7], [8], [9], [10] Calibrated N.A Non-convex Depth initialization [11] Calibrated Ring Non-convex Depth initialization [12] Calibrated N.A. Non-convex Relaxation of light fall-off [13] Uncalibrated N.A. Non-convex Depth initialization, normal integration [14] Uncalibrated N.A. Non-convex Data prior Ours Partially calibrated Symmetric pairs Convex/Closed-form Relaxation of light fall-off Universal [15] Uncalibrated N.A. Non-convex Data prior
+
+optical center can be unknown. One of our application scenarios is taking the devices from place to place for recovering different target surfaces, which requires frequent assembly and disassembly of the capture setup. Despite maintaining the relative position of lights, inevitable shifts in the absolute positions can occur, requiring careful light calibration. Our method bypasses the re-calibration step by using a symmetric light setup, which can be widely found in capture devices in previous works. To summarize, this paper contributes to near-light photometric stereo by introducing a linear closed-form solution method that achieves global minima in surface shape recovery under the light fall-off relaxation, utilizing symmetric point light pairs. Furthermore, our method reduces the calibration effort of near light position, as it only requires the radii ratios and angles of the symmetric light source pairs, rather than precise point light positions. 
+
+2 RELATED WORK 
+
+Our method is related to near-light Lambertian photometric stereo methods and also photometric stereo methods that exploit specific light arrangements. We provide a brief summary of related works in these two categories, as summarized in Table 1. For non-Lambertian photometric stereo methods, we recommend referring to recent surveys and benchmark evaluations, such as DiLi-GenT [17] and DiLiGenT 10 2 [18] for distant light configurations, and LUCES [19] for near-light configurations. 
+
+2.1 Near-light photometric stereo 
+
+Near-light photometric stereo has gained interest since Iwahori et al . [20] due to its practical and accurate modeling of nearby point lights compared to the conventional distant-light photometric stereo [1]. However, under a near-light condition, different surface points are illuminated by different light directions and attenua-tion ( i.e. , light fall-off) depending on the relative positions between point lights to the surface points, leading to a non-linear relation-ship between the image observations and the surface normals. Due to this non-linearity, the problem of near-light photometric stereo is inherently non-convex, and there is no closed-form solution. Under calibrated light settings, variational methods [7], [8], [9], [10] formulate the problem as non-linear PDEs based on image ratios (ratio of two images under different illuminations) and iteratively update depth and its partial derivatives. Alternative approaches involving optimization of surface normals and depth are widely applied in [21], [22], [23], [24], [25] as well as an uncalibrated near-light photometric stereo method [13]. Surface normals are first calculated from image observations with depth initialization, and depth is then recovered through normal integra-tion [26]. Due to the non-convex nature of near-light photometric stereo, these iterative optimization pipelines typically require a careful depth initialization. This depth initialization is also re-quired in the most recent learning-based near-light photometric stereo methods [14], [15], [27], [28] addressing non-Lambertian reflectance. To avoid depth initialization in non-convex optimization, Sakaue and Sato [12] introduce light fall-off relaxation and derive a linear solution for near-light photometric stereo. However, their method treats surface normal and depth as independent variables, leading to inconsistent normal and depth map estimates. Our method differs from previous non-convex and light calibration-reliant approaches, providing a linear solution for near-light pho-tometric stereo using partially-calibrated symmetric near lights and light fall-off relaxation [12]. Our approach ensures that the estimated surface normal and depth achieve global optima under light fall-off relaxation. 
+
+2.2 Photometric stereo with specific light arrangement 
+
+Reducing the effort of light calibration is highly desirable in photometric stereo. While existing uncalibrated photometric stereo methods, such as Favaro and Papadhimitri [6], do not require known light directions, they suffer from ambiguity in their esti-mation. As a result, additional constraints like surface integrability and detection of local diffuse reflectance maxima [6] are necessary to resolve the ambiguity. Few studies [14], [15] have explored uncalibrated photometric stereo under near-light settings. They adopt a learning-based approach, which eliminates the need for light source calibration. However, these methods require a large number of lights to obtain stable estimations. An alternative approach to minimizing geometric light calibra-tion effort is the utilization of specific light arrangements, which is referred to as “partially-calibrated” in Table 1. Under distant light setting, Zhou and Tan [3], adopt ring light to disambiguate the GBR ambiguity [29] in the normal estimates, where the light directions lie on a camera view-centered cone. Chandraker et al . [4] further extends the ring light setting to dif-ferential light and achieves surface normal estimation for surfaces with isotropic reflectances. Minami et al . [2] proposes to use a simplified version of the ring light, where four directional lights are fixed in vertical and horizontal symmetry ( i.e. , axis-aligned), 𝐱            
+
+> Light -to -surface
+> distance 𝑒 ∗
+> Light -to -surface distance 𝑒 ∗
+> Target surface
+> 𝐬 ∗
+> 3D position 𝐱
+> 𝐬 ∗
+> 3D position 𝐱
+> 𝐱
+> Estimated 𝑒 ∗
+> as radiu s
+> 𝑒 ∗∝𝐬 ∗−𝐱 2
+> 2
+
+Fig. 2: Overview of the proposed method. We consider the differences and summations of observations under the symmetric light pairs and construct a linear optimization system to estimate light-to-surface (scaled) distance e∗. From the scaled distance e∗,we compute the surface position (up to scale if radii are unknown) and normal. which is a special case of the symmetric light arrangement. The observations obtained under symmetric lights provide azimuth angles of surface normals without assuming a given radius for the lights. To uniquely determine the full surface normal, their approach requires at least two scene points with constant albedo. Few methods explore light arrangement in near-light photo-metric stereo. Liu et al . [11] utilize a ring point light configuration to obtain a reasonable depth initialization for their non-linear photometric stereo optimization; however, light calibration for these ring point lights remains necessary. Our approach intro-duces a symmetric near-light arrangement, offering more flexible configurations, as shown in Fig. 1, compared to the distant and axis-aligned symmetric light arrangement [2]. By employing the proposed symmetric light pairs, we not only eliminate the need for geometric light calibration but also enable the resolution of near-light photometric stereo using linear and convex optimization. 
+
+3 PROBLEM STATEMENT 
+
+We start by presenting the image formation model under a near-light setting. We then outline our approach for estimating the scene shape and albedos using the proposed symmetric near point light pairs. Assuming Lambertian reflectance and the equal light radiance for all the lights, the intensity measurement m ∈ R+ of a surface point x ∈ R3 illuminated by a point light source can be described as: 
+
+m = ρ 1
+
+∥s − x∥22
+
+(s − x)T n
+
+∥s − x∥2
+
+, (1) where ρ ∈ R+ is the albedo of the surface point, which is scaled by the strength of the light source, s ∈ R3 is the point light source position, and n ∈ S2 ⊂ R3 is a surface normal. The factor 1
+
+> ∥s−x∥22
+
+represents the light fall-off effect proportional to the squared distance from light source s to surface point x. For the simplicity of notations, we define d ≜ ∥s − x∥2 and e ≜ ρ−1d3.The Eq. (1) can be rewritten as 
+
+em = ( s − x)T n. (2) The scalar e can be interpreted as a light-to-surface distance scaled by the albedo and light fall-off, and we hereafter call it a scaled distance. Given the measurements {m} under a set of point light sources {s}, our goal is to determine the surface normal n, surface point x, and albedo ρ at each surface point. 
+
+4 PROPOSED METHOD 
+
+As shown in Fig. 2, instead of directly solving for all the unknowns, our strategy is to first determine the scaled distance 
+
+e by exploiting the constraints derived by our symmetric light configuration. Once the scaled distance e is obtained in a per-pixel manner, we can then solve for surface normal n and surface point 
+
+x, and albedo ρ up to scale. In the following, we first introduce the linear constraint derived from the symmetric light arrangement, then discuss the surface normal and depth estimation. 
+
+4.1 Symmetric-light constraints 
+
+As illustrated in Fig. 3, we have a pair of origin symmetric point lights whose 3D coordinates, sθr+ and sθr−, are: 
+
+(sθr+ = [+ r sin θ, +r cos θ, 0] T + so
+
+sθr− = [ −r sin θ, −r cos θ, 0] T + so
+
+, (3) in which r ∈ R+ is the radius of the symmetric lights, 
+
+so = [ sx, s y , s z ]T is the offset of the set of symmetric lights. Hereafter, we call this origin-symmetric light pair parameterized by the same radius and angle as the symmetric pair. The observations under the symmetric pair of lights can be written using Eq. (2) as: 
+
+(
+
+eθr+mθr+ =  sθr+ − xT n
+
+eθr−mθr− =  sθr− − xT n ,𝐱 
+
+Target surface 
+
+𝐬 𝛼𝑟 −
+
+> 𝜃
+
+𝐬 𝑜  𝑥 
+
+𝑦 
+
+𝐬 𝛼𝑟 +
+
+> 𝜃
+
+𝜃 
+
+> ×
+
+𝛼 𝑟 
+
+𝑟 
+
+Fig. 3: Light coordinate system. where surface normal 
+
+n = [ nx, n y , n z ]T, surface position x = [x, y, z ]T,and scaled distances e∗
+
+are unknown. In a similar manner to [2], we consider the difference of observations under symmetric pair and construct equations for unknown scaled distances 
+
+e∗. First, we consider the difference of observations under one pair to obtain the following equation: 
+
+eθr+mθr+ − eθr−mθr− =
+
+
+
+sθr+ − sθr−
+
+T
+
+n = 2 
+
+
+
+sθr+ − so
+
+T
+
+n.
+
+(4) 𝐬 ௥ା 
+
+> ఏ
+
+𝐬 ఉ௥ା 
+
+> ట
+
+𝐬 ఈ௥ା 
+
+> థ
+
+𝐬 ௢ 𝑡 𝐬 ఈ௥ା  
+
+> థ
+
+− 𝐬 ௢
+
+𝑠 𝐬 ௥ା  
+
+> ఏ
+
+− 𝐬 ௢
+
+Fig. 4: Relative vector relation. 
+
+When we have at least two symmetric pair of lights, whose angles are different from each other, any other relative vectors 
+
+s∗∗ − so can be written as a linear combination of the two bases as: 
+
+sψβr + − so = s
+
+
+
+sθr+ − so
+
+
+
++ t
+
+
+
+sϕαr + − so
+
+
+
+,
+
+(5) where the ratio of the radii α and β are known in our setting, and coefficients s, t ∈ R can be parameterized by the known ratio α : β and angles θ, ϕ, and ψ. By substituting Eq. (5) into Eq. (4), we can obtain the following equation: 
+
+eψβr +mψβr + − eψβr −mψβr −
+
+= 2 
+
+
+
+sψβr + − so
+
+T
+
+n
+
+= 2 s  sθr+ − so
+
+T n + 2 t
+
+
+
+sϕαr + − so
+
+T
+
+n
+
+= s  eθr+mθr+ − eθr+mθr+
+
+ + t
+
+
+
+eϕαr +mϕαr + − eϕαr −mϕαr −
+
+
+
+.
+
+(6) When we have npairs pairs of the symmetric light sources, we can obtain npairs − 2 equations using two basis pairs, e.g. , (r, θ ) and 
+
+(αr, ϕ ). See the supplementary material for further detail on the number of linearly independent constraints. Further, by considering the summation of the symmetric pairs, we can obtain the following equations: 
+
+eθr+mθr+ + eθr−mθr− = 2 ( so − x)T n
+
+= eϕαr +mϕαr + + eϕαr −mϕαr −, (7) which leads to another linear constraints on e∗. Given npairs pairs of symmetric lights, we can obtain npairs − 1 linear independent equations. To sum up, we have two kinds of equations from the dif-ference and summation of the symmetric pairs (Eqs. (6) and (7)) for unknown scaled distances e = [ e∗]T ∈ R2npairs  
+
+> +
+
+. Let 
+
+A ∈ Rneqs ×2npairs be a coefficient matrix formed by putting together Eqs. (6) and (7), where neqs is the total number of equations. If we can solve the homogeneous system, 
+
+Ae = 0, (8) for the scaled distance vector e, it can be converted to the surface position x as will be described in Sec. 4.3. Unfortunately though, the right null space of the matrix A is three-dimensional, 
+
+i.e. , rank (A) = 2 npairs − 3 in the general case. To determine the scaled distance vector e up to scale, it requires two more independent constraints so that rank (A) = 2 npairs − 1.
+
+4.2 Linear constraints by light fall-off relaxation 
+
+To derive additional constraints, we approximate the light fall-off proportional to the distance, instead of using the squared distance. Existing studies [12], [13] use the same approximation and show that its merit in alleviating difficult nonlinearity overtakes the effect of the approximation error. With the relaxation, the scaled distance e is approximated as 
+
+e = ρ−1d3 ≈ ρ−1d2 = ρ−1∥s − x∥22. (9) Given this approximated scaled distance, we can obtain four additional linear constraints on the scaled distance vector e,derived from its differences and sums, similar to the previous section. First, Eq. (9) of the symmetric pair can be rewritten using a shifted surface point x′ = x − so as: 
+
+
+
+eθr+ = ρ−1 sθr+ − x 22
+
+= ρ−1 
+
+sθr+ − so
+
+
+
+− (x − so) 22
+
+= ρ−1 
+
+r2 + x′Tx′ − 2x′T 
+
+sθr+ − so
+
+ 
+
+eθr− = ρ−1 
+
+r2 + x′Tx′ − 2x′T 
+
+sθr− − so
+
+ 
+
+. (10) By summing e∗, we have 
+
+eθr+ + eθr− = 2 ρ−1 
+
+r2 + x′Tx′
+
+. (11) Similarly, by taking a difference we can eliminate the quadratic terms as 
+
+eθr+ − eθr− = −4ρ−1x′T 
+
+sθr+ − so
+
+
+
+. (12) 
+
+Additional constraint 1A: When we have at least three symmetric pairs whose radii are different from each other, the following homogeneous constraints can be obtained from Eq. (11) by elimi-nating albedo scaled radius: 
+
+ρ−1r2 =
+
+
+
+eψβr + + eψβr −
+
+
+
+−  eθr+ + eθr−
+
+
+
+2 ( β2 − 1) =
+
+
+
+eϕαr + + eϕαr −
+
+
+
+−  eθr+ + eθr−
+
+
+
+2 ( α2 − 1) 
+
+(13) for npairs − 2 combinations. 
+
+Additional constraint 1B: As a special case of the above con-straint, when we have symmetric pairs whose radii are the same as each other, we can obtain a constraint from Eq. (11), 
+
+eθr+ + eθr− = eϕr+ + eϕr−, (14) for npairs − 1 combinations. 
+
+Additional constraint 2A: Since Eq. (12) includes the relative light position sθr+ − so similarly in Eq. (4), we obtain the follow-ing equations by similar manner to Eq. (6): 
+
+eψβr + − eψβr − = s
+
+
+
+eθr+ − eθr−
+
+
+
++ t
+
+
+
+eϕαr + − eϕαr −
+
+
+
+, (15) assuming sψβr + can be represented using the two basis sθr+
+
+and sϕαr + (Eq. (5)). Considering all the possible pairs leads to 
+
+npairs − 2 constraints, similar to Eq. (6). 
+
+Additional constraint 2B: The above three constraints, Eqs. (13)-(15), hold for arbitrary global offset so. In the specific case where the lights only have the global offset along z-axis, 
+
+i.e. , so = [0 , 0, s z ], there are additional homogeneous constraints instead of Eq. (15) as: 
+
+pT sθr+ − so
+
+r
+
+! 
+
+eϕαr + − eϕαr −
+
+
+
+= pT sϕαr + − so
+
+r
+
+! 
+
+eθr+ − eθr−
+
+, (16) where  sθr+ − so
+
+ /r = [sin θ, cos θ, 0] , and p = [ u′, v ′, 1] is a normalized camera coordinate, which is parameterized as 
+
+p =
+
+ u − cx
+
+fx
+
+, v − cy
+
+fy
+
+, 1
+
+T
+
+, (17) where (u, v ), (fx, f y ), and (cx, c y ) are the pixel coor-dinate, focal length, and optical center in a pixel unit, respectively. This constraint comes from Eq. (12) and 
+
+x′T  sθr+ − so
+
+ = z′pT  sθr+ − so
+
+, where x′ ≜ [x′, y ′, z ′]T.Considering all the combinations of the symmetric pairs, 
+
+npairs − 1 linearly independent constraints can be obtained. In summary, the equations in Eqs. (13)-(16) are the addi-tional constraints obtained by the relaxation. Putting them in a matrix A′ ∈ Rn′ 
+
+> eqs ×2npairs
+
+, we have a new homogeneous system 
+
+A′e = 0, where n′ 
+
+> eqs
+
+is the number of all the equations from the relaxation. Putting the constraints together, we solve the following minimization problem by vertically stacking constraint matrices 
+
+A and A′:
+
+e∗ = argmin 
+
+> e
+
+ AA′
+
+
+
+e
+
+> 22
+
+s.t. eTe = 1 . (18) The problem is equivalent to finding the right null space of the stacked constraint matrix. We solve the problem by the singular value decomposition (SVD) and ensure that the sign of the estimated e becomes positive because they are scaled distances. While conventional SVD does not guarantee e ≥ 0, we have empirically observed that the elements of the estimated vector e
+
+always have the same signs. 
+
+4.3 Surface normal and position estimation 
+
+From scaled distances e estimated in the previous section, we here estimate the surface position x up to scale and surface normal n. If we know the radius r of the symmetric lights, the surface position 
+
+x can be recovered without the scaling ambiguity. From Eq. (13), we can parameterize ρ−1r2 using e, which we know the exact value from the estimated e. Let us define a scaled and shifted surface position x′ 
+
+> r
+
+as 
+
+x′ 
+
+> r
+
+≜ x′
+
+r = [ x′ 
+
+> r
+
+, y ′ 
+
+> r
+
+, z ′ 
+
+> r
+
+]T =
+
+ x − sx
+
+r , y − sy
+
+r , z − sz
+
+r
+
+T
+
+, (19) Since Eq. (12) can be rewritten using r and θ as 
+
+eθr+ − eθr− = −4ρ−1r2x′ 
+
+> r
+> T
+
+[sin θ, cos θ, 0] T , (20) we can derive x′ 
+
+> r
+
+from Eq. (12) as 
+
+x′ 
+
+> r
+
+=
+
+ eθr+ − eθr−
+
+ α cos ϕ −
+
+
+
+eϕαr + − eϕαr −
+
+
+
+cos θ
+
+−4ρ−1r2α sin ( θ − ϕ) . (21) Similarly, y′ can be obtained as 
+
+y′ 
+
+> r
+
+=
+
+ eθr+ − eθr−
+
+ α sin ϕ −
+
+
+
+eϕαr + − eϕαr −
+
+
+
+sin θ
+
+−4ρ−1r2α sin ( ϕ − θ) . (22) Substituting x′, y′, and ρ−1r2 into Eq. (10) yields 
+
+z′ 
+
+> r
+
+=
+
+vuut eθr+
+
+2ρ−1r2 − (x′2 
+
+> r
+
++ y′2 
+
+> r
+
++ 1) + 2 
+
+ x′
+
+r
+
+T sθr+ − so
+
+r
+
+!
+
+,
+
+(23) assuming the camera is looking toward the +z direction. Note that the z element of the relative light position sθr+ − so is always 0,and thus the third term of Eq. (23) can be parameterized by x′ 
+
+> r
+
+, y′
+
+> r
+
+and the known angle θ. The same can be computed for the other combination of lights. In our method, we take the mean estimate from using all the equations from all the light pairs, and as a result, we have the scaled and shifted surface point x′ 
+
+> r
+
+.From the relaxed image formation model introduced in the previous section, we have 
+
+m∗ ≈ ρ (s − x)T n
+
+∥s − x∥22
+
+= ρr −1 (s′ 
+
+> r
+
+− x′ 
+
+> r
+
+)T n
+
+∥s′ 
+
+> r
+
+− x′ 
+
+> r
+
+∥22
+
+, (24) where s′ 
+
+> r
+
+= ( s − so)/r , e.g. , sϕαr + = α [sin ϕ, cos ϕ, 0] T, which are the known relative positions of symmetric lights. Since only unknowns are the scalar ρr −1 and surface normal n, and the norm of normal ∥n∥22 should be always 1, once the scaled and shifted surface point x′ 
+
+> r
+
+is obtained, the surface normal estimate can be obtained by closed-form solution as classic calibrated photometric stereo [1]. 
+
+4.4 Optimality under relaxation 
+
+Our two-step approach can be summarized as follows: 
+
+
+
+e∗ = argmin 
+
+> e
+
+L(e) s.t. eTe = 1 
+
+L(e) = 
+
+ AA′
+
+
+
+e
+
+> 22
+
+e = g(x)
+
+, (25) where g(x) : x 7 → e denotes the mapping function that corre-sponds to Eq. (10). Our approach can be viewed as optimizing a surface point x that minimizes the objective function L(g(x)) .From Eqs. (21)-(23) in Sec. 4.3, the mapping from e to x, hereafter denoted as g−1 : e 7 → x, is a one-to-one mapping function. Since the globally optimal e∗ can be obtained by convex optimization and g−1 is an one-to-one mapping function, the obtained surface point x∗ = g−1(e∗) gives the global minimum of the objective 
+
+L(g(x)) . Surface normal can also be derived as a closed-form solution using the optimal x∗.
+
+4.5 Valid light arrangements 
+
+In this section, we analyze the solvability of our problem to present the practical light arrangements derived from the constraints. We here consider the general case where all the lights are not on the same line and discuss the special case later. 
+
+Scaled distance estimation: We first present the solvabil-ity on scaled distance estimation in all possible combinations. Throughout this section, we establish the coefficient matrices 
+
+A′1A , A′1B , A′2A , and A′2B by assembling the four constraints derived by the light fall-off relaxation (Eqs. (13)-(16)), respec-tively. Considering the linearly independent constraints, the rank of these matrices is as follows: 
+
+
+
+rank (A) = 2 npairs − 3
+
+rank (A′1A ) = npairs − 2 (non-ring light )
+
+rank (A′1B ) = npairs − 1 (ring light )
+
+rank (A′2A ) = npairs − 2 (xyz -axis offset )
+
+rank (A′2B ) = npairs − 1 (z-axis offset )
+
+.
+
+Here, A′1A and A′1B are both obtained by the elementary oper-ation on Eq. (11), and thus A′1A is a subset of A′1B . Similarly, 
+
+A′2A is a subset of A′2B . Overall, we have four possible cases where (i) non-ring light with the global offset along xyz -axis, (ii) non-ring light with the offset along z-axis, (iii) ring light with the offset along xyz -axis, and (iv) ring light with the offset along 
+
+z-axis, which lead to the corresponding additional constraints of 
+
+1A + 2A , 1A + 2B , 1B + 2A , and 1B + 2B , respectively. Since A, A′ 
+
+> 1A /1B
+
+and A′ 
+
+> 2A /2B
+
+are linearly independent of each other, we can estimate e for all the possible light arrangements if the sum of the rank of constraints from 
+
+A, A′ 
+
+> 1A /1B
+
+and A′ 
+
+> 2A /2B
+
+is at least 2npairs − 1; namely, we can estimate e with npairs ≥ 3 for (i) ∼ (iii) cases and npairs ≥ 2
+
+for (iv) case. In summary, the minimum setting for scaled distance ✓ scaled distance estimation 
+
+✓ depth estimation 
+
+> 𝑛 pairs  = 3 𝑛 pairs  = 2
+
+× scaled distance estimation 
+
+✓ depth estimation 
+
+✓ scaled distance estimation 
+
+× depth estimation 
+
+Special case 
+
+(ii) All pairs have 
+
+different radii 
+
+(i) At least  2 pairs 
+
+have the same radii 
+
+All the pair shares 
+
+the same radii 
+
+✓ scaled distance estimation 
+
+(with camera  intrinsics )
+
+× depth estimation 
+
+Invalid Valid 
+
+✓ scaled distance estimation 
+
+✓ depth estimation 
+
+> 𝑛 pairs  ≥ 4
+
+✓ scaled distance estimation 
+
+× depth estimation 
+
+All the pair shares 
+
+the same radii 
+
+At  least  1 pair have 
+
+the different radii 
+
+…Fig. 5: Examples of valid/invalid light arrangements. 𝑛 pairs = 2 𝑛 pairs = 4𝑛 pairs = 3
+
+1.0
+
+2.0
+
+45 °
+
+Fig. 6: Light arrangements used in the synthetic experiments. In every case, we set the inner and outer radii as 1 and 2.estimation for non-ring light cases i.e. , (i) and (iii) is that we have at least npairs = 3 . Although the scaled distance can be estimated in the case of a ring light, the depth cannot be estimated as described in the following section. 
+
+Surface position estimation: We then consider the solvability of surface point estimation given scaled distances. At the end of this part, we show that the following condition should be satisfied. 
+
+Condition 1. At least two pairs with different radii must exist for the surface position estimation. 
+
+In short, this is due to the fact that the denominator of ρ−1r2
+
+in Eq. (13) goes to 0 when all radii are equal, so the surface point obtained from Eqs. (21)-(23), which includes ρ−1r2, cannot be recovered either. The condition can also be explained by its geometric meaning. Apollonius shows that the set of points that have a given ratio of distances to the fixed points lies in the circle [30]. The aforementioned theorem also holds in Rn case (see Appendix: Proposition 1.); i.o.w., with the two fixed points ∈ R3 and its corresponding ratios, we get an Apollonius sphere .Now we have the known relative light positions s∗−so 
+
+> r
+
+and the estimated distance ratios e∗. Therefore, given two randomly selected lights, we can obtain an Apollonius sphere, where the unknown surface point x′ 
+
+> r
+
+lies. Thus, the problem of solving for a surface point, given known relative light positions and their distance to the estimated shifted point, can be cast into the problem of estimating the intersection of Apollonius spheres using combinations of two lights chosen from 2npairs . Consequently, a point x can be recovered if the spheres have a unique intersection. More details along with the proof of each proposition can be found in the supplementary material. To facilitate the discussion, we present the following proposi-tion, the proof of which is given in the appendix. 
+
+Proposition 2. When the radii of the symmetric lights r∗ of all pairs are the same, all the possible Apollonius spheres are centered on a line, whose direction is [−y′, x ′, 0] .
+
+Assuming that the estimation of the scaled distances has no error, then the Apollonius spheres always have some common intersections. If we let all 3D spheres lie on a line, the intersection obviously has an ambiguity along the 2D circle, and thus the unique surface point x′ cannot be recovered. That is, if all the light pairs have a unique radius, e.g. , arranged on a ring, our relatively-calibrated near-light photometric stereo problem cannot be solved. In contrast, we empirically observed symmetric light arrangements sharing the same center with at least two different radii can disambiguate the problem. The examples of valid/invalid light arrangements are shown in Fig. 5, which satisfies the condition for both scaled distance estimation and surface point estimation. 
+
+Special case: Finally, we consider the solvability condition when all lights are on the same line. In this case, we can estimate the surface points with ≥ 4 lights and the known camera intrinsics, assuming that the x− and y− components of the light offset so
+
+are all 0. With a similar rank analysis as in the general case, we can confirm that ≥ 4 lights are needed for the scaled distance estimation. From the scaled distances we have an inhomogeneous constraint on x′ 
+
+> r
+
+and y′ 
+
+> r
+
+from Eq. (21). Additionally, when so =[0 , 0, s z ]T, the ratio y′ 
+
+> r
+
+/x ′ 
+
+> r
+
+can be obtained using a normalized camera coordinate p as v′/u ′. From the above two constraints we can estimate x′ 
+
+> r
+
+and y′ 
+
+> r
+
+, and z′ 
+
+> r
+
+can also be obtained by following Eq. (23). 
+
+5 EXPERIMENTS 
+
+In this section, we evaluate our method using both synthetic and real-world scenes. We first outline our experimental settings and then present the results of our evaluations. 
+
+5.1 Experimental settings 
+
+Baselines: For comparison, we evaluate our method with three state-of-the-art techniques: Calibrated [7], FastNFPS [14], and UniversalPS [15]. Calibrated is a near-light calibrated photometric stereo method that assumes Lambertian surfaces.FastNFPS and UniversalPS are both learning-based approaches. FastNFPS is a near-light uncalibrated photometric stereo method for non-Lambertian scenes, and UniversalPS is an uncalibrated method designed for both near and distant light conditions. npairs = 3 npairs = 4      
+
+> GT/Input Ours Calibrated [7] fastNFPS [14] UniversalPS [15] GT Ours Calibrated [7] fastNFPS [14] UniversalPS [15] BUNNY
+> Normal map
+
+𝑧 
+
+𝑥 
+
+𝑦 Error map                           
+
+> 4.974 4.590 16.312 17.719 4.897 3.896 14.934 17.009 Depth map Error map
+> 0.026 0.032 0.031 0.017 0.031 0.029 CRAB
+> Normal map Error map
+> 4.907 7.384 15.514 22.176 4.886 6.196 14.451 20.439 Depth map Error map
+> 0.024 0.058 0.037 0.013 0.055 0.038 Normal error
+> 010 ◦
+> Depth error
+> 00.01
+
+Fig. 7: Estimation results of our method and comparison methods, with the global offset along z-axis so = [0 .0, 0.0, 0.5] added to the center of the symmetric light pairs. The left-hand side and right-hand side columns show the estimations from npairs = 3 and 
+
+npairs = 4 cases, respectively. We show the normal maps and depth maps along with the corresponding error maps, as well as a mean angular (for normal)/relative absolute errors (for depth) at the bottom of each error map. For Calibrated, we use the ground-truth light positions as input. Since Calibrated requires initial guesses of the depth, we use the median value of the ground-truth depth for synthetic experiments and the approximate distance between the camera and the target object for real-world experiments. Since UniversalPS only outputs normal maps, we evaluate its performance using the estimated normal maps. 
+
+Evaluation procedures: For quantitative evaluation in the syn-thetic experiment, we align the estimated depth maps from each method by scaling and shifting so that the estimated depth fits the ground truth. This is necessary because FastNFPS and our method estimate depth maps with scale and shift ambiguities. Although Calibrated outputs absolute depth, the results can shift depending on the initialization. To ensure a fair comparison, we apply the same alignment to all methods. We use an angular error for surface normal, and a relative absolute error for depth as evaluation metrics. Relative absolute error is computed as the ratio of raw absolute error over the ground-truth depth. 
+
+5.2 Evaluation with synthetic scenes 
+
+In this section, we quantitatively evaluate the baseline method and ours on a synthetic dataset. 
+
+Dataset: We render synthetic scenes using two Lambertian ob-jects, B UNNY with spatially-varying albedo and C RAB with uni-form albedo. We use a camera whose focal length, sensor size, and resolution are set to 85 mm , 36 × 24 mm , and 720 × 480 ,respectively. In the image rendering process, the physically-correct light fall-off, i.e. , proportional to squared distance, is included, and global illumination effects, such as cast shadows and inter-reflections, are not included. We also mask the attached shadow npairs = 3 npairs = 4                                
+
+> GT/Input Ours Calibrated [7] fastNFPS [14] UniversalPS [15] GT Ours Calibrated [7] fastNFPS [14] UniversalPS [15] BUNNY
+> Normal map Error map
+> 7.416 4.704 18.487 18.089 5.116 4.122 16.641 17.536 Depth map Error map
+> 0.077 0.033 0.042 0.025 0.033 0.042 CRAB
+> Normal map Error map
+> 8.555 7.375 17.692 20.708 5.504 5.612 16.257 18.873 Depth map Error map
+> 0.088 0.058 0.037 0.030 0.050 0.038 Normal error
+> 010 ◦
+> Depth error
+> 00.01
+
+Fig. 8: Estimation results of our method and comparison methods, with the global offset along all the xyz -axis so = [0 .3, 0.4, 0.5] 
+
+added to the center of the symmetric light pairs. area only in the synthetic experiments. The rendered images are stored in single-precision. Figure 6 shows the light arrangements used in our synthetic ex-periments with varying the number of symmetric light pairs from 
+
+2 to 4. For each light arrangement, we evaluate the results with a global offset along the z-axis and along all three axes x, y, z -axis with respect to the camera’s optical center. The proposed and the uncalibrated methods assume unknown offsets, while the other methods use the ground truth light positions. The object is put 6
+
+distance away from the camera center, where the inner radius of the symmetric pairs is 1.
+
+Results: Figure 7 shows the estimated results of proposed and comparison methods for our synthetic scenes with the global offset along the z-axis. For both scenes with different numbers of symmetric light pairs, the proposed method achieves results that are comparable to those of the Calibrated in terms of both normal and depth map estimation. One possible reason for the relatively large errors observed in FastNFPS and UniversalPS is the small number of light sources. Furthermore, we observe that the Calibrated, which assumes a continuous surface, fails to accurately recover the depth map for scenes with discontinuities, such as the limbs of the C RAB . In contrast, the proposed method, which employs per-pixel estimation, achieves better results in handling these discontinuities. Figure 8 shows the estimated results with the global offset along all three axes x, y, z - axis. In the scenes with npairs = 3 ,although our method also achieves comparable results, it fails depth recovery in some areas, e.g. , right side of the B UNNY ’s face. This is because the npairs = 3 case is the minimal condition required to solve our homogeneous system, and the solution should be sensitive to the approximation error from light fall-off relaxation. In contrast, in the scenes with npairs = 4 , the proposed method achieves almost similar accuracy compared to GT/Input Ours Calibrated [7] fastNFPS [14] BUNNY     
+
+> Depth map Error map
+> 0.01 0
+> 0.038 0.055 0.050 CRAB
+> Depth map Error map
+> 0.01 0
+> 0.031 0.059 0.037
+
+Fig. 9: Depth estimation results with npairs = 2 case. We add the global offset along the z-axis as so = [0 .0, 0.0, 0.5] . We show a mean relative absolute error at the bottom of each error map. the Calibrated although the proposed method assumes an unknown global offset. Figure 9 shows the estimated results for npairs = 2 , where the proposed method can only estimate depth maps. The proposed method outperforms Calibrated even though it uses the given light positions and initial depth, due to the difficulty in solving the non-convex optimization problem with a small number of lights. 
+
+5.3 Effect of varying light-to-surface distance 
+
+The light fall-off relaxation may fail when the light-to-surface distance is too short. We evaluate the effect of varying light-to-surface distances using synthetic scenes. In this experiment, we use npairs = 4 lights as shown in Fig. 6, and we change the positions of light sources along the z-axis. Figure 10 shows the estimated results. While the shorter cases have a larger error, we can obtain comparable results when we use approximately l ≥ 4,where l is the distance from the light sources to the target object. This result suggests that, for example, if we use the radius of the inner symmetric light pair s ≈ 12 .5 cm , we should put the target object more than 50 cm far away from the lights, which is comparable to the conclusion in the supplementary material. The error by the relaxation is attributed to the difference in the input images, i.o.w., the difference in the light fall-off terms. To assess the further analysis of relaxation-accuracy relations, we evaluate the relative error of the light fall-off terms in the supplementary material. Please refer to it for more details. 
+
+5.4 Comparison with axis-aligned method 
+
+We further evaluate the estimation results of our method and the axis-aligned symmetric light method [2]. The light arrangement used in this experiment and the estimated normal maps by both methods are shown in Fig. 11. The proposed method outperforms the axis-aligned symmetric light method, which assumes distant lights, due to its explicit consideration of the near-light effects. 
+
+5.5 Noise/Shadow effect 
+
+To evaluate the method in a more realistic setting, we render the images with settings as close as possible to real-world experi-ments, with quantization of 12 bit unsigned integer same as the real-world setting, global illumination effects enabled including cast shadows and inter-reflections, and a shot and readout noise following existing work [31] as synthetic noises. The parameters for shot noise and the standard deviation for readout noise are fitted using real-world images captured by the same camera used in real-world experiments. Figure 14 shows the estimated results with noisy images captured under npairs = 4 symmetric lights. Our surface normal estimates outperform the uncalibrated PS methods, in most of the area. The depth map from fastNFPS has a flattened shape, while ours can estimate a reasonable shape except for the boundary area. 
+
+5.6 Experiment with real-world scenes 
+
+In this section, we show evaluations using our real-world dataset. To capture the dataset, we use the device shown in Figure 12, which consists of a CCD camera 1 equipped with 25 mm lens and eight LEDs 2. The LEDs are mounted on a board precisely manufactured by a CNC machine, ensuring the accurate placement of each LED. We employ a constant current circuit in our device for all light sources to emit uniform radiance. For further detail, please refer to the supplementary material. Since the camera is fixed to the board via rigs, it is difficult to align the optical center of the symmetric light pairs with the camera. Therefore, in this experiment, the proposed method assumes the existence of an unknown global offset and solves for it using four symmetric light pairs. The camera’s intrinsics are calibrated using OpenCV 3 for comparison methods. For the target objects, we use nine objects with an almost diffuse surface. 
+
+Results: Figure 13 shows the estimated normal maps by the comparison and proposed methods. Overall, the proposed method achieves almost comparable results to Calibrated, even though the proposed method does not use the exact light positions. Both the learning-based results in over-smoothed results for most of the objects. Both the Calibrated and our method output reasonable shape estimations for almost pure Lambertian scenes, such as C AT 
+
+and S HEEP , and, for the other scenes, both the Calibrated and ours are affected by the specular observations due to the deviation from the Lambertian assumption. For example, in S ANTA ’s lower body, we can see that both methods failed to recover the correct shape. Other than C AT , the surfaces contain spatially-varying albedo, and the proposed method can naturally handle it because of our per-pixel formulation. Comparing the proposed and comparison methods, we can see that the proposed method is affected by cast shadows more than the calibrated method, for example, around the R ABBIT ’s ear part. This is because the proposed method computes the differences of symmetric pair observations, which is sensitive to the pair that one observation is shadowed. The results of the proposed method are slightly noisy because of the per-pixel estimation. This can be improved by considering the smoothness across the neighboring pixels. 
+
+> 1. BFS-U3-28S5C-C, Teledyne FLIR LLC 2. XLamp CXA1304, Cree, Inc. 3. OpenCV 4.5, https://opencv.org, Retrieved Apr. 14, 2023.
+
+Median of light-to-surface distance l
+
+←−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−
+
+l = 6 l = 5 l = 4 l = 3 l = 2 
+
+> Input image
+
+Ours Calibrated [7] Ours Calibrated [7] Ours Calibrated [7] Ours Calibrated [7] Ours Calibrated [7] Normal map Error map  10 ◦
+
+0
+
+4.814 3.900 5.021 3.981 5.374 3.859 6.013 3.908 7.429 4.443 
+
+Fig. 10: Estimation results with varying light-to-surface distances. We show the estimated surface normal with angular error maps, where the distance from the light to the object is set to 2, 3, 4, 5, and 6 under the setting of r = 1 .1.0 2.0
+
+Ours GT/Input  Axis -aligned [2] Light arrangement 
+
+10° 
+
+0° 
+
+6.264  8.86 0
+
+Fig. 11: (Left) Axis-aligned symmetric light arrangement used in this experiment. (Right) Estimated normal maps from the proposed method (Ours) and axis-aligned symmetric light method [2]. 
+
+6 CONCLUSION 
+
+We have proposed a near-light photometric stereo method using origin symmetric lights. Unlike the previous studies dealing with non-convex optimization problems, we show the symmetric ar-rangements along with the light fall-off relaxation casts the near-light photometric stereo problem to a per-pixel linear estimation, which results in a closed-form solution for surface normal and depth recovery that is globally optimal under light fall-off relax-ation. The experiments show that our method enables comparable results to the state-of-the-art calibrated near-light photometric stereo method, without explicit calibration or initial depth input. 
+
+ACKNOWLEDGMENTS 
+
+This work was supported by JSPS KAKENHI Grant Number JP23H05491. 
+
+REFERENCES   
+
+> [1] R. J. Woodham, “Photometric method for determining surface orientation from multiple images,” Optical Engineering , vol. 19, no. 1, pp. 139–144, 1980.
+
+60 cm 
+
+Camera 
+
+Target 
+
+Symmetric light pairs 
+
+Target 
+
+Fig. 12: Our capturing setup. We put the object approximately 
+
+60 cm away from the camera. Inner and outer radii are 12 .5 cm 
+
+and 27 .5 cm , respectively. We use the images taken under each of the lights shown in the figure.              
+
+> [2] K. Minami, H. Santo, F. Okura, and Y. Matsushita, “Symmetric-light photometric stereo,” in Proceedings of the Winter Conference on Appli-cations of Computer Vision (WACV) , 2022, pp. 317–325. [3] Z. Zhou and P. Tan, “Ring-light photometric stereo,” in Proceedings of the European Conference on Computer Vision (ECCV) , 2010, pp. 265– 279. [4] M. Chandraker, J. Bai, and R. Ramamoorthi, “On differential photometric reconstruction for unknown, isotropic brdfs,” IEEE Transactions on Pattern Analysis and Machine Intelligence (PAMI) , vol. 35, no. 12, pp. 2941–2955, 2013. [5] R. Shiradkar, P. Tan, and S. H. Ong, “Auto-calibrating photometric stereo using ring light constraints,” Machine Vision and Applications , vol. 25, no. 3, p. 801–809, Apr. 2014. [6] P. Favaro and T. Papadhimitri, “A closed-form solution to uncalibrated photometric stereo via diffuse maxima,” in Proceedings of the Conference on Computer Vision and Pattern Recognition (CVPR) , 2012, pp. 821– 828. [7] Y. Qu´ eau, B. Durix, T. Wu, D. Cremers, F. Lauze, and J.-D. Durou, “Led-based photometric stereo: Modeling, calibration and numerical solution,”
+> Journal of Mathematical Imaging and Vision , vol. 60, 2018. [8] R. Mecca, A. Wetzler, A. M. Bruckstein, and R. Kimmel, “Near field photometric stereo with point light sources,” SIAM Journal on Imaging
+
+CAT SHEEP SV-C AT SAILOR SANTA BUNNY BUDDHA DONUT BALL 
+
+> Input image Ours Calibrated [7] FastNFPS [14] UniversalPS [15]
+
+Fig. 13: Estimated normal maps for our real-world dataset. For each scene, we show one of the input images and estimate normal maps by the proposed method (Ours) and the comparison methods.              
+
+> Surface normal Depth
+> GT/Input Ours Calibrated [7] fastNFPS [14] UniversalPS [15] GT Ours Calibrated [7] fastNFPS [14] UniversalPS [15] Estimated Error map
+> 15.532 / 9.706 6.034 / 4.452 22.095 / 23.127 14.240 / 12.084 25.184 / 5.411 0.549 / 0.470 3.306 / 4.282 INVALID Normal error
+> 010 ◦
+> Depth error
+> 00.01
+
+Fig. 14: Estimation results of our method and comparison methods on our synthetic scenes, which are rendered under the realistic image setting described in Sec. 5.5. We show a mean angular (for normal)/relative absolute errors (for depth) at the bottom of each error map. The two values separated by “/” indicate the errors without and with masking the pixels where our depth estimation errors are larger than 0.01 .
+
+Sciences , vol. 7, no. 4, pp. 2732–2770, 2014. [9] R. Mecca, E. Rodol` a, and D. Cremers, “Realistic photometric stereo using partial differential irradiance equation ratios,” Computers & Graph-ics , vol. 51, pp. 8–16, 2015. [10] R. Mecca and Y. Qu´ eau, “Unifying diffuse and specular reflections for the photometric stereo problem,” in Proceedings of the Winter Conference on Applications of Computer Vision (WACV) , 2016. [11] C. Liu, S. G. Narasimhan, and A. W. Dubrawski, “Near-light photometric stereo using circularly placed point light sources,” in Proceedings of IEEE International Conference on Computational Photography (ICCP) ,2018. [12] F. Sakaue and J. Sato, “A new approach of photometric stereo from linear image representation under close lighting,” in Proceedings of the International Conference on Computer Vision Workshop (ICCVW) , 2011, pp. 759–766. [13] T. Papadhimitri and P. Favaro, “Uncalibrated near-light photometric stereo,” in Proceedings of the British Machine Vision Conference (BMVC) , 2014. [14] D. Lichy, S. Sengupta, and D. W. Jacobs, “Fast light-weight near-field photometric stereo,” in Proceedings of the Conference on Computer Vision and Pattern Recognition (CVPR) , 2022. [15] S. Ikehata, “Universal photometric stereo network using global lighting contexts,” in Proceedings of the Conference on Computer Vision and Pattern Recognition (CVPR) , 2022, pp. 12 591–12 600. [16] F. Logothetis, I. Budvytis, R. Mecca, and R. Cipolla, “A CNN based approach for the near-field photometric stereo problem,” in Proceedings of the British Machine Vision Conference (BMVC) , 2020. [17] B. Shi, Z. Mo, Z. Wu, D. Duan, S. Yeung, and P. Tan, “A benchmark dataset and evaluation for non-lambertian and uncalibrated photometric stereo,” IEEE Transactions on Pattern Analysis and Machine Intelligence (PAMI) , vol. 41, no. 2, pp. 271–284, 2019. [18] J. Ren, F. Wang, J. Zhang, Q. Zheng, M. Ren, and B. Shi, “Diligent102: A photometric stereo benchmark dataset with controlled shape and material variation,” in Proceedings of the Conference on Computer Vision and Pattern Recognition (CVPR) , 2022, pp. 12 581–12 590. [19] R. Mecca, F. Logothetis, I. Budvytis, and R. Cipolla, “LUCES: A dataset for near-field point light source photometric stereo,” in Proceedings of the British Machine Vision Conference (BMVC) , 2021. [20] Y. Iwahori, H. Sugie, and N. Ishii, “Reconstructing shape from shading images under point light source illumination,” in Proceedings of the International Conference on Pattern Recognition (ICPR) , 1990. [21] J. Ahmad, J. Sun, L. Smith, and M. Smith, “An improved photometric stereo through distance estimation and light vector optimization from diffused maxima region,” Pattern Recognition Letters , vol. 50, pp. 15– 22, 2014. [22] A. Bony, B. Bringier, and M. Khoudeir, “Tridimensional reconstruction by photometric stereo with near spot light sources,” in European Signal Processing Conference , 2013. [23] T. Collins and A. Bartoli, “3D reconstruction in laparoscopy with close-range photometric stereo,” in International Conference on Medical Image Computing and Computer-Assisted Intervention , 2012. [24] X. Huang, M. Walton, G. Bearman, and O. Cossairt, “Near light correc-tion for image relighting and 3D shape recovery,” in Digital Heritage ,2015. [25] Y. Nie and Z. Song, “A novel photometric stereo method with non-isotropic point light sources,” in Proceedings of the International Con-ference on Pattern Recognition (ICPR) , 2016. [26] Y. Qu´ eau, J.-D. Durou, and J.-F. Aujol, “Normal integration: a survey,” 
+
+Journal of Mathematical Imaging and Vision , vol. 60, no. 4, pp. 576–593, 2018. [27] F. Logothetis, R. Mecca, I. Budvytis, and R. Cipolla, “A cnn based approach for the point-light photometric stereo problem,” International Journal of Computer Vision , pp. 1–20, 2022. [28] H. Santo, M. Waechter, and Y. Matsushita, “Deep near-light photometric stereo for spatially varying reflectances,” in Proceedings of the European Conference on Computer Vision (ECCV) , 2020. [29] M. K. Chandraker, F. Kahl, and D. J. Kriegman, “Reflections on the generalized bas-relief ambiguity,” in Proceedings of the Conference on Computer Vision and Pattern Recognition (CVPR) , vol. 1, 2005, pp. 788– 795. [30] C. S. Ogilvy, Excursions in Geometry . Courier Corporation, 1990. [31] Y. Cao, M. Liu, S. Liu, X. Wang, L. Lei, and W. Zuo, “Physics-guided iso-dependent sensor noise modeling for extreme low-light photography,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2023, pp. 5744–5753. 
+
+Lilika Makabe received her B.S. and M.S. de-grees in computer science from Osaka Uni-versity, Japan, in 2020 and 2022, respectively, where she is currently working toward a Ph.D degree. Her research interests include compu-tational photography and physics-based vision. 
+
+Heng Guo received his B.E. and M.S. degrees in signal and information processing from Uni-versity of Electronic Science and Technology of China, and Ph.D. degree from Osaka Univer-sity, in 2015, 2018, and 2022. He is currently a specially-appointed assistant professor at Os-aka University. His research interests include physics-based vision and machine learning. 
+
+Hiroaki Santo received his M.S. and Ph.D. de-grees in information science from Osaka Univer-sity, Japan, in 2018 and 2021, respectively. He is currently an assistant professor with the De-partment of Multimedia Engineering, Graduate School of Information Science and Technology, Osaka University. His research interests include computer vision and machine learning. 
+
+Fumio Okura received the M.S. and Ph.D. de-grees in engineering from the Nara Institute of Science and Technology, in 2011 and 2014, respectively. He has been an assistant profes-sor with the Institute of Scientific and Industrial Research, Osaka University, until 2020. He is now an associate professor with the Graduate School of Information Science and Technology, Osaka University. His research interest includes the boundary domain between computer vision and computer graphics. 
+
+Yasuyuki Matsushita received his B.S., M.S. and Ph.D. degrees in EECS from the University of Tokyo in 1998, 2000, and 2003, respectively. From April 2003 to March 2015, he was with Visual Computing group at Microsoft Research Asia. In April 2015, he joined Osaka University as a professor. His research area includes com-puter vision, machine learning and optimization. He is/was an Editor-in-Chief for International Journal of Computer Vision and on the editorial board of IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI), The Visual Computer journal, IPSJ Transactions on Computer Vision Applications (CVA), and Encyclopedia of Computer Vision. He served/is serving as a Program Co-Chair of PSIVT 2010, 3DIMPVT 2011, ACCV 2012, ICCV 2017, and a General Co-Chair for ACCV 2014 and ICCV 2021. He is a senior member of IEEE.

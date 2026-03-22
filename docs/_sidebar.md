@@ -1,6 +1,10 @@
 * <a class="dpr-sidebar-root-link" href="#/">首页</a>
 * <a class="dpr-sidebar-root-link dpr-sidebar-noactive-link" href="javascript:void(0)" data-dpr-hash="#/tutorial/README">使用教程</a>
 * Daily Papers
+  * 2026-03-22 <!--dpr-date:20260322-->
+    * 速读区
+      * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202603/22/2603.16404v1-near-light-photometric-stereo-with-symmetric-lights" data-sidebar-item="{&quot;title&quot;: &quot;Near-light Photometric Stereo with Symmetric Lights&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2603.16404v1-near-light-photometric-stereo-with-symmetric-lights&quot;, &quot;score&quot;: &quot;7.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;3dgsir&quot;}], &quot;evidence&quot;: &quot;用于表面法线和深度恢复的逆向渲染&quot;}">Near-light Photometric Stereo with Symmetric Lights</a>
+      * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202603/22/2603.16566v1-videomatgen-pbr-materials-through-joint-generative-modeling" data-sidebar-item="{&quot;title&quot;: &quot;VideoMatGen: PBR Materials through Joint Generative Modeling&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2603.16566v1-videomatgen-pbr-materials-through-joint-generative-modeling&quot;, &quot;score&quot;: &quot;6.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;3dgsir&quot;}], &quot;evidence&quot;: &quot;为3D形状生成基于物理的材质&quot;}">VideoMatGen: PBR Materials through Joint Generative Modeling</a>
   * 2026-03-13 ~ 2026-03-22 <!--dpr-date:20260313-20260322-->
     * 精读区
       * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/20260313-20260322/2603.19234v1-matryoshka-gaussian-splatting" data-sidebar-item="{&quot;title&quot;: &quot;Matryoshka Gaussian Splatting&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2603.19234v1-matryoshka-gaussian-splatting&quot;, &quot;score&quot;: &quot;10.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;3dgsir&quot;}], &quot;evidence&quot;: &quot;3D高斯泼溅的连续细节层次渲染&quot;}">Matryoshka Gaussian Splatting</a>
