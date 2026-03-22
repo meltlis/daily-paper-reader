@@ -1,0 +1,380 @@
+Title: Low-light Image Enhancement with Retinex Decomposition in Latent Space
+
+URL Source: https://arxiv.org/pdf/2603.15131v1
+
+Published Time: Tue, 17 Mar 2026 06:47:10 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+> JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 1
+
+# Low-light Image Enhancement with Retinex Decomposition in Latent Space 
+
+Bolun Zheng, Qingshan Lei, Quan Chen, Qianyu Zhang, Kainan Yu, Xu Jia and Lingyu Zhu 
+
+Abstract —Retinex theory provides a principled foundation for low-light image enhancement, inspiring numerous learning-based methods that integrate its principles. However, existing methods exhibits limitations in accurately decomposing reflectance and illumination components. To address this, we propose a Retinex-Guided Transformer (RGT) model, which is a two-stage model consisting of decomposition and enhancement phases. First, we propose a latent space decomposition strategy to separate reflectance and illumination components. By incorporating the log transformation and 1-pixel offset, we convert the intrin-sically multiplicative relationship into an additive formulation, enhancing decomposition stability and precision. Subsequently, we construct a U-shaped component refiner incorporating the proposed guidance fusion transformer block. The component refiner refines reflectance component to preserve texture details and optimize illumination distribution, effectively transforming low-light inputs to normal-light counterparts. Experimental eval-uations across four benchmark datasets validate that our method achieves competitive performance in low-light enhancement and a more stable training process. 
+
+Index Terms —Low light, image enhancement, retinex, trans-former 
+
+I. I NTRODUCTION 
+
+# LOW-LIGHT image enhancement serves as a critical yet challenging task in computer vision, one that underpins a wide array of visual tasks including autonomous driving [1] and object detection [2]. Images captured under low-light conditions often suffer from prominent degradations such as severe color distortion, amplified noise and compromised de-tail visibility. These impairments severely hinder human visual perception but also considerably degrade the performance of various downstream visual tasks. Conventional approaches, such as histogram equalization and gamma correction, gen-erally exhibit limited robustness in handing real-world noise. Another line of methods, grounded in the Retinex theory, decomposes an image into reflectance ( R) and illumination ( L)components by assuming spatially smooth and slowly varying illumination. However, these Retinex-based methods focus on illumination estimation and tend to overlook the influence of noise. Abrupt illumination variations under extreme low-light 
+
+Bolun Zheng, Qingshan Lei, Qianyu Zhang and Kainan Yu are with the School of Automation, Hangzhou Dianzi University, Hangzhou 310018, China (e-mail:blzheng@hdu.edu.cn; 241060071@hdu.edu.cn; zqqqyu@163.com; 244060059@hdu.edu.cn). Quan Chen is with the College of Artificial Intelligence, Jiaxing University, Jiaxing 314001, China (e-mail:chenquan@alu.hdu.edu.cn). Xu Jia is with the School of Artificial Intelligence at Dalian University of Technology, Dalian 116000, China (e-mail:jiayushenyang@gmail.com). Lingyu Zhu is with the Department of Computer Science at City University of Hong Kong, Hong Kong, China (e-mail:lingyzhu-c@my.cityu.edu.hk). Quan Chen is the Corresponding Author. 
+
+Fig. 1. Comparison between the typical Retinex decomposition strategy and our method in deep learning frameworks. 
+
+conditions can further give rise to severe noise amplification or local color distortion. With the vigorous advancement of deep learning, numerous low-light enhancement models based on convolutional neu-ral networks (CNNs) have emerged. The mainstream design paradigm for such models is to learn the brightness mapping between low-light images and their normal-light counterparts. By treating details and noise as equally important information, these methods are prone to inducing color distortion and noise amplification. Another category of models incorporates Retinex theory into network design, typically consisting of an illumination estimation module followed by a refinement module. For the image decomposition process, as shown in Fig. 1(a), these methods decompose an input image into 1-channel illumination component and 3-channel reflectance component in the color domain Nevertheless, these methods exhibit two inherent limita-tions: (1) The representational capability of the R and L
+
+components generated within the color domain is limited. Dur-ing the camera imaging process, real-world illumination and sensor noise undergo nonlinear coupling, yet the linear model relying solely on the product of R and L struggles to model such complex scenarios. (2) During the image reconstruction through element-wise multiplication, R and L components are integrated into the backpropagation process. Estimation errors of components in challenging regions directly undermine the training stability of the model [3], [4]. To address these issues, we propose a Retinex-guided Trans- 
+
+> arXiv:2603.15131v1 [cs.CV] 16 Mar 2026 JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 2
+
+former (RGT) model consisting of a decomposition stage and an enhancement stage. In the decomposition stage, we design a latent-space decomposition strategy, as shown in Fig. 1(b). Unlike conventional color-space decoupling methods, this strategy maps the input image into a latent feature space for nonlinear decomposition. A dual-branch decomposition network built upon Transformer blocks is employed, lever-aging the global modeling ability of Transformers to improve the separation accuracy of reflectance and illumination com-ponents. Meanwhile, a logarithmic transformation is applied to the image in the color domain, converting the inherent multiplicative relationship between R and L into an additive one. This conversion effectively mitigates mutual interference during training and enhances optimization stability. It should be noted that a 1-pixel offset is introduced prior to the logarithmic transformation to prevent numerical instability caused by extremely low pixel values in dark regions. In the enhancement stage, we design a Component Refiner (CR) to separately enhance the R and L components. We posit that average pooling operations are effective in preserving texture details while suppressing noise, whereas max pooling operations better retain illumination information. Building on this insight, we develop a Guidance Fusion Transformer Block (GFTB) and stack it within a U-shaped architecture to construct the CR module. Experimental results on four public datasets ( i.e. , LOLv2 [5], HDR [6], SDSD [7], SICE [8]) validate the effectiveness of our RGT model. For instance, on the HDR test set, RGT outperforms RetinexFormer by 0.79 dB in PSNR. Extensive ablation studies demonstrate that the latent-space decomposition strategy achieves more effective decoupling of illumination and reflectance, while also promoting greater stability throughout the training process.  
+
+> •
+
+We propose a retinex-guided transformer (RGT) model that employs a two-stage paradigm of decomposition and enhancement to enhance low-light images.  
+
+> •
+
+We propose a latent space decomposition strategy to reconstruct images in the feature domain in an additive manner, ensuring component quality and model training stability.  
+
+> •
+
+We design a feature-guided transformer block that lever-ages image structural priors to refine image enhancement details.  
+
+> •
+
+Extensive experiments on four public datasets demon-strate the superior performance of the RGT model. The rest of this paper is structured as follows. We first introduce related works in Section II. In Section III, we present the proposed RGT in detail. The experimental results are presented in Section IV. Finally, the concluding remarks are drawn in Section V. II. R ELATED WORK 
+
+A. Low-light Image Enhancement 
+
+Traditional Methods. Numerous approaches have been developed in traditional low-light image enhancement. An elementary strategy is the direct and uniform amplification of image intensity. This global operation, however, frequently results in over-enhanced or under-enhanced regions. To al-leviate these issues, techniques such as histogram equaliza-tion [9] and grayscale transformation methods [10] have been widely adopted. Histogram equalization improves visibility by stretching the dynamic range of pixels in dark areas, thereby enhancing both contrast and brightness. Grayscale transformations, including gamma correction and logarithmic mapping, adjust each pixel independently without considering spatial contextual information. Although computationally ef-ficient, these methods often amplify noise or exhibit limited capability in local adaptation. Another line of work [11] builds on dehazing theory, where the low-light image is inverted to mimic a hazy scene. Conventional dehazing algorithms are then applied, and the output is inverted back to produce the enhanced image. A fundamental limitation of these approaches is their strong dependence on the image dehazing process, which tends to introduce amplified noise and color artifacts. 
+
+Deep Learning Methods. The rapid development of deep learning has brought substantial performance gains to various image processing domains, leading to its widespread use in tasks such as image dehazing [12], super-resolution [13], deblurring [14], and low-light image enhancement [15]–[19]. Further expanding the methodology spectrum, a number of recent approaches also incorporate diffusion models into the computational pipeline [20]–[23]. In the context of low-light enhancement, most deep learning techniques rely on supervised training with paired datasets. A widely adopted paradigm employs convolutional neural networks (CNNs) to learn an end-to-end mapping that directly transforms a low-light input into its normally-light counterpart [24]–[28]. One representative example is LLNet [29], which implements a stacked sparse denoising autoencoder with a CNN-based back-bone. This architecture is tailored to perform simultaneous brightness enhancement and noise suppression while effec-tively capturing multi-scale image characteristics. To address the challenge of balancing efficiency and performance, Li et al. [30] propose an image enhancement method based on 3D lookup tables. This method achieves competitive image quality by leveraging the high efficiency inherent to lookup tables. In general, these methods optimize parameters via loss functions defined within a paired-supervised CNNs framework. These methods share a common limitation that their integration of physical image formation principles remains insufficient. This limitation reduces the interpret-ability of the models, but also frequently leads to suboptimal outcomes such as local over-enhancement or under-enhancement. 
+
+Retinex-Based Methods. The Retinex theory has served as a foundational framework for low-light image enhance-ment since its inception [31]. Early implementations of this theory include the Single Scale Retinex (SSR) method [32], which estimates a smooth illumination component through a single-scale Gaussian blur kernel. The reflection component is subsequently derived from the estimated illumination map 
+
+L and the original input, with the resulting R component taken as the enhanced output. A key limitation of SSR lies in its use of a fixed filtering process that lacks learnable parameters, frequently leading to unnatural appearances and noticeable color distortion. To address these issues, later Multi-JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 3
+
+Scale Retinex (MSR) techniques [33] were developed, which combine outputs from multiple SSR instances via weighted averaging. Although these methods improve the overall en-hancement quality, they still exhibit persistent artifacts such as grayish tones and loss of fine details. With the progress of deep learning, Retinex theory has been increasingly incorporated into neural network designs [34]–[38], offering a physically motivated guidance mechanism. Most deep Retinex-based methods adopt a two-stage structure, beginning with the de-composition of the input into reflectance R and illumination 
+
+L, followed by a dedicated enhancement phase. One branch of methods, inspired by conventional SSR, focuses solely on estimating the illumination component L. As an example, Wang et al. [39] designed a CNN to predict L, after which the enhanced image is generated by dividing the original input by the estimated L. This paradigm, however, frequently fails to account for complex noise patterns, color inaccuracies, and physical constraints of the imaging process, often resulting in visible artifacts under demanding conditions. Another line of research jointly estimates both R and L in the decom-position stage. A prominent implementation, RetinexNet [4], utilizes a convolutional network to decompose the image, applies independent denoising and brightness enhancement to each component, and finally reconstructs the image through multiplicative fusion. A notable drawback of this design is that the multiplication-based recombination couples both R
+
+and L in the gradient computation during backpropagation, potentially destabilizing the training process. Furthermore, decomposition conducted in the original image space often results in incomplete separation between R and L, which in turn constrains the final enhancement performance. 
+
+B. Transformer 
+
+The Transformer architecture, originally developed for ma-chine translation [40], has seen growing adoption in computer vision due to its powerful global modeling capabilities. It has been successfully applied to diverse vision tasks including object detection [41], [42], image segmentation [43], and low-light image enhancement [44]–[51]. In the domain of low-level vision, the U-shaped Transformer design has become particularly prevalent. Among these, Uformer [52] introduced a purely Transformer-based U-shaped encoder-decoder that employs skip connections to integrate multi-scale features, though its computational requirements remain substantial. To address efficiency limitations, Restormer [53] proposed the Multi-Dconv Head Transposed Attention (MDTA) and Gated-Dconv Feed-Forward Network (GDFN), which signif-icantly reduce computational complexity while maintaining restoration performance. For the specific task of low-light enhancement, LLformer [54] introduced an axis-based multi-head self-attention mechanism that modifies the standard Transformer block to achieve lower computational cost while delivering competitive enhancement quality. Further extend-ing this direction, several studies have combined Retinex theory with Transformer architectures. For instance, Liu et al. [55] first estimate an illumination component L following Retinex principles to produce an initial brightened image. This intermediate output is then processed by a Multiscale Degradation Estimation Network built with customized Trans-former blocks to further improve visual quality. Although the self-attention mechanism inherently captures long-range dependencies and supports global illumination adjustment, its undirected attention allocation often leads to inadequate recon-struction in severely degraded image regions. To mitigate this, Retinexformer [56] incorporates externally generated guidance signals through multiplication with the value vector, thereby enhancing restoration. However, this strategy still does not fully integrate guidance into the query–key interaction, which limits finer control over attention distribution. III. M ETHODOLOGY 
+
+As shown in Fig. 2, the proposed RGT model consists of two phases, namely image decomposition (Fig. 2(a)) and enhancement (Fig. 2(b)). We first review the Retinex theory, followed by the introduction the proposed latent space de-composition strategy. Next, we present the component refiner used for low-light enhancement. Finally, the loss function is described. 
+
+A. Preliminary 
+
+Based on Retinex theory [31], a color image I ∈ RH×W ×3
+
+can be decomposed into a reflectance map R ∈ RH×W ×3 and an illumination map L ∈ RH×W ×1:
+
+I = R ⊙ L, (1) where ⊙ denotes an element-wise multiplication. Current deep Retinex-based models [3], [4] universally employ dual-branch networks to estimate reflectance R and illumination L components in the color domain. These com-ponents are supervised by reconstructing the input image via element-wise multiplication (see Eq. (1)). Since this decompo-sition process is entirely data-driven, the gradient propagation of this process exerts a critical influence on component quality. Considering the gradient for learnable parameters layers ded-icated to estimating R and L, their gradient back-propagation can be expressed as: 
+
+∂l ∂w Rj
+
+= δRj ◦ xRj , ∂l ∂w Lj
+
+= δLj ◦ xLj (2) where δRj and δLj denote the local gradient of the j-th vari-able ( i.e. , wRj and wLj ) in the convolution layer for estimating 
+
+R and L, xRj and xLj are the corresponding inputs, and l
+
+denotes the back-propagation loss. Then the local gradient 
+
+δR/L j can be calculated using the chain rule as: 
+
+δRj = σ′
+
+> m
+
+X
+
+> i=1
+
+δiLi, δLj = σ′
+
+> m
+
+X
+
+> i=1
+
+δiRi (3) where σ′ denotes the derivative of the activation function, and δi denotes the local gradient of the i-th variable in the convolution layer for estimating R and L. According to Eq. (1), ∂I ∂R = L and ∂I ∂L = R. Therefore, the R and L
+
+are introduced into local gradient. For low-light image input, the values of R and L are generally small, leading to the JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 4                
+
+> Fig. 2. The overview of the RGT model. (a) Decomposition takes a paired low-light/normal-light image as input during training to decompose the image into Rand Lcomponents. (b) RGT extracts Rand Lusing the pre-trained decomposition network (frozen parameters) and enhances Rand Lseparately via the Enhancer network (non-shared parameters). Then, reconstructing the final enhanced result by combining processed Rand L.
+
+slower convergence rate due to gradient scaling. Besides, the decomposed R and L may exist abnormal values, leading to unbalanced parameters update. Furthermore, previous methods perform image decoupling in color space and consider the combination process of R
+
+and L as a simple linear relationship. It interfere with the expression ability of the components. In addition, these meth-ods often apply clip operations to R and L, resulting in poor quality of the enhanced image in over-exposed regions. 
+
+B. Decomposition 
+
+To address these limitations, we introduce the latent space decomposition strategy. First, we apply a logarithmic transfor-mation to input image, allowing Eq. (1) to be convert to: 
+
+S = log( I) = log( R) + log( L) (4) Through this transformation, log( R) and log( L) can be de-composed via an additive operation. Thus, when using convo-lution layers to predict the decomposed log( R) and log( L), the back-propagation coefficients for layers remain consistently 1. This ensures the training procedure for the decomposition is more stable and efficient. Considering the numerical explosion of conventional logarithmic transformations at extremely small values, namely low-light regions (pixel values ∈ [0 , 1] ), we employ a 1-pixel offset operation, as illustrated in Fig. 1(b). Then, the decomposition process can be formulated as: 
+
+R, L = fdec (S, p ), ˜S = frec (R + L) (5) where fdec (·) denotes decomposition, and frec (·) means re-construction. Specifically, for an input image I, we first apply log transformation to obtain S. An illumination prior 
+
+p ∈ RH×W ×1 is then extracted as p = M ax c(S), where 
+
+M ax c(·) denotes the operation that calculates the maximum values of each pixel along channel dimension. The features  
+
+> Fig. 3. The architecture of the GFTB.
+
+S and p are concatenated along the channel dimension and fused via a 3 × 3 convolutional layer, which projects the combined inputs into the latent space. Two Transformer blocks subsequently decouple the resulting features into reflectance and illumination components. Finally, a 3 × 3 convolutional layer reconstructs R + L and maps the result back to the RGB space, producing the output ˜S. Compared with decomposition in the RGB space, that in the latent space can leverage the strong non-linear modeling capability of deep neural networks, thus better adapting to complex lighting environments. 
+
+C. Enhancement 
+
+Images captured under low-light conditions contain signif-icant noise. We argue that this noise propagates to R and L,so we revise Eq. 4 as: 
+
+log( I) = log( R + ˆR) + log( L + ˆL), (6) JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 5
+
+where ˆR and ˆL are noise components in R and L. Statistically, it is fair to hold the hypothesis that ˆR ≪ R and ˆL ≪ L.Therefore, we can apply first-order Taylor expansion to extend the Eq. (6) as: 
+
+log (R + ˆR) ≈ log (R) + ˆRR , (7) 
+
+log (L + ˆL) ≈ log (L) + ˆLL . (8) Therefore, we design a Component Refiner (CR) to en-hance log( R) and log( L) by estimating noise components  
+
+> ˆRR
+
+and ˆLL in latent space, respectively. Note that the noise components are related to R and L, it’s necessary to provide a roughly estimated R and L as a guidance to estimate the corresponding noise component. The guidance for ˆRR is given by Smean (i, j ) = 13
+
+P 
+
+> c∈(R,G,B )
+
+Sc(i, j ), while the guidance for ˆLL is provided by Smax (i, j ) = M ax c∈(R,G,B )(Sc(i, j )) .As illustrated in Fig. 2(c), the component refiner (CR) takes the estimated feature components and corresponding structural priors as dual inputs, and employs a three-scale U-shaped structure to enhance the input components. To fuse the prior features and component features, we further design the Guidance Fusion Transformer Block (GFTB), which is elaborated subsequently. 
+
+Guidance Fusion Transformer Block. As illustrated in Fig. 3, we employ Smean and Smax as guidance signals to preserve structural details in R and maintain brightness distribution in L, respectively. We utilize a 3 ×3 convolutional layer to map the single-channel guidance signal to latent space, obtaining GL ∈ RH×W ×C or GR ∈ RH×W ×C . Then, the guidance signal is incorporated into the decoupling com-ponents through the following process. Firstly, self-attention is applied to the input features to generate Ym. We derive 
+
+Q, K, V by Q = W Qfin , K = W K fin , V = W V fin .Simultaneously, the guidance signal is projected to a guidance query Q′ = W GG for cross-attention. The outputs of both attention paths are computed as: 
+
+Ym = V · Softmax ( QT Kαm
+
+), (9) 
+
+YG = V · Softmax ( Q′T KαG
+
+), (10) where αm and αG are learnable parameters. The two outputs are combines as Y = Ym + YG. A feed-forward layer is then applied to Y , followed by the addition of positional encoding, to produce the final output feature fout .
+
+D. Loss Function 
+
+Our RGT model adopts a two-stage training paradigm, thus its total loss comprises two parts. 
+
+Decomposition. Following RetinexNet [4], the decomposi-tion loss Ldecom consists of three terms, expressed as: 
+
+Ldecom = Lrecon + λ1Lis + λ2LiR (11) where λ1 and λ2 balance the contribution of each term.    
+
+> Fig. 4. Schematic illustration of illumination-reflectance component swapping between two content-identical images under different lighting conditions. Each input image is decomposed into reflectance ( R) and illumination ( L)components within the shallow spatial space. By exclusively exchanging the L
+> components between paired images, we can synthesize four novel recomposed results. Ideally, swapping only the Lcomponents is sufficient to alter the brightness of the images.
+
+The reconstruction loss Lrecon enforces that the decom-posed reflectance and illumination can accurately reconstruct the input image. The Lis ensures local-consistency and smoothness in the illumination map while while preserv-ing strong structural details in the reflectance R. The LiR 
+
+promotes similarity between the reflectance estimates under different lighting conditions. These terms are formulated as: 
+
+Lrecon = X
+
+> i∈(l,n )
+
+∥frec (Ri, L i) − Si∥1,
+
+Lis = X
+
+> i∈(l,n )
+
+∥∇ Li ◦ exp (α∇Ri)∥1,
+
+LiR = ∥Rl − Rn∥1
+
+(12) where α represents a coefficient that balances the structure-awareness strength. 
+
+Enhancement. During the training of the enhancer, we employ L1 loss and perceptual loss Lp [57] to guide the low-light enhancement process. The enhancement loss Len is defined as: 
+
+Len = ∥Sen − Sn∥1 + λpLp(Sen , S n) (13) IV. E XPERIMENT 
+
+A. Datasets and Evaluation Metrics 
+
+Datasets. We evaluate our method on four widely used paired low-light image datasets, including LOLv2 [5], HDR+(480p) [6], SDSD-indoor [7] and SICE [8]. We also conduct evaluation on unpaired real-world datasets, including DICM [60], LIME [61], MEF [62], NPE [63], and VV [64]. 
+
+LOLv2 contains two subsets, Real and Synthetic. The training-to-test data pair ratios are set as 689:100 for LOLv2 real and 900:100 for LOLv2 syn. 
+
+HDR+(480p) provides ISP-untreated inputs that simulate low-light conditions, making it suitable for low-light enhancement JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 6
+
+TABLE I THE PSNR OF COMPARATIVE DECOMPOSITION ON LOL V2 DATASET . frec REPRESENTS THE OPERATION OF RECONSTRUCTING THE IMAGE FROM R AND 
+
+L COMPONENTS . A CCORDING TO RETINEX NET [4] REQUIREMENTS FOR THE DECOMPOSED R AND L COMPONENTS , THE RECONSTRUCTED IMAGES FROM R AND L SHOULD MATCH THE INPUT IMAGE CORRESPONDING TO L.                                         
+
+> Methods LOLv2 real LOLv2 syn
+> frec (Rl, L l)frec (Rl, L n)frec (Rn, L l)frec (Rn, L n)frec (Rl, L l)frec (Rl, L n)frec (Rn, L l)frec (Rn, L n)
+> RetinexNet [4] 38.56 23.90 35.47 29.50 36.44 20.37 26.59 30.28 RetinexDIP [58] 16.61 14.91 14.49 18.05 23.75 14.43 23.52 20.47 URetinexNet [59] 34.85 19.40 31.47 24.76 26.78 17.39 25.36 22.89 RGT 69.45 54.77 68.34 59.05 58.22 51.11 56.82 53.72
+
+Fig. 5. Visual comparisons of the decomposed results by different methods on LOLv2 real. The images within the green boxes should be same and the images within the red boxes should be same. 
+
+evalution. The dataset includes 675 training pairs and 247 testing pairs. 
+
+SDSD-indoor uses a static(indoor) subset, with 62 image pairs for training and 6 for testing. 
+
+SICE Follows FECNet [65], where the medium-exposure image is taken as the ground truth. The shortest-exposure image is used as the low-light input. The dataset contains 452 training pairs and 50 testing pairs. 
+
+Evaluation metrics. For paired datasets, we adopt Peak Signal-to-Noise Ratio (PSNR) and Structural Similarity (SSIM) [66] as evalution metrics. The Learned Perceptual Im-age Patch Similarity (LPIPS) metric, based on AlexNet [67], is also employed to quantify perceptual similarity. For unpaired datasets, we utilize CLIP-IQA [68] and NIQE [69] to evaluate the quality of the enhanced images, as these metrics do not require paired ground-truth references. 
+
+B. Implementation Details 
+
+Our method is implemented by PyTorch and trained on an NVIDIA 4090 GPU with the Adam optimizer ( β1 = 0 .9 and 
+
+β2 = 0 .999 ) for 1.5 × 10 5 iterations. The initial learning rate is 2 × 10 −4, which is decayed to 1 × 10 −6 via cosine annealing. Training samples are (256 ×256) patches randomly cropped from low-/normal-light image pairs, with a batch size of 4. Data augmentation includes random rotation and flipping. The two-stage training protocol proceeds as follows: (i) Decomposition phase: train the decomposition network with loss weights λ1 = 0.1 and λ2 = 1, outputting R
+
+and L components with channel dimension C = 40 . (ii) Enhancement phase: the decomposition network parameters frozen, the CR is trained with λp = 0 .01 .
+
+C. Comparison with SOTA Models 
+
+We perform extensive comparisons between our method and SOTA low-light enhancement algorithms, covering both quantitative and visual evaluations across paired and unpaired datasets. 
+
+Decomposition quality comparison. To validate the ef-fectiveness of our latent space decomposition strategy, we conduct paired-image experiments through illumination ( L)component swapping. According to Retinex theory, swapping only the L components should alter solely the image brightness without affecting their content information. As shown in Fig. 4, given paired images IA and IB , our latent space decom-position strategy yields illumination-reflectance component JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 7
+
+TABLE II QUANTITATIVE COMPARISONS PSNR/SSIM ON LOL V2 [5], HDR+ [6], SDSD( INDOOR ) [7] AND SICE [8] DATASETS . T HE HIGHEST RESULT IS IN  
+
+> BOLD WHILE THE SECOND HIGHEST RESULT IS UNDERLINED
+
+.Methods LOLv2 real LOLv2 syn HDR+(480p) SDSD-indoor SICE Complexity PSNR SSIM PSNR SSIM PSNR SSIM PSNR SSIM PSNR SSIM FLOPs(G) Params(M) Time(ms) RetinexNet [4] 16.52 0.674 19.11 0.805 19.54 0.678 25.88 0.832 19.71 0.686 587.47 0.84 3.36 LLFlow [70] 20.41 0.829 23.14 0.930 22.96 0.762 22.10 0.801 19.99 0.685 358.40 17.42 122.70 MirNetv2 [71] 22.00 0.818 24.86 0.925 22.87 0.765 29.68 0.870 24.29 0.767 140.21 5.86 61.69 SNR-Net [72] 21.48 0.849 24.14 0.928 22.50 0.764 29.44 0.894 21.78 0.729 26.35 4.01 6.25 GSAD [73] 22.20 0.811 22.46 0.897 18.03 0.781 – – 15.11 0.553 134.04 18.42 164.99 LLFormer [54] 21.86 0.816 25.32 0.933 23.38 0.768 29.18 0.867 23.44 0.739 22.52 24.55 70.28 Cotf [74] 19.25 0.774 22.91 0.892 22.31 0.737 28.41 0.875 22.50 0.769 1.81 0.31 3.56 CSPN [75] 21.59 0.859 25.34 0.935 25.18 0.906 30.89 0.895 23.53 0.775 60.92 1.40 118.41 AttnFlow [76] 20.23 0.877 24.28 0.954 25.75 0.906 25.83 0.866 21.08 0.717 286.37 17.42 624.55 IGDFormer [77] 22.73 0.833 25.33 0.937 24.61 0.897 28.88 0.838 23.28 0.756 38.23 3.55 77.85 RetinexMamba [78] 22.70 0.858 25.79 0.933 24.92 0.899 29.63 0.878 24.64 0.768 45.98 4.59 164.88 CIDNet-op [79] 23.11 0.849 25.44 0.935 21.17 0.866 21.69 0.877 23.67 0.751 7.57 1.88 18.37 CIDNet-wp [79] 23.81 0.865 25.28 0.934 – – 22.30 0.861 24.19 0.772 7.57 1.88 18.37 RetinexFormer [56] 22.80 0.840 25.67 0.939 26.18 0.910 29.77 0.895 24.84 0.765 15.57 1.61 18.96 RGT 23.80 0.896 26.18 0.941 26.97 0.924 31.31 0.896 26.40 0.827 50.30 4.79 55.71 
+
+pairs {LA, R A}and {LB , R B }. By exclusively exchanging their illumination components ( LA ↔ LB ), we generate four recomposed variants through the following cross-synthesis protocol: 
+
+frec (Rl, L l) = ˜Sl,frec (Rl, L n) = ˜Sswap l ,frec (Rn, L n) = ˜Sn,frec (Rn, L l) = ˜Sswap n ,
+
+(14) Where frec represents the reconstruction operation, and super-script swap represents recomposed outputs generated through 
+
+L component exchange. We emphasize that under ideal con-ditions, if ˜Sl(or ˜Sn) and ˜Sswap l (or ˜Sswap n ) are consistent, it indicates that the L component dominates the brightness characteristics of the image, while the R component deter-mines the content information, thus validating the accuracy of the image decoupling process. As shown in Table I, our decomposition strategy achieves the best performance. We also compare decomposition quality visually with three represen-tative approaches. As shown in Fig. 5, competing methods exhibit inferior decomposition performance when R and L
+
+components are examined independently, with issues including exposure inconsistency and structural degradation. In contrast, our approach leverages latent-space additive coupling to enable stable training and precise decomposition of R and L. This robust decomposition lays a solid foundation for high-quality enhancement, particularly in handling overexposed regions. More comprehensive experimental analysis will be conducted in the ablation experiment section. 
+
+Comparison on paired datasets. As shown in Table II, the high-quality decomposition also leads to outstanding PSNR and SSIM performance in low-light image enhancement task, outperforming all competing methods on four benchmark datasets while securing second-best results on the remaining one. On the SICE dataset, where shortest-exposure images serve as low-light inputs, our method achieves a 1.36 dB PSNR improvement compared with the second-ranked method. This gain verifies that latent-space decomposition allows R and L
+
+TABLE III QUANTITATIVE COMPARISONS LPIPS ↓ ON LOL V2 [5], HDR+(480 P) [6], SDSD( INDOOR ) [7] AND SICE [8] DATASETS . T HE HIGHEST RESULT IS IN  
+
+> BOLD WHILE THE SECOND HIGHEST RESULT IS UNDERLINED
+
+.                                             
+
+> Methods LOLv2 real LOLv2 syn HDR+(480p) SDSD-indoor SICE SNR-Net [72] 0.122 0.061 0.238 0.230 0.206 CSPN [75] 0.156 0.055 0.071 0.181 0.235 IGDFormer [77] 0.158 0.074 0.086 0.227 0.237 AttnFlow [76] 0.146 0.050 0.064 0.223 0.298 RetinexMamba [78] 0.147 0.062 0.073 0.184 0.230 CIDNet [79] 0.131 0.055 0.086 0.198 0.258 RetinexFormer [56] 0.169 0.064 0.069 0.116 0.229 RGT 0.102 0.046 0.047 0.119 0.127
+
+components to break free from numerical constraints effec-tively. The nonlinear fusion capability of the convolutional neural network in our model further enhances adaptability to extremely low-light environments. In terms of perceptual quality, the RGT model achieves the best LPIPS results across all five datasets, indicating that the enhanced images are better aligned with human perception (Table III). Visual comparisons between our method and SOTA ap-proaches are conducted on five benchmark datasets. As shown in Fig. 6 and Fig. 7, existing methods face difficulties in effectively enhancing extremely dark regions effectively while suppressing noise, often resulting in color distortion or in-sufficient enhancement. For instance, Retinexformer relies on a multiplicative relationship to derive R and L in RGB space, failing to decompose images into accurate R and L
+
+components. This deficiency leads to over-enhancement and noisy artifacts. Moreover, previous methods apply clipping operations to R and L, which frequently causes artifacts in overexposed regions during enhancement. 
+
+Comparison on unpaired datasets. For unpaired datasets (DICM, LIME, MEF, NPE and VV), ground-truth images are unavailable. To evaluate performance under realistic conditions, images are enhanced using models trained on LOLv2 or HDR+(480p), and assess the results with the CLIP-IQA and NIQE metrics. As reported in Table IV, the proposed method consistently ranks among the top two JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 8
+
+Fig. 6. Visual comparisons of the enhanced results by different methods on LOLv2 real (top) and LOLv2 syn (bottom). 
+
+Fig. 7. Visual comparisons of the enhanced results by different methods on HDR+(480p) (top), SICE (middle) and SDSD-indoor (bottom) TABLE IV QUANTITATIVE COMPARISONS CLIP-IQA ↑/NIQE ↓ ON DICM [60], LIME [61], MEF [62], NPE [63] AND VV [64] DATASETS . T HE HIGHEST RESULT IS IN BOLD WHILE THE SECOND HIGHEST RESULT IS UNDERLINED .
+
+Methods DICM LIME MEF NPE VV CLIP-IQA ↑ NIQE ↓ CLIP-IQA ↑ NIQE ↓ CLIP-IQA ↑ NIQE ↓ CLIP-IQA ↑ NIQE ↓ CLIP-IQA ↑ NIQE ↓
+
+SNR-Net [72] 0.599 4.71 0.665 5.74 0.633 4.18 0.544 4.32 0.304 9.87 CSPN [75] 0.659 4.10 0.626 4.12 0.604 4.42 0.668 3.97 0.297 3.24 IGDFormer [77] 0.652 3.77 0.665 3.96 0.688 3.51 0.530 4.30 0.313 2.99 AttnFlow [76] 0.730 4.54 0.712 4.46 0.746 4.64 0.683 4.24 0.352 3.00 RetinexMamba [78] 0.665 3.79 0.691 3.96 0.673 3.35 0.573 3.92 0.384 2.90 CIDNet [79] 0.743 3.99 0.675 4.16 0.664 3.72 0.758 3.73 0.299 3.19 RetinexFormer [56] 0.711 3.79 0.687 4.13 0.776 3.56 0.691 3.74 0.297 3.21 RGT 0.732 3.78 0.723 3.85 0.810 3.42 0.791 3.72 0.361 2.87 JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 9
+
+Fig. 8. Visual comparisons of the enhanced results by different methods on unpaired dataset (DICM, LIME, MEF, NPE and VV). TABLE V ABLATION STUDY ON DECOMPOSITION STRATEGIES USING THE 
+
+LOL V2 REAL BENCHMARK . S UBSCRIPTS l/n DENOTE COMPONENTS DERIVED FROM LOW -LIGHT AND NORMAL IMAGES RESPECTIVELY .Methods frec (Rl, L l) frec (Rl, L n) frec (Rn, L l) frec (Rn, L n) PSNR SSIM (0) 40.35 30.84 39.91 38.35 21.76 0.844 (1) 50.16 23.56 42.76 38.52 22.30 0.844 (2) 52.73 48.19 51.77 51.58 23.27 0.811 (3) 51.12 22.83 39.03 50.53 22.63 0.832 Ours 69.45 54.77 68.34 59.05 23.80 0.896 
+
+across all metrics, demonstrating that it produces more natural-looking results with superior overall visual quality. Representative images from each dataset are selected for visual comparison. As illustrated in Fig. 8, the advantages of latent-space decomposition allow the proposed method to cope robustly with very dark and challenging lighting, achieving balanced global enhancement without over-exposure. 
+
+Comparison on real-world data. Furthermore, we col-lected real low-light images using five mobile devices and selected five methods for comparison, with the results pre-sented in Fig. 9. Visual inspections reveal that in compar-ison with competing methods such as RetinexFormer and RetinexMamba, the enhanced images generated by the RGT model exhibit fewer artifacts and lower noise levels. This observation demonstrates the strong generalization capability of our proposed method. 
+
+D. Ablation Study 
+
+We conducted ablation studies on the LOLv2 real dataset to validate the effectiveness of each component of RGT. 
+
+Effectiveness of the decomposition strategy. To validate the efficacy of our latent space decomposition strategy, we design four targeted decoupling variants, as detailed in Fig. 10.  
+
+> •
+
+(0) means standard Retinex decomposition strategy: Im-ages are decoupled in the pixel domain into a 3-channel reflectance ( R) component and 1-channel illu-mination ( L) component, with reconstruction through multiplication;  
+
+> •
+
+(1) denotes that we decouple image by multiplication operation in latent space;  
+
+> •
+
+(2) means that we decouple image by additive operation in latent space without log transform on image;  
+
+> •
+
+(3) denotes that we decouple image by additive operation in RGB space with log transform. As shown in Table V, the multiplicative operation degrades both the decomposition quality and the final enhancement performance, owing to ineffective gradient back-propagation. Although variant (3) yields acceptable results in decomposition and enhancement, it cannot fully unleash the model’s potential as it lacks the necessary logarithmic transformation. Decompo-sition in the image space further struggles with bright regions under linear reconstruction constraints, such as frec (Rl, L n)
+
+only get 22.83 dB. By contrast, our proposed method achieves JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 10   
+
+> Fig. 9. Visual comparison of various methods on real-world images from various mobile devices.
+> Fig. 10. The overview of four variant decomposition strategies.
+
+superior performance in both decomposition and enhancement, benefiting from improved gradient flow and the ability to handle highlight regions effectively. Low-light enhancement datasets typically contain paired low-light and normal-light images, thus failing to validate the applicability of image decomposition strategies to over-exposed images—another common extreme illumination sce-nario. To bridge this gap, we conduct supplementary ex-periments on the Kalantri dataset [80], containing 74 static scenes with low-normal-high triplet images. To fully validate the effectiveness of our proposed latent space decomposition strategy, we design three image combinations based on bright-ness differences: (i) Low ↔Middle; (ii) Middle ↔High; (iii) Low ↔High. For each combination, we conduct experiments with three decomposition strategies, including the classical Retinex strategy ( i.e. , variant (1)), variant (2), and the full strategy. Notably, the model use frozen weights from Table V, without retraining or fine-tuning. As shown in Table VI, the proposed latent decomposition strategy achieves the best quantitative results across three combinations, outperforming the classical Retinex decomposition strategy by at least 10dB. This sufficiently demonstrates that our method is applicable to images with varying brightness and exhibits excellent generalization ability. Compared with the classic Retinex im-JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 11 
+
+TABLE VI ABLATION STUDY ON DECOMPOSITION STRATEGIES USING THE KALANTRI DATASET . B ASED ON THE TYPES OF INPUT IMAGE PAIRS , THE EXPERIMENTS CAN BE DIVIDED INTO THREE GROUPS :( I) L OW ↔MIDDLE ; ( II ) M IDDLE ↔HIGH ; ( III ) L OW ↔HIGH . E ACH GROUP EMPLOYS THREE DECOMPOSITION STRATEGIES FOR THE EXPERIMENTS , INCLUDING THE CLASSICAL RETINEX STRATEGY (VARIANT (1)), VARIANT (2), AND THE FULL STRATEGY (O URS ). Inputs Methods frec (Rl, L l) frec (Rl, L n) frec (Rn, L l) frec (Rn, L n) Avg Low ↔Middle (1) 57.27 46.19 46.18 57.33 51.74 (2) 64.74 59.52 62.16 61.03 61.86 Ours 68.00 61.92 66.86 62.73 64.88 
+
+Middle ↔High (1) 58.38 41.27 39.42 50.39 47.37 (2) 61.03 57.39 58.29 59.18 58.97 Ours 62.73 57.62 61.38 58.78 60.13 
+
+Low ↔High (1) 57.27 42.08 37.71 50.40 45.87 (2) 64.74 58.21 59.27 58.19 60.10 Ours 68.00 57.09 65.47 58.78 62.34 
+
+TABLE VII ABLATION STUDY ON DECOMPOSITION STRATEGIES USING THE 
+
+LOL V2 REAL BENCHMARK . S UBSCRIPTS l/n DENOTE COMPONENTS DERIVED FROM LOW -LIGHT AND NORMAL IMAGES RESPECTIVELY . * 
+
+> DENOTES THE MODEL EMPLOYS THE LATENT SPACE DECOMPOSITION STRATEGY
+
+.Methods frec (Rl, L l) frec (Rl, L n) frec (Rn, L l) frec (Rn, L n) Avg RetinexNet 38.56 23.90 35.47 29.50 31.86 RetinexNet* 58.27 45.09 57.84 50.23 52.86 URetinexNet 34.85 19.40 31.47 24.76 27.62 URetinexNet* 56.75 45.35 56.35 47.13 51.40 Ours 69.45 54.77 68.34 59.05 62.91 
+
+age decoupling strategy, our method yields more accurate R
+
+and L components. Furthermore, swapping the L component between two images of different brightness enables precise adjustment of image brightness while preserving richer details. To further validate that the performance gains primarily originate from the latent decomposition strategy with a log transformation, we deploy it across various network architec-tures including RetinexNet [4] and URetinexNet [59]. Con-cretely, for RetinexNet and URetinexNet, we retain original network architectures while only replacing the default pixel space image decoupling process with our proposed strategy, followed by retraining the image decomposition module. As shown in Table VII, after integrating our strategy, RetinexNet* and URetinexNet* achieve average performance gains of 21.00dB and 23.78dB, respectively, compared to their original counterparts. Additionally, our full strategy attains superior performance owing to the transformer’s stronger feature mod-eling capability. In addition, to validate the improved training stability of the proposed decomposition strategy, both additive and multiplica-tive decomposition models are trained ten times. Statistical results of the enhancement PSNR show that the additive decomposition offers greater stability, with a mean PSNR of 23.84 and a variance of 0.067, whereas the multiplicative decomposition yields a mean PSNR of 22.16 and a variance of 0.157. The training loss curves in Fig. 11 further demonstrate that the additive decomposition attains a lower final conver-gence loss and converges faster. In addition, its loss curves display considerably smaller fluctuations across runs. These results indicate that under multiplicative decomposition, the 
+
+Fig. 11. Comparison of training stability between additive and multiplicative decompositions. Each model is trained 10 times, and the figure shows the mean and variance of the loss at each epoch. 
+
+Fig. 12. The overview of three GFTB variants and complete GFTB. 
+
+values of L and R directly affect gradient propagation, intro-ducing greater training uncertainty and inferior convergence. In contrast, the proposed additive decomposition avoids this problem, leading to more stable training and more consistent enhancement performance. 
+
+Effectiveness of the guidance signals. To evaluate the contribution of the introduced guidance signals, we developed three GFTB variants, each incorporating a distinct guidance signal integration approach. As shown in Fig. 12, (a) represents the GFTB without guidance signals. (b) and (c) correspond to GFTB configurations with two different feature fusion strategies. (d) denotes our proposed GFTB structure while allowing replacement of the guidance signal. As indicated in Table VIII, complete removal of guidance signals results in a 0.81 dB performance degradation of the JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 12 
+
+TABLE VIII ABLATION STUDY ON DIFFERENT GFTB STRUCTURES .Different GFTB structures Metrics Variants R L(a) SA (b)                                 
+
+> ⊙V
+> (c)
+> ⊙fin
+> (d) CA Smean Smax Smean Smax PSNR SSIM
+> ✓22.99 0.837
+> ✓✓✓23.03 0.792
+> ✓✓✓21.85 0.815
+> ✓✓✓23.53 0.855
+> ✓✓✓22.98 0.842
+> ✓✓✓23.36 0.840
+> ✓✓✓23.80 0.896
+
+model. Compared with the GFTB variants ( i.e. , ⊙V and ⊙fin ), our proposed method achieves performance improvements of 0.78 dB and 1.95 dB over these two alternatives respectively. This demonstrates that the cross-attention based guidance signal integration approach is more effective. Additionally, compared with the full model, using only Smean or Smax 
+
+as the guidance signal leads to performance drops of 0.27 dB and 1.49 dB respectively. These results confirm that ap-propriate guidance signals are essential for achieving optimal enhancement performance. V. C ONCLUSION 
+
+In this paper, we propose a Retinex-based low-light enhancement method, named Retinex-Guided Transformer (RGT), featuring a two-stage architecture with decomposition and enhancement. Rooted in Retinex theory, we propose a latent-space decomposition strategy incorporating a log transformation and 1-pixel offset, achieving stable and accurate components of reflectance and illumination. We propose a component refiner to enhance low-light images, where the designed guided feature transformer block preserves details of both reflectance and illumination components. Comprehensive quantitative and qualitative experiments on four public datasets and real-world data demonstrate that RGT achieves superior performance. Ablation experiments validate the effectiveness of the proposed latent-space decomposition strategy. REFERENCES [1] H. Wang, Y. Chen, Y. Cai, L. Chen, Y. Li, M. A. Sotelo, and Z. Li, “Sfnet-n: An improved sfnet algorithm for semantic segmentation of low-light autonomous driving road scenes,” IEEE Transactions on Intelligent Transportation Systems , vol. 23, no. 11, pp. 21 405–21 417, 2022. [2] Q. Chen, X. Yang, B. Zheng, R. Lu, X. Yang, Q. Zhang, Y. Liu, and X. Zhou, “Wxsod: A benchmark for robust salient object detection in adverse weather conditions,” arXiv preprint arXiv:2508.12250 , 2025. [3] W. Dong, H. Zhou, Y. Zhang, X. Liu, and J. Chen, “Ecmamba: Consolidating selective state space model with retinex guidance for efficient multiple exposure correction,” in NeurIPS , vol. 37, 2024, pp. 53 438–53 457. [4] C. Wei, W. Wang, W. Yang, and J. Liu., “Deep retinex decomposition for low-light enhancement.” in BMVC . , 2018. [5] W. Yang, W. Wang, H. Huang, S. Wang, and J. Liu, “Sparse gradient regularized deep retinex network for robust low-light image enhance-ment,” IEEE TIP , p. 2072–2086, Jan 2021. [6] S. W. Hasinoff, D. Sharlet, R. Geiss, A. Adams, J. T. Barron, F. Kainz, J. Chen, and M. Levoy, “Burst photography for high dynamic range and low-light imaging on mobile cameras,” ACM Transactions on Graphics ,p. 1–12, Nov 2016. [7] R. Wang, X. Xu, C.-W. Fu, J. Lu, B. Yu, and J. Jia, “Seeing dynamic scene in the dark: A high-quality video dataset with mechatronic alignment,” in ICCV , Oct 2021. [8] J. Cai, S. Gu, and L. Zhang, “Learning a deep single image contrast enhancer from multi-exposure images,” IEEE TIP , vol. 27, no. 4, pp. 2049–2062, 2018. [9] K. Zuiderveld, Contrast limited adaptive histogram equalization , USA, 1994. [10] Z.-G. Wang, Z.-H. Liang, and C.-L. Liu, “A real-time image processor with combining dynamic contrast ratio enhancement and inverse gamma correction for pdp,” Displays , vol. 30, no. 3, pp. 133–139, 2009. [11] L. Li, R. Wang, W. Wang, and W. Gao, “A low-light image enhancement method for both denoising and contrast enlarging,” in 2015 IEEE international conference on image processing (ICIP) . IEEE, 2015, pp. 3730–3734. [12] X. Zhao, F. Xu, and Z. Liu, “Transdehaze: transformer-enhanced texture attention for end-to-end single image dehaze,” The Visual Computer ,vol. 41, no. 3, pp. 1621–1635, 2025. [13] S. Umirzakova, S. Ahmad, L. U. Khan, and T. Whangbo, “Medical im-age super-resolution for smart healthcare applications: A comprehensive survey,” Information Fusion , vol. 103, p. 102075, 2024. [14] Y. Xiang, H. Zhou, C. Li, F. Sun, Z. Li, and Y. Xie, “Deep learning in motion deblurring: current status, benchmarks and future prospects,” 
+
+The Visual Computer , vol. 41, no. 6, pp. 3801–3827, 2025. [15] Z. Cui, L. Gu, X. Sun, X. Ma, Y. Qiao, and T. Harada, “Aleth-nerf: Illumination adaptive nerf with concealing field assumption,” AAAI ,vol. 38, no. 2, pp. 1435–1444, Mar. 2024. [16] C. Yuning, Z. Syed, Waqas, K. Salman, K. Alois, S. Mubarak, and K. Fahad, Shahbaz, “Adair: Adaptive all-in-one image restoration via frequency mining and modulation,” in ICLR , 2025. [17] H. Zhou, W. Dong, X. Liu, S. Liu, X. Min, G. Zhai, and J. Chen, “Glare: Low light image enhancement via generative latent feature based codebook retrieval,” in ECCV , 2024, pp. 36–54. [18] Z. Lingyu, Y. Wenhan, C. Baoliang, Z. Hanwei, N. Zhangkai, M. Qi, and W. Shiqi, “Unrolled decomposed unpaired learning for controllable low-light video enhancement,” in ECCV , 2024. [19] T. Chobola, Y. Liu, H. Zhang, J. A. Schnabel, and T. Peng, Fast Context-Based Low-Light Image Enhancement via Neural Implicit Representa-tions , 2024, p. 413–430. [20] C. He, C. Fang, Y. Zhang, K. Li, L. Tang, C. You, F. Xiao, Z. Guo, and X. Li, “Reti-diff: Illumination degradation image restoration with retinex-based latent diffusion model,” ICLR , 2025. [21] C.-Y. Chan, W.-C. Siu, Y.-H. Chan, and H. Anthony Chan, “Anligh-tendiff: Anchoring diffusion probabilistic model on low light image enhancement,” IEEE TIP , vol. 33, pp. 6324–6339, 2024. [22] H. Jiang, A. Luo, X. Liu, S. Han, and S. Liu, “Lightendiffusion: Unsupervised low-light image enhancement with latent-retinex diffusion models,” in European Conference on Computer Vision , 2024. [23] X. Yi, H. Xu, H. Zhang, L. Tang, and J. Ma, “Diff-retinex: Rethinking low-light image enhancement with a generative diffusion model,” in 
+
+ICCV , 2023, pp. 12 302–12 311. [24] M. Zhu, P. Pan, W. Chen, and Y. Yang, “Eemefn: Low-light image en-hancement via edge-enhanced multi-exposure fusion network,” vol. 34, no. 07, pp. 13 106–13 113, Apr. 2020. [25] Y. Jiang, J. Zhu, L. Li, and H. Ma, “A joint network for low-light image enhancement based on retinex,” Cognitive Computation , vol. 16, no. 6, pp. 3241–3259, 2024. [26] Y. Luo, G. Lv, J. Ling, and X. Hu, “Low-light image enhancement via an attention-guided deep retinex decomposition model,” Applied Intelligence , vol. 55, no. 2, pp. 1–13, 2025. [27] L. Zainab, H. Afzal, K. Mahmood, and O. Arif, “A light-weight deep learning framework for low light image enhancement,” Neurocomputing ,vol. 621, p. 129236, 2025. [28] K. Jiang, Q. Wang, Z. An, Z. Wang, C. Zhang, and C.-W. Lin, “Mutual retinex: Combining transformer and cnn for image enhancement,” IEEE Transactions on Emerging Topics in Computational Intelligence , vol. 8, no. 3, pp. 2240–2252, 2024. [29] K. G. Lore, A. Akintayo, and S. Sarkar, “Llnet: A deep autoencoder approach to natural low-light image enhancement,” Pattern Recognition ,vol. 61, pp. 650–662, 2017. [30] C. Li, H. Su, X. Tan, X. Zhang, and L. Ma, “Wv-lut: Wide vision lookup tables for real-time low-light image enhancement,” IEEE Transactions on Multimedia , 2025. [31] E. H. Land and J. J. McCann, “Lightness and retinex theory,” J. Opt. Soc. Am. , vol. 61, no. 1, pp. 1–11, Jan 1971. [32] D. Jobson, Z. Rahman, and G. Woodell, “Properties and performance of a center/surround retinex,” IEEE TIP , vol. 6, no. 3, pp. 451–462, 1997. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 13 
+
+[33] Z. Rahman, D. Jobson, and G. Woodell, “Multi-scale retinex for color image enhancement,” in ICIP , vol. 3, 1996, pp. 1003–1006 vol.3. [34] K. Wu, J. Huang, Y. Ma, F. Fan, and J. Ma, “Cycle-retinex: Unpaired low-light image enhancement via retinex-inline cyclegan,” IEEE TMM ,vol. 26, pp. 1213–1228, 2024. [35] S. Sun, W. Ren, J. Peng, F. Song, and X. Cao, “Di-retinex: Digital-imaging retinex model for low-light image enhancement,” International Journal of Computer Vision , pp. 1–22, 2025. [36] H. Xu, H. Zhang, X. Yi, and J. Ma, “Cretinex: A progressive color-shift aware retinex model for low-light image enhancement,” International Journal of Computer Vision , vol. 132, no. 9, pp. 3610–3632, 2024. [37] E. Hu, Y. Liu, A. Wang, B. Shiri, W. Ren, and W. Lin, “Low-light image enhancement using a retinex-based variational model with weighted l p norm constraint,” IEEE Transactions on Multimedia , 2025. [38] Z. Zhao and D. Shi, “Retinex-guided generative diffusion prior for low-light image enhancement,” Pattern Recognition , p. 112421, 2025. [39] R. Wang, Q. Zhang, C.-W. Fu, X. Shen, W.-S. Zheng, and J. Jia, “Underexposed photo enhancement using deep illumination estimation,” in CVPR , June 2019. [40] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, L. Kaiser, and I. Polosukhin, “Attention is all you need,” in NeurIPS ,2017, p. 6000–6010. [41] N. Carion, F. Massa, G. Synnaeve, N. Usunier, A. Kirillov, and S. Zagoruyko, “End-to-end object detection with transformers,” in 
+
+ECCV , 2020, pp. 213–229. [42] Z. Liu, Y. Lin, Y. Cao, H. Hu, Y. Wei, Z. Zhang, S. Lin, and B. Guo, “Swin transformer: Hierarchical vision transformer using shifted windows,” in ICCV , 2021. [43] E. Xie, W. Wang, Z. Yu, A. Anandkumar, J. M. Alvarez, and P. Luo, “Segformer: Simple and efficient design for semantic segmentation with transformers,” in NeurIPS , 2021. [44] A. Brateanu, R. Balmez, A. Avram, C. Orhei, and C. Ancuti, “Lyt-net: Lightweight yuv transformer-based network for low-light image enhancement,” IEEE Signal Processing Letters , vol. 32, pp. 2065–2069, 2025. [45] X. Yin, Z. Yu, X. Gao, R. Ju, X. Sun, and X. Zhang, “Deformer: Dct-driven enhancement transformer for low-light image and dark vision,” in ICASSP , 2023. [46] R. Jha, A. Lenka, M. Ramanagopal, A. Sankaranarayanan, and K. Mitra, “Rt-x net: Rgb-thermal cross attention network for low-light image enhancement,” in CVPR , 2025. [47] Y. Guo, Y. Gao, Y. Lu, R. W. Liu, and S. He, “Onerestore: A universal restoration framework for composite degradation,” in ECCV , 2024. [48] H. Zhou, W. Dong, X. Liu, Y. Zhang, G. Zhai, and J. Chen, “Low-light image enhancement via generative perceptual priors,” in AAAI , vol. 39, no. 10, 2025, pp. 10 752–10 760. [49] J. Wang, H. Fu, W. Zheng, X. Wang, X. Wang, H. Zhang, and H. Ma, “Rethinking the low-light video enhancement: Benchmark datasets and methods,” IEEE Transactions on Image Processing , 2025. [50] L. Tu, J. Wu, C. Wang, D. Meng, and Z. Jin, “Fourier-based decoupling network for joint low-light image enhancement and deblurring,” IEEE Transactions on Image Processing , 2025. [51] Y. Lin, X. Xu, J. Wu, Y. Han, and Z. Liu, “Geometric-aware low-light image and video enhancement via depth guidance,” IEEE Transactions on Image Processing , 2025. [52] Z. Wang, X. Cun, J. Bao, W. Zhou, J. Liu, and H. Li, “Uformer: A general u-shaped transformer for image restoration,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,2022, pp. 17 683–17 693. [53] S. W. Zamir, A. Arora, S. Khan, M. Hayat, F. S. Khan, and M.-H. Yang, “Restormer: Efficient transformer for high-resolution image restoration,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2022, pp. 5728–5739. [54] T. Wang, K. Zhang, T. Shen, W. Luo, B. Stenger, and T. Lu, “Ultra-high-definition low-light image enhancement: a benchmark and transformer-based method,” in AAAI , vol. 37, no. 3, 2023, pp. 2654 – 2662. [55] C. Liu, Z. Wang, P. Birch, and X. Wang, “Efficient retinex-based frame-work for low-light image enhancement without additional networks,” 
+
+IEEE Transactions on Circuits and Systems for Video Technology , 2024. [56] Y. Cai, H. Bian, J. Lin, H. Wang, R. Timofte, and Y. Zhang, “Retinex-former: One-stage retinex-based transformer for low-light image en-hancement,” in ICCV , 10 2023, pp. 12 470–12 479. [57] J. Johnson, A. Alahi, and L. Fei-Fei, “Perceptual losses for real-time style transfer and super-resolution,” in Computer Vision – ECCV 2016 ,2016, pp. 694–711. [58] Z. Zhao, B. Xiong, L. Wang, Q. Ou, L. Yu, and F. Kuang, “Retinexdip: A unified deep framework for low-light image enhancement,” IEEE TCSVT , vol. 32, no. 3, 2022. [59] W. Wu, J. Weng, P. Zhang, X. Wang, W. Yang, and J. Jiang, “Uretinex-net: Retinex-based deep unfolding network for low-light image enhance-ment,” in CVPR , 2022, pp. 5891–5900. [60] C. Lee, C. Lee, and C.-S. Kim, “Contrast enhancement based on layered difference representation of 2d histograms,” IEEE Transactions on Image Processing , vol. 22, no. 12, pp. 5372–5384, 2013. [61] X. Guo, Y. Li, and H. Ling, “Lime: Low-light image enhancement via illumination map estimation,” IEEE Transactions on Image Processing ,vol. 26, no. 2, pp. 982–993, 2017. [62] K. Ma, K. Zeng, and Z. Wang, “Perceptual quality assessment for multi-exposure image fusion,” IEEE Transactions on Image Processing ,vol. 24, no. 11, pp. 3345–3356, 2015. [63] S. Wang, J. Zheng, H.-M. Hu, and B. Li, “Naturalness preserved enhancement algorithm for non-uniform illumination images,” IEEE Transactions on Image Processing , vol. 22, no. 9, pp. 3538–3548, 2013. [64] V. Vonikakis, R. Kouskouridas, and A. Gasteratos, “On the evaluation of illumination compensation algorithms,” Multimedia Tools and Appli-cations , p. 9211–9231, Apr 2018. [65] J. Huang, Y. Liu, F. Zhao, K. Yan, J. Zhang, Y. Huang, M. Zhou, and Z. Xiong, “Deep fourier-based exposure correction with spatial-frequency interaction,” in ECCV , 2022, p. 163–180. [66] Z. Wang, A. Bovik, H. Sheikh, and E. Simoncelli, “Image quality assess-ment: from error visibility to structural similarity,” IEEE Transactions on Image Processing , vol. 13, no. 4, pp. 600–612, 2004. [67] A. Krizhevsky, I. Sutskever, and G. E. Hinton, “Imagenet classification with deep convolutional neural networks,” vol. 25, 2012. [68] J. Wang, K. C. Chan, and C. C. Loy, “Exploring clip for assessing the look and feel of images,” in AAAI , vol. 37, no. 2, 2023, pp. 2555–2563. [69] A. Mittal, R. Soundararajan, and A. C. Bovik, “Making a “completely blind” image quality analyzer,” IEEE Signal Processing Letters , vol. 20, no. 3, pp. 209–212, 2013. [70] Y. Wang, R. Wan, W. Yang, H. Li, L.-P. Chau, and A. C. Kot, “Low-light image enhancement with normalizing flow,” in AAAI , vol. 36, no. 3, 2022, pp. 2604–2612. [71] S. W. Zamir, A. Arora, S. Khan, M. Hayat, F. S. Khan, M.-H. Yang, and L. Shao, “Learning enriched features for fast image restoration and enhancement,” IEEE TPAMI , 2022. [72] X. Xu, R. Wang, C.-W. Fu, and J. Jia, “Snr-aware low-light image enhancement,” in CVPR , 2022, pp. 17 693–17 703. [73] J. HOU, Z. Zhu, J. Hou, H. LIU, H. Zeng, and H. Yuan, “Global structure-aware diffusion process for low-light image enhancement,” in 
+
+NeurIPS , A. Oh, T. Naumann, A. Globerson, K. Saenko, M. Hardt, and S. Levine, Eds., vol. 36, 2023, pp. 79 734–79 747. [74] Z. Li, F. Zhang, M. Cao, J. Zhang, Y. Shao, Y. Wang, and N. Sang, “Real-time exposure correction via collaborative transformations and adaptive sampling,” in CVPR , 2024, pp. 2984–2994. [75] H. Wu, C. Wang, L. Tu, C. Patsch, and Z. Jin, “Cspn: A category-specific processing network for low-light image enhancement,” IEEE Transactions on Circuits and Systems for Video Technology , 2024. [76] C. Wang, L. Ma, H. Qin, S. Yang, R. Li, and X. Shi, “Conditional attention guided normalizing flow for low-light image enhancement,” 
+
+Neurocomputing , vol. 638, p. 130196, 2025. [77] Y. Wen, P. Xu, Z. Li, and W. Xu(ATO), “An illumination-guided dual attention vision transformer for low-light image enhancement,” Pattern Recognition , vol. 158, p. 111033, 2025. [78] J. Bai, Y. Yin, Q. He, Y. Li, and X. Zhang, “Retinexmamba: Retinex-based mamba for low-light image enhancement,” in ICONIP , 2025, pp. 427–442. [79] Q. Yan, Y. Feng, C. Zhang, G. Pang, K. Shi, P. Wu, W. Dong, J. Sun, and Y. Zhang, “Hvi: A new color space for low-light image enhancement,” in CVPR , June 2025, pp. 5678–5687. [80] N. K. Kalantari, R. Ramamoorthi et al. , “Deep high dynamic range imaging of dynamic scenes.” ACM Trans. Graph. , vol. 36, no. 4, pp. 144–1, 2017.

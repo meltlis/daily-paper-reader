@@ -1,0 +1,256 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-03-22T15:26:23.080067+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 4,
+    "deep_cap": 6,
+    "deep_selected": 4,
+    "quick_candidates": 2,
+    "quick_skim_target": 11,
+    "quick_selected": 2
+  },
+  "deep_dive": [
+    {
+      "id": "2603.19234v1",
+      "title": "Matryoshka Gaussian Splatting",
+      "abstract": "The ability to render scenes at adjustable fidelity from a single model, known as level of detail (LoD), is crucial for practical deployment of 3D Gaussian Splatting (3DGS). Existing discrete LoD methods expose only a limited set of operating points, while concurrent continuous LoD approaches enable smoother scaling but often suffer noticeable quality degradation at full capacity, making LoD a costly design decision. We introduce Matryoshka Gaussian Splatting (MGS), a training framework that enables continuous LoD for standard 3DGS pipelines without sacrificing full-capacity rendering quality. MGS learns a single ordered set of Gaussians such that rendering any prefix, the first k splats, produces a coherent reconstruction whose fidelity improves smoothly with increasing budget. Our key idea is stochastic budget training: each iteration samples a random splat budget and optimises both the corresponding prefix and the full set. This strategy requires only two forward passes and introduces no architectural modifications. Experiments across four benchmarks and six baselines show that MGS matches the full-capacity performance of its backbone while enabling a continuous speed-quality trade-off from a single model. Extensive ablations on ordering strategies, training objectives, and model capacity further validate the designs.",
+      "authors": [
+        "Zhilin Guo",
+        "Boqiao Zhang",
+        "Hakan Aktas",
+        "Kyle Fogarty",
+        "Jeffrey Hu",
+        "Nursena Koprucu Aslan",
+        "Wenzhao Li",
+        "Canberk Baykal",
+        "Albert Miao",
+        "Josef Bengtson",
+        "Chenliang Zhou",
+        "Weihao Xia",
+        "Cristina Nader Vasconcelos. Cengiz Oztireli"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.GR"
+      ],
+      "published": "2026-03-19T17:59:56+00:00",
+      "link": "https://arxiv.org/pdf/2603.19234v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Continuous level of detail for 3D Gaussian Splatting",
+      "llm_evidence_cn": "3D高斯泼溅的连续细节层次渲染",
+      "llm_evidence": "3D高斯泼溅的连续细节层次渲染",
+      "canonical_evidence": "3D高斯泼溅的连续细节层次渲染",
+      "llm_tldr_en": "MGS introduces a training framework for continuous level of detail in 3D Gaussian Splatting.",
+      "llm_tldr_cn": "MGS为3D高斯泼溅引入了一种支持连续细节层次（LoD）的训练框架。",
+      "llm_tldr": "MGS为3D高斯泼溅引入了一种支持连续细节层次（LoD）的训练框架。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "3D Gaussian Splatting representation and rendering",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.19226v1",
+      "title": "Under One Sun: Multi-Object Generative Perception of Materials and Illumination",
+      "abstract": "We introduce Multi-Object Generative Perception (MultiGP), a generative inverse rendering method for stochastic sampling of all radiometric constituents -- reflectance, texture, and illumination -- underlying object appearance from a single image. Our key idea to solve this inherently ambiguous radiometric disentanglement is to leverage the fact that while their texture and reflectance may differ, objects in the same scene are all lit by the same illumination. MultiGP exploits this consensus to produce samples of reflectance, texture, and illumination from a single image of known shapes based on four key technical contributions: a cascaded end-to-end architecture that combines image-space and angular-space disentanglement; Coordinated Guidance for diffusion convergence to a single consistent illumination estimate; Axial Attention applied to facilitate ``cross-talk'' between objects of different reflectance; and a Texture Extraction ControlNet to preserve high-frequency texture details while ensuring decoupling from estimated lighting. Experimental results demonstrate that MultiGP effectively leverages the complementary spatial and frequency characteristics of multiple object appearances to recover individual texture and reflectance as well as the common illumination.",
+      "authors": [
+        "Nobuo Yoshii",
+        "Xinran Nicole Han",
+        "Ryo Kawahara",
+        "Todd Zickler",
+        "Ko Nishino"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-19T17:59:45+00:00",
+      "link": "https://arxiv.org/pdf/2603.19226v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "generative inverse rendering for reflectance and illumination",
+      "llm_evidence_cn": "用于反射率和照明的生成式逆向渲染",
+      "llm_evidence": "用于反射率和照明的生成式逆向渲染",
+      "canonical_evidence": "用于反射率和照明的生成式逆向渲染",
+      "llm_tldr_en": "MultiGP is a generative inverse rendering method that disentangles reflectance, texture, and illumination from a single image.",
+      "llm_tldr_cn": "MultiGP是一种生成式逆向渲染方法，能从单张图像中解耦反射率、纹理和光照。",
+      "llm_tldr": "MultiGP是一种生成式逆向渲染方法，能从单张图像中解耦反射率、纹理和光照。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Inverse rendering techniques for 3D reconstruction",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.17227v1",
+      "title": "Adaptive Anchor Policies for Efficient 4D Gaussian Streaming",
+      "abstract": "Dynamic scene reconstruction with Gaussian Splatting has enabled efficient streaming for real-time rendering and free-viewpoint video. However, most pipelines rely on fixed anchor selection such as Farthest Point Sampling (FPS), typically using 8,192 anchors regardless of scene complexity, which over-allocates computation under strict budgets. We propose Efficient Gaussian Streaming (EGS), a plug-in, budget-aware anchor sampler that replaces FPS with a reinforcement-learned policy while keeping the Gaussian streaming reconstruction backbone unchanged. The policy jointly selects an anchor budget and a subset of informative anchors under discrete constraints, balancing reconstruction quality and runtime using spatial features of the Gaussian representation. We evaluate EGS in two settings: fast rendering, which prioritizes runtime efficiency, and high-quality refinement, which enables additional optimization. Experiments on dynamic multi-view datasets show consistent improvements in the quality--efficiency trade-off over FPS sampling. On unseen data, in fast rendering at 256 anchors ($32\\times$ fewer than 8,192), EGS improves PSNR by $+0.52$--$0.61$\\,dB while running $1.29$--$1.35\\times$ faster than IGS@8192 (N3DV and MeetingRoom). In high-quality refinement, EGS remains competitive with the full-anchor baseline at substantially lower anchor budgets. \\emph{Code and pretrained checkpoints will be released upon acceptance.} \\keywords{4D Gaussian Splatting \\and 4D Gaussian Streaming \\and Reinforcement Learning}",
+      "authors": [
+        "Ashim Dahal",
+        "Rabab Abdelfattah",
+        "Nick Rahimi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-18T00:18:11+00:00",
+      "link": "https://arxiv.org/pdf/2603.17227v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Efficient 4D Gaussian streaming for real-time rendering",
+      "llm_evidence_cn": "用于实时渲染的高效4D高斯流式传输",
+      "llm_evidence": "用于实时渲染的高效4D高斯流式传输",
+      "canonical_evidence": "用于实时渲染的高效4D高斯流式传输",
+      "llm_tldr_en": "Introduces an adaptive anchor policy for efficient 4D Gaussian Splatting streaming and real-time rendering.",
+      "llm_tldr_cn": "引入了一种自适应锚点策略，用于高效的 4D 高斯泼溅流式传输和实时渲染。",
+      "llm_tldr": "引入了一种自适应锚点策略，用于高效的 4D 高斯泼溅流式传输和实时渲染。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "3D Gaussian Splatting representation and rendering",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.19193v1",
+      "title": "Reconstruction Matters: Learning Geometry-Aligned BEV Representation through 3D Gaussian Splatting",
+      "abstract": "Bird's-Eye-View (BEV) perception serves as a cornerstone for autonomous driving, offering a unified spatial representation that fuses surrounding-view images to enable reasoning for various downstream tasks, such as semantic segmentation, 3D object detection, and motion prediction. However, most existing BEV perception frameworks adopt an end-to-end training paradigm, where image features are directly transformed into the BEV space and optimized solely through downstream task supervision. This formulation treats the entire perception process as a black box, often lacking explicit 3D geometric understanding and interpretability, leading to suboptimal performance. In this paper, we claim that an explicit 3D representation matters for accurate BEV perception, and we propose Splat2BEV, a Gaussian Splatting-assisted framework for BEV tasks. Splat2BEV aims to learn BEV feature representations that are both semantically rich and geometrically precise. We first pre-train a Gaussian generator that explicitly reconstructs 3D scenes from multi-view inputs, enabling the generation of geometry-aligned feature representations. These representations are then projected into the BEV space to serve as inputs for downstream tasks. Extensive experiments on nuScenes and argoverse dataset demonstrate that Splat2BEV achieves state-of-the-art performance and validate the effectiveness of incorporating explicit 3D reconstruction into BEV perception.",
+      "authors": [
+        "Yiren Lu",
+        "Xin Ye",
+        "Burhaneddin Yaman",
+        "Jingru Luo",
+        "Zhexiao Xiong",
+        "Liu Ren",
+        "Yu Yin"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-19T17:49:43+00:00",
+      "link": "https://arxiv.org/pdf/2603.19193v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Geometry-aligned BEV representation using 3D Gaussian Splatting",
+      "llm_evidence_cn": "利用3D高斯泼溅学习几何对齐的BEV表示",
+      "llm_evidence": "利用3D高斯泼溅学习几何对齐的BEV表示",
+      "canonical_evidence": "利用3D高斯泼溅学习几何对齐的BEV表示",
+      "llm_tldr_en": "This paper uses 3DGS to learn explicit 3D geometric understanding for autonomous driving BEV perception.",
+      "llm_tldr_cn": "本文利用3DGS为自动驾驶的BEV感知学习显式的3D几何理解。",
+      "llm_tldr": "本文利用3DGS为自动驾驶的BEV感知学习显式的3D几何理解。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "3D Gaussian Splatting representation and rendering",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2603.16301v1",
+      "title": "OGScene3D: Incremental Open-Vocabulary 3D Gaussian Scene Graph Mapping for Scene Understanding",
+      "abstract": "Open-vocabulary scene understanding is crucial for robotic applications, enabling robots to comprehend complex 3D environmental contexts and supporting various downstream tasks such as navigation and manipulation. However, existing methods require pre-built complete 3D semantic maps to construct scene graphs for scene understanding, which limits their applicability in robotic scenarios where environments are explored incrementally. To address this challenge, we propose OGScene3D, an open-vocabulary scene understanding system that achieves accurate 3D semantic mapping and scene graph construction incrementally. Our system employs a confidence-based Gaussian semantic representation that jointly models semantic predictions and their reliability, enabling robust scene modeling. Building on this representation, we introduce a hierarchical 3D semantic optimization strategy that achieves semantic consistency through local correspondence establishment and global refinement, thereby constructing globally consistent semantic maps. Moreover, we design a long-term global optimization method that leverages temporal memory of historical observations to enhance semantic predictions. By integrating 2D-3D semantic consistency with Gaussian rendering contribution, this method continuously refines the semantic understanding of the entire scene.Furthermore, we develop a progressive graph construction approach that dynamically creates and updates both nodes and semantic relationships, allowing continuous updating of the 3D scene graphs. Extensive experiments on widely used datasets and real-world scenes demonstrate the effectiveness of our OGScene3D on open-vocabulary scene understanding.",
+      "authors": [
+        "Siting Zhu",
+        "Ziyun Lu",
+        "Guangming Wang",
+        "Chenguang Huang",
+        "Yongbo Chen",
+        "I-Ming Chen",
+        "Wolfram Burgard",
+        "Hesheng Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-03-17T09:38:01+00:00",
+      "link": "https://arxiv.org/pdf/2603.16301v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "3D Gaussian representation for scene mapping",
+      "llm_evidence_cn": "用于场景建图的高斯表示",
+      "llm_evidence": "用于场景建图的高斯表示",
+      "canonical_evidence": "用于场景建图的高斯表示",
+      "llm_tldr_en": "Introduces an incremental open-vocabulary 3D Gaussian scene graph mapping system for robotic understanding.",
+      "llm_tldr_cn": "引入一种增量式开放词汇3D高斯场景图建图系统，用于机器人理解。",
+      "llm_tldr": "引入一种增量式开放词汇3D高斯场景图建图系统，用于机器人理解。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "3D Gaussian Splatting representation and rendering",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.15131v1",
+      "title": "Low-light Image Enhancement with Retinex Decomposition in Latent Space",
+      "abstract": "Retinex theory provides a principled foundation for low-light image enhancement, inspiring numerous learning-based methods that integrate its principles. However, existing methods exhibits limitations in accurately decomposing reflectance and illumination components. To address this, we propose a Retinex-Guided Transformer~(RGT) model, which is a two-stage model consisting of decomposition and enhancement phases. First, we propose a latent space decomposition strategy to separate reflectance and illumination components. By incorporating the log transformation and 1-pixel offset, we convert the intrinsically multiplicative relationship into an additive formulation, enhancing decomposition stability and precision. Subsequently, we construct a U-shaped component refiner incorporating the proposed guidance fusion transformer block. The component refiner refines reflectance component to preserve texture details and optimize illumination distribution, effectively transforming low-light inputs to normal-light counterparts. Experimental evaluations across four benchmark datasets validate that our method achieves competitive performance in low-light enhancement and a more stable training process.",
+      "authors": [
+        "Bolun Zheng",
+        "Qingshan Lei",
+        "Quan Chen",
+        "Qianyu Zhang",
+        "Kainan Yu",
+        "Xu Jia",
+        "Lingyu Zhu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-16T11:24:35+00:00",
+      "link": "https://arxiv.org/pdf/2603.15131v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Decomposing reflectance and illumination components",
+      "llm_evidence_cn": "分解反射率和光照分量",
+      "llm_evidence": "分解反射率和光照分量",
+      "canonical_evidence": "分解反射率和光照分量",
+      "llm_tldr_en": "Proposes a Retinex-Guided Transformer for low-light enhancement by decomposing reflectance and illumination.",
+      "llm_tldr_cn": "提出一种 Retinex 引导的 Transformer，通过分解反射率和光照进行低光增强。",
+      "llm_tldr": "提出一种 Retinex 引导的 Transformer，通过分解反射率和光照进行低光增强。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Decomposing material and lighting from 3D Gaussian representations",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

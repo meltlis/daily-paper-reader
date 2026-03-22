@@ -1,0 +1,93 @@
+{
+  "label": "2026-03-13 ~ 2026-03-22",
+  "date": "2026-03-13 ~ 2026-03-22",
+  "generated_at": "2026-03-22T15:27:39",
+  "count": 6,
+  "papers": [
+    {
+      "paper_id": "20260313-20260322/2603.19234v1-matryoshka-gaussian-splatting",
+      "section": "deep",
+      "title_en": "Matryoshka Gaussian Splatting",
+      "authors": "Zhilin Guo, Boqiao Zhang, Hakan Aktas, Kyle Fogarty, Jeffrey Hu, Nursena Koprucu Aslan, Wenzhao Li, Canberk Baykal, Albert Miao, Josef Bengtson, Chenliang Zhou, Weihao Xia, Cristina Nader Vasconcelos. Cengiz Oztireli",
+      "date": "2026-03-19",
+      "pdf": "https://arxiv.org/pdf/2603.19234v1",
+      "score": "10.0",
+      "evidence": "3D高斯泼溅的连续细节层次渲染",
+      "tldr": "本研究针对3D高斯泼溅（3DGS）在实际部署中对细节层次（LoD）的需求，提出了Matryoshka Gaussian Splatting (MGS)。现有方法往往在离散点受限或牺牲全容量质量。MGS通过随机预算训练策略，学习一个有序的高斯点集，使得渲染前k个点的任意前缀都能获得连贯且质量随预算增加而提升的重建效果。该方法仅需两次前向传播且无需修改架构，在保持全容量性能的同时实现了连续的速度-质量权衡。",
+      "tags": "query:3dgsir",
+      "abstract_en": "The ability to render scenes at adjustable fidelity from a single model, known as level of detail (LoD), is crucial for practical deployment of 3D Gaussian Splatting (3DGS). Existing discrete LoD methods expose only a limited set of operating points, while concurrent continuous LoD approaches enable smoother scaling but often suffer noticeable quality degradation at full capacity, making LoD a costly design decision. We introduce Matryoshka Gaussian Splatting (MGS), a training framework that enables continuous LoD for standard 3DGS pipelines without sacrificing full-capacity rendering quality. MGS learns a single ordered set of Gaussians such that rendering any prefix, the first k splats, produces a coherent reconstruction whose fidelity improves smoothly with increasing budget. Our key idea is stochastic budget training: each iteration samples a random splat budget and optimises both the corresponding prefix and the full set. This strategy requires only two forward passes and introduces no architectural modifications. Experiments across four benchmarks and six baselines show that MGS matches the full-capacity performance of its backbone while enabling a continuous speed-quality trade-off from a single model. Extensive ablations on ordering strategies, training objectives, and model capacity further validate the designs.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "20260313-20260322/2603.19226v1-under-one-sun-multi-object-generative-perception-of-materials-and-illumination",
+      "section": "deep",
+      "title_en": "Under One Sun: Multi-Object Generative Perception of Materials and Illumination",
+      "authors": "Nobuo Yoshii, Xinran Nicole Han, Ryo Kawahara, Todd Zickler, Ko Nishino",
+      "date": "2026-03-19",
+      "pdf": "https://arxiv.org/pdf/2603.19226v1",
+      "score": "9.0",
+      "evidence": "用于反射率和照明的生成式逆向渲染",
+      "tldr": "本研究提出MultiGP，一种生成式逆渲染方法，旨在从单张图像中解耦多个物体的反射率、纹理和光照。其核心思想是利用同一场景中物体共享相同光照的约束。通过级联架构、协调引导、轴向注意力和纹理提取控制网络，MultiGP能有效从已知形状的物体中恢复各自的材质属性及共同的场景光照，解决了逆渲染中的歧义性问题。",
+      "tags": "query:3dgsir",
+      "abstract_en": "We introduce Multi-Object Generative Perception (MultiGP), a generative inverse rendering method for stochastic sampling of all radiometric constituents -- reflectance, texture, and illumination -- underlying object appearance from a single image. Our key idea to solve this inherently ambiguous radiometric disentanglement is to leverage the fact that while their texture and reflectance may differ, objects in the same scene are all lit by the same illumination. MultiGP exploits this consensus to produce samples of reflectance, texture, and illumination from a single image of known shapes based on four key technical contributions: a cascaded end-to-end architecture that combines image-space and angular-space disentanglement; Coordinated Guidance for diffusion convergence to a single consistent illumination estimate; Axial Attention applied to facilitate ``cross-talk'' between objects of different reflectance; and a Texture Extraction ControlNet to preserve high-frequency texture details while ensuring decoupling from estimated lighting. Experimental results demonstrate that MultiGP effectively leverages the complementary spatial and frequency characteristics of multiple object appearances to recover individual texture and reflectance as well as the common illumination.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "20260313-20260322/2603.17227v1-adaptive-anchor-policies-for-efficient-4d-gaussian-streaming",
+      "section": "deep",
+      "title_en": "Adaptive Anchor Policies for Efficient 4D Gaussian Streaming",
+      "authors": "Ashim Dahal, Rabab Abdelfattah, Nick Rahimi",
+      "date": "2026-03-18",
+      "pdf": "https://arxiv.org/pdf/2603.17227v1",
+      "score": "8.0",
+      "evidence": "用于实时渲染的高效4D高斯流式传输",
+      "tldr": "针对动态场景重建中4D高斯流式传输计算资源分配不均的问题，本文提出了一种名为EGS的自适应锚点采样策略。该方法利用强化学习策略取代传统的固定最远点采样（FPS），根据场景复杂度动态选择锚点数量和子集。在保持重建质量的同时，显著降低了计算开销，实现了更优的渲染效率与质量平衡。",
+      "tags": "query:3dgsir",
+      "abstract_en": "Dynamic scene reconstruction with Gaussian Splatting has enabled efficient streaming for real-time rendering and free-viewpoint video. However, most pipelines rely on fixed anchor selection such as Farthest Point Sampling (FPS), typically using 8,192 anchors regardless of scene complexity, which over-allocates computation under strict budgets. We propose Efficient Gaussian Streaming (EGS), a plug-in, budget-aware anchor sampler that replaces FPS with a reinforcement-learned policy while keeping the Gaussian streaming reconstruction backbone unchanged. The policy jointly selects an anchor budget and a subset of informative anchors under discrete constraints, balancing reconstruction quality and runtime using spatial features of the Gaussian representation. We evaluate EGS in two settings: fast rendering, which prioritizes runtime efficiency, and high-quality refinement, which enables additional optimization. Experiments on dynamic multi-view datasets show consistent improvements in the quality--efficiency trade-off over FPS sampling. On unseen data, in fast rendering at 256 anchors ($32\\times$ fewer than 8,192), EGS improves PSNR by $+0.52$--$0.61$\\,dB while running $1.29$--$1.35\\times$ faster than IGS@8192 (N3DV and MeetingRoom). In high-quality refinement, EGS remains competitive with the full-anchor baseline at substantially lower anchor budgets. \\emph{Code and pretrained checkpoints will be released upon acceptance.} \\keywords{4D Gaussian Splatting \\and 4D Gaussian Streaming \\and Reinforcement Learning}",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "20260313-20260322/2603.19193v1-reconstruction-matters-learning-geometry-aligned-bev-representation-through-3d-gaussian-splatting",
+      "section": "deep",
+      "title_en": "Reconstruction Matters: Learning Geometry-Aligned BEV Representation through 3D Gaussian Splatting",
+      "authors": "Yiren Lu, Xin Ye, Burhaneddin Yaman, Jingru Luo, Zhexiao Xiong, Liu Ren, Yu Yin",
+      "date": "2026-03-19",
+      "pdf": "https://arxiv.org/pdf/2603.19193v1",
+      "score": "8.0",
+      "evidence": "利用3D高斯泼溅学习几何对齐的BEV表示",
+      "tldr": "针对自动驾驶中BEV感知缺乏显式3D几何理解的问题，本文提出Splat2BEV框架。该方法利用3D高斯泼溅（3DGS）技术，通过预训练的高斯生成器从多视图输入中显式重建3D场景，从而学习几何对齐的特征表示。这些特征被投影到BEV空间以支持下游任务。在nuScenes和Argoverse数据集上的实验证明，结合显式3D重建能显著提升感知性能，达到SOTA水平。",
+      "tags": "query:3dgsir",
+      "abstract_en": "Bird's-Eye-View (BEV) perception serves as a cornerstone for autonomous driving, offering a unified spatial representation that fuses surrounding-view images to enable reasoning for various downstream tasks, such as semantic segmentation, 3D object detection, and motion prediction. However, most existing BEV perception frameworks adopt an end-to-end training paradigm, where image features are directly transformed into the BEV space and optimized solely through downstream task supervision. This formulation treats the entire perception process as a black box, often lacking explicit 3D geometric understanding and interpretability, leading to suboptimal performance. In this paper, we claim that an explicit 3D representation matters for accurate BEV perception, and we propose Splat2BEV, a Gaussian Splatting-assisted framework for BEV tasks. Splat2BEV aims to learn BEV feature representations that are both semantically rich and geometrically precise. We first pre-train a Gaussian generator that explicitly reconstructs 3D scenes from multi-view inputs, enabling the generation of geometry-aligned feature representations. These representations are then projected into the BEV space to serve as inputs for downstream tasks. Extensive experiments on nuScenes and argoverse dataset demonstrate that Splat2BEV achieves state-of-the-art performance and validate the effectiveness of incorporating explicit 3D reconstruction into BEV perception.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "20260313-20260322/2603.16301v1-ogscene3d-incremental-open-vocabulary-3d-gaussian-scene-graph-mapping-for-scene-understanding",
+      "section": "quick",
+      "title_en": "OGScene3D: Incremental Open-Vocabulary 3D Gaussian Scene Graph Mapping for Scene Understanding",
+      "authors": "Siting Zhu, Ziyun Lu, Guangming Wang, Chenguang Huang, Yongbo Chen, I-Ming Chen, Wolfram Burgard, Hesheng Wang",
+      "date": "2026-03-17",
+      "pdf": "https://arxiv.org/pdf/2603.16301v1",
+      "score": "7.0",
+      "evidence": "用于场景建图的高斯表示",
+      "tldr": "针对机器人场景理解中现有方法依赖预构建地图的局限，本文提出OGScene3D系统。该系统利用基于置信度的3D高斯语义表示，实现了增量式的开放词汇语义建图与场景图构建。通过分层语义优化和长期全局优化策略，系统能持续提升语义一致性并动态更新场景图，在多项实验中展现了卓越的性能。",
+      "tags": "query:3dgsir",
+      "abstract_en": "Open-vocabulary scene understanding is crucial for robotic applications, enabling robots to comprehend complex 3D environmental contexts and supporting various downstream tasks such as navigation and manipulation. However, existing methods require pre-built complete 3D semantic maps to construct scene graphs for scene understanding, which limits their applicability in robotic scenarios where environments are explored incrementally. To address this challenge, we propose OGScene3D, an open-vocabulary scene understanding system that achieves accurate 3D semantic mapping and scene graph construction incrementally. Our system employs a confidence-based Gaussian semantic representation that jointly models semantic predictions and their reliability, enabling robust scene modeling. Building on this representation, we introduce a hierarchical 3D semantic optimization strategy that achieves semantic consistency through local correspondence establishment and global refinement, thereby constructing globally consistent semantic maps. Moreover, we design a long-term global optimization method that leverages temporal memory of historical observations to enhance semantic predictions. By integrating 2D-3D semantic consistency with Gaussian rendering contribution, this method continuously refines the semantic understanding of the entire scene.Furthermore, we develop a progressive graph construction approach that dynamically creates and updates both nodes and semantic relationships, allowing continuous updating of the 3D scene graphs. Extensive experiments on widely used datasets and real-world scenes demonstrate the effectiveness of our OGScene3D on open-vocabulary scene understanding.",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "20260313-20260322/2603.15131v1-low-light-image-enhancement-with-retinex-decomposition-in-latent-space",
+      "section": "quick",
+      "title_en": "Low-light Image Enhancement with Retinex Decomposition in Latent Space",
+      "authors": "Bolun Zheng, Qingshan Lei, Quan Chen, Qianyu Zhang, Kainan Yu, Xu Jia, Lingyu Zhu",
+      "date": "2026-03-16",
+      "pdf": "https://arxiv.org/pdf/2603.15131v1",
+      "score": "6.0",
+      "evidence": "分解反射率和光照分量",
+      "tldr": "针对低光照图像增强中Retinex分解不准确的问题，本文提出了一种在潜空间进行分解的Retinex引导Transformer（RGT）模型。该模型通过对数变换将传统的乘法分解转化为加法形式，显著提升了分解的稳定性，并利用U型组件精炼器优化反射率与光照分量。实验证明，该方法在多个基准数据集上实现了卓越的增强效果和更稳定的训练过程。",
+      "tags": "query:3dgsir",
+      "abstract_en": "Retinex theory provides a principled foundation for low-light image enhancement, inspiring numerous learning-based methods that integrate its principles. However, existing methods exhibits limitations in accurately decomposing reflectance and illumination components. To address this, we propose a Retinex-Guided Transformer~(RGT) model, which is a two-stage model consisting of decomposition and enhancement phases. First, we propose a latent space decomposition strategy to separate reflectance and illumination components. By incorporating the log transformation and 1-pixel offset, we convert the intrinsically multiplicative relationship into an additive formulation, enhancing decomposition stability and precision. Subsequently, we construct a U-shaped component refiner incorporating the proposed guidance fusion transformer block. The component refiner refines reflectance component to preserve texture details and optimize illumination distribution, effectively transforming low-light inputs to normal-light counterparts. Experimental evaluations across four benchmark datasets validate that our method achieves competitive performance in low-light enhancement and a more stable training process.",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
