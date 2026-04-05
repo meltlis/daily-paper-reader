@@ -1,0 +1,282 @@
+Title: RT-GS: Gaussian Splatting with Reflection and Transmittance Primitives
+
+URL Source: https://arxiv.org/pdf/2604.00509v1
+
+Published Time: Thu, 02 Apr 2026 00:49:30 GMT
+
+Number of Pages: 19
+
+Markdown Content:
+# RT-GS: Gaussian Splatting with Reflection and Transmittance Primitives 
+
+Kunnong Zeng 1 , Chensheng Peng 2 , Yichen Xie 2 , Masayoshi Tomizuka 2 ,and Cem Yuksel 1 
+
+> 1
+
+University of Utah  
+
+> 2
+
+University of California, Berkeley 
+
+Abstract. Gaussian Splatting is a powerful tool for reconstructing dif-fuse scenes, but it struggles to simultaneously model specular reflections and the appearance of objects behind semi-transparent surfaces. These specular reflections and transmittance are essential for realistic novel view synthesis, and existing methods do not properly incorporate the underlying physical processes to simulate them. To address this issue, we propose RT-GS, a unified framework that integrates a microfacet material model and ray tracing to jointly model specular reflection and transmittance in Gaussian Splatting. We accomplish this by using sepa-rate Gaussian primitives for reflections and transmittance, which allow modeling distant reflections and reconstructing objects behind transpar-ent surfaces concurrently. We utilize a differentiable ray tracing frame-work to obtain the specular reflection and transmittance appearance. Our experiments demonstrate that our method successfully produces re-flections and recovers objects behind transparent surfaces in complex environments, achieving significant qualitative improvements over prior methods where these specular light interactions are prominent. 
+
+Keywords: Novel view synthesis · Gaussian splatting · Ray tracing 
+
+## 1 Introduction 
+
+Reconstructing 3D scenes from multi-view input 2D images and rendering images for novel viewpoints is a fundamental problem in novel view synthesis. Neural Radiance Fields (NeRF) [11] achieve good reconstruction quality by leveraging the expressive power of neural networks. However, the high computational cost of NeRFs makes it difficult to achieve real-time performance. Recently, 3D Gaus-sian Splatting (3D-GS) [8] has demonstrated fast reconstruction and rendering. However, 3D-GS primarily relies on rasterization, which is well-suited for diffuse appearance but fundamentally limited in modeling multi-bounce light transport and view-dependent specular effects such as reflections. Several recent works extend GS with additional mechanisms for non-diffuse phenomena. EnvGS [23] utilizes ray tracing on separate environment Gaussian primitives to model specular reflection. While it can synthesize near-field reflec-tions, it still struggles to reconstruct complex reflections and dielectric surfaces   
+
+> arXiv:2604.00509v1 [cs.GR] 1 Apr 2026 2K. Zeng et al.
+> Fig. 1: We present a method that optimizes the quality of specular reflection and transmittance concurrently in GS-based method. For the rasterization-based gaussian splatting method [8] in the left image, the specular reflection details are blurred on the surface of objects. For the reflection rays integrated method [23] in the middle image, the object behind the semi-transparent surface is blurred. We solve both the complex reflection and transmittance ray effects at the same time by integrating reflection and transmittance rays into gaussian splatting. Then, we can see the transmittance appear-ance and specular reflection details, as shown in the right image.
+
+due to its simplified rendering functions. Moreover, it does not consider trans-mittance of semi-transparent surfaces. TransparentGS [5] integrates transparent Gaussian primitives to model transparent objects. However, it bakes the envi-ronment around the transparent objects to generate refraction effects and fails to reconstruct objects behind semi-transparent surfaces. In this paper, we present a novel framework to further improve the quality of specular reflection and transmittance appearance simultaneously in GS-based methods. We utilize the microfacet model to represent complex material prop-erties on surfaces. We reconstruct the 3D scenes using three separate Gaussian primitives: diffuse Gaussian, reflection Gaussian, and transmittance Gaussian. We start with the rasterization process using diffuse Gaussians to obtain the per-pixel diffuse color, surface position, normal map, roughness map, and reflectance map. The microfacet model is integrated to calculate the bidirectional scatter-ing distribution function (BSDF) on the surfaces of diffuse Gaussians. Then, we generate reflection and transmittance rays, based on the normal map at surface positions, and utilize differentiable ray tracing on reflection and transmittance Gaussians, respectively. We assume that the outer layer of transparent objects is infinitely thin, so transmittance rays maintain the direction of incoming cam-era rays. The specular reflection color is obtained by ray tracing on reflection Gaussian. The objects behind transparent surfaces are reconstructed by trans-mittance Gaussians. Transmittance rays exiting from the back of transparent RT-GS: Gaussian Splatting with Reflection and Transmittance Primitives 3
+
+objects continue to intersect with the diffuse Gaussians to reconstruct the light paths of seeing through transparent objects. Finally, we blend diffuse, reflection, and transmittance colors using the BSDF to obtain the final rendering results. To train diffuse, specular reflection, and transmittance components jointly from input 2D images, we first generate segmentation masks for transparent ob-jects using SAM2 [9, 16] guided by GroundingDINO [10]. Reflection and trans-mittance rays are traced simultaneously on the surface of transparent objects, while only reflection rays are traced elsewhere. We extract meshes of transparent objects to guide the transmittance rays and limit the transmittance Gaussians in-side transparent objects. We add a regularization term on specular strength [27] to force the reflection and transmittance colors to have a larger percentage on transparent objects. In summary, the technical contributions in this paper are the following: 
+
+– We integrate a microfacet model to reconstruct complex material properties. 
+
+– We introduce separate transmittance Gaussian primitives to model the in-teriors of transparent objects. 
+
+– We extract the mesh to guide the ray tracing on transmittance Gaussian and use masks of transparent objects to guide the training of material properties. 
+
+## 2 Related Work 
+
+The target of novel view synthesis is to generate images from new viewpoints of a scene based on a limited set of posed images. Neural radiance fields (NeRF) [11] adopt implicit multilayer perceptrons (MLPs) to reconstruct 3D scenes and lever-age differentiable volume rendering to obtain rendering results, achieving a high quality of appearance in novel views. Subsequent methods have further enhanced rendering quality [19,21] and accelerated both training and rendering speed [12]. Recently, 3D Gaussian Splatting (3D-GS) [8] achieves real-time rendering and superior rendering quality over NeRF-based methods by rasterizing 3D Gaussian primitives. 2D Gaussian Splatting (2D-GS) [4] flattens 3D Gaussians into 2D Gaussian primitives to achieve better surface alignment. In our work, we adopt 2D Gaussian primitives as the scene representation to reconstruct better surface geometry and normals. 3D-GS and 2D-GS struggle to accurately model specular reflection and trans-mittance concurrently due to their use of spherical harmonics (SH) to reconstruct appearance, which causes blurry results. Recent approaches [6, 25] use the en-vironment map to model specular reflection, but they fail to model near-field reflections and transmittance. Other methods [24, 27] integrate the PBR mate-rials and deferred shading to achieve better physical properties of the surface. However, they only focus on specular reflections and fail to model the trans-mittance appearance. EnvGS [23] integrate ray tracing on Gaussians to achieve better specular reflection, but they also fail to model the transmittance effects of transparent objects. TransparentGS [5] models transparent objects as separate Gaussian primitives and bakes the environment around them for deferred shad-ing. However, it ignores objects behind the transparent surfaces. Our method 4 K. Zeng et al. 
+
+Fig. 2: Overview of our method. In the first stage, we start with the rasterization process using diffuse Gaussians to obtain per-pixel material maps and diffuse color. In the second stage, we generate specular reflection rays from the surface of diffuse Gaussians and utilize ray tracing on reflection Gaussians. In the third stage, we trace first-bounce transmittance rays from the surface into the transparent objects on trans-mittance Gaussians to obtain the inside color and second-bounce transmittance rays from the back surface of the mesh on diffuse Gaussian again to obtain the outside color. Finally, we combine the diffuse, reflection and transmittance colors for the final image. We jointly optimize these three types of Gaussians using ground truth images for supervision. 
+
+integrates the microfacet model without the split-sum approximation to recon-struct surface properties. We adopt ray tracing to model specular effects and reconstruct objects behind transparent surfaces. 
+
+## 3 Method 
+
+3D-GS [8] represents a scene using differentiable 3D Gaussian primitives defined by a covariance matrix P and a position μ in world space 
+
+G(x) = e− 12 (x)⊤Σ−1(x) . (1) During the rendering process, the 3D Gaussians are projected to 2D splats using the transformation matrix from world space to image space. The rendering color 
+
+C is computed by α-blending the 2D splats in front-to-back order, such that 
+
+C =
+
+> N
+
+X
+
+> i=1
+
+Cioii−1Y
+
+> j=1
+
+(1 − oj ) , (2) where oi is the opacity and Ci is the view-dependent color represented by spher-ical harmonics of each Gaussian. RT-GS: Gaussian Splatting with Reflection and Transmittance Primitives 5
+
+2D-GS [4] uses 2D Gaussian primitives to represent a scene and provide bet-ter surface reconstruction. The 2D Gaussian is defined in a local tangent plane in world space with two principal tangential vectors tu and tv and a scaling vector 
+
+(su, s v ). Because the specular reflection and transmittance require accurate sur-face representation, we adopt the 2D Gaussian as our base primitive. However, 2D-GS integrates spherical harmonics to model scene appearance, which intro-duces a blurry appearance for highly view-dependent effects, including specular reflection and transmittance. To address this, we introduce separate Gaussian primitives to model specular effects. 
+
+3.1 Modeling Specular Light Transport 
+
+To reconstruct scenes with both specular reflection and transmittance, we sep-arate the Gaussian primitives into diffuse, reflection, and transmittance Gaus-sian primitives. The diffuse Gaussian is initialized using the sparse point cloud obtained from Structure-from-Motion (SfM) [3, 18]. The reflection and trans-mittance Gaussians are both randomly initialized within the scene’s bounding box [23]. Each Gaussian is integrated into depth d, normal n, roughness α, base re-flectance f0 and specular blending weight ks properties. How we use these prop-erties for deferred shading is demonstrated in Sec. 3.2. We first use 2D Gaussian splatting to render the diffuse Gaussian. These properties of the diffuse Gaus-sians are α blended by rasterization to generate per-pixel material maps for deferred shading: 
+
+x =
+
+> N
+
+X
+
+> i=1
+
+xioii−1Y
+
+> j=1
+
+(1 − oj ), x ∈ { d, n, α, f 0, k s} , (3) where oi is the opacity of the i-th Gaussian primitive. After we obtain these material maps, we compute surface positions based on the depth map. Then, the reflection direction can be calculated based on the surface position and normal map. The transmittance direction is taken as the direction of the incoming camera rays, assuming infinitely thin semi-transparent surfaces. The reflection and transmittance Gaussians are rendered by a differ-entiable ray tracer [23] with the reflection and transmittance rays to obtain the reflection color Cr and transmittance color Ct, respectively. Based on the diffuse color Cd obtained through rasterization on the diffuse Gaussian, we can derive the final color using 
+
+C = (1 − ks)Cd + ks(fr Cr + ftCt) . (4) where ks is the blending weight for the specular term, fr is the bidirectional re-flectance distribution function (BRDF) and ft is the bidirectional transmittance distribution function (BTDF). 6 K. Zeng et al. 
+
+3.2 Microfacet Material Model 
+
+To model dielectric surfaces, we incorporate a microfacet material. We divide the rendering color C at the surface position x in the viewing direction ωo into two parts: the diffuse term and the specular term [1]: 
+
+C(x, ωo) = (1 − ks)Cd(x) + ksLs(x, ω o) (5) where Ls is the outgoing specular radiance. We adopt the rendering equation [7] to calculate outgoing specular radiance 
+
+Ls at the surface position x in the direction ωo:
+
+Ls(x, ωo) = 
+
+Z
+
+> Ω
+
+Li(x, ωi)fs(x, ωi, ωo)( ωi · n)dωi (6) where Li is the incident radiance from the upper hemisphere, ωi is the incidence direction and n is the surface normal. fs is the bidirectional scattering distribu-tion function (BSDF), which can be composed by the BRDF fr and the BTDF 
+
+ft, such that 
+
+fs(x, ωi, ωo) = fr (x, ωi, ωo) + ft(x, ωi, ωo) (7) For the BRDF fr , we adopt the Torrance-Sparrow BRDF [2] 
+
+fr (x, ω i, ω o) = DGF 
+
+4( ωo · n)( ωi · n) (8) where D, G, F denote the normal distribution function, the shadowing-masking term and the Fresnel term, respectively. For the normal distribution function, we use the isotropic Trowbridge–Reitz model [20] 
+
+D(n, ωh, α ) = α2
+
+π
+
+
+
+(n · ωh)2(α2 − 1) + 1 
+
+2 (9) where ωh is the half vector between the incidence direction ωi and the outgoing direction ωo such that ωh = ( ωi + ωo)/∥ωi + ωo∥, and α is the roughness. When α approaches zero, it indicates near-perfect specular reflection. During training, the roughness approaching zero causes the normal distribution term to become excessively large, thereby adversely affecting the quality of training. Therefore, we apply a mapping from such roughness values to input α values [15]: 
+
+g(α) = 1 .62142 + 0 .819955 ln α + 0 .1734(ln α)2 + 0 .0171201(ln α)3
+
++ 0 .000640711(ln α)4 (10) For the BTDF ft, we consider specular transmission: 
+
+ft(x, ωi, ωo) = (1 − F ) δ(ωi − ωt)(ωi · n) (11) where ωt is the specular transmission direction and δ is the Dirac delta function. RT-GS: Gaussian Splatting with Reflection and Transmittance Primitives 7 
+
+> Fig. 3: Mesh-guided ray tracing for transparent objects. The surface mesh is extracted from the diffuse Gaussian. The first bounces of transmittance rays are traced from the depth positions of the diffuse Gaussian on the transmittance Gaussian. The second bounces of transmittance rays are traced from the back surface positions of the extracted mesh on the diffuse Gaussian. To obtain the back surface positions, we trace rays on the mesh to get the second nearest depth.
+
+3.3 Optimizations 
+
+We employ a multi-stage reconstruction process for these three different Gaussian primitives. Fig. 2 illustrates the overview of our rendering pipeline. In the first stage, we obtain the material maps {d, n, α, f 0, k s} and the diffuse color Cd based on the diffuse Gaussian. In the second stage, we add specular reflection rays starting from the surface positions of the diffuse Gaussian to obtain the reflection color Cr from the reflec-tion Gaussian. We adopt the joint optimization of the diffuse Gaussian and the reflection Gaussian to obtain better material quality and extract high-quality surface meshes. In the final stage, after obtaining high-quality surface positions and normals, we first extract the surface mesh from the diffuse Gaussian. Then, we trace the transmittance rays guided by the extracted mesh to obtain the transmittance color Ct and jointly optimize these three Gaussian primitives. Fig. 3 illustrates the process of mesh-guided ray tracing for transparent objects. Specifically, the first bounce of transmittance rays starts from the surface positions of the diffuse Gaussian and is traced on the transmittance Gaussian. To obtain the color of the external environment as seen through transparent objects, we need to trace rays from the back surface of transparent objects on the diffuse Gaussian again, because the diffuse Gaussians have already been well trained. However, the back surface positions cannot be obtained by the rasterization of the diffuse Gaussian, as we can only get the positions of the nearest depth. Therefore, we trace rays 8 K. Zeng et al.  
+
+> Fig. 4: Illustration of the regularization to the depth. When reconstructing the internal object, the depth of first-bounce transmittance rays of the part of the object that exists is reconstructed well, as demonstrated by the solid red curve. But in the parts where no object is existing, the depth is trained to the outside the transparent object, as shown by the red dashes curve, because it tries to reconstruct the outside color, which should be rendered by second-bounce transmittance rays. Therefore, we add regularization to the depth to push it back into the transparent object.
+
+from cameras on the extracted surface mesh to obtain the nearest depth and second nearest depth. The second bounce of transmittance rays starts from the second-nearest surface positions and is traced on the diffuse Gaussians again. To add transmittance rays only to the parts of transparent objects, we gen-erate segmentation masks for transparent objects using SAM2 [9, 16] guided by GroundingDINO [10]. Based on the observation that surfaces on transparent ob-jects have a high specular strength, we add regularization to the specular map to encourage the specular colors Cr and Ct to dominate the final color for trans-parent objects. Inspired by MaterialRefGS [27], the masks are used to add the constraint to the specular map ks at a high target value, such that 
+
+Lspec = 1
+
+NpNp
+
+X
+
+> i=1
+
+Γi · ReLU (K0 − ks,i ) , (12) where Np is the number of pixels in the image, Γi is the binary mask for the transparent object at pixel i, K0 is the target value, and ReLU is the rectified linear unit [14]. The transmittance Gaussian is used to reconstruct the objects inside trans-parent objects, so it needs to be constrained within transparent objects. As illustrated in Fig. 4, we add regularization to the depth map d obtained by the first bounce of transmittance rays, such that 
+
+Ld = 1
+
+NpNp
+
+X
+
+> i=1
+
+Γi · ReLU (di − Di) , (13) where Di is the second-nearest depth of the diffuse Gaussian at the i-th pixel, specifically on the back surface of transparent objects. RT-GS: Gaussian Splatting with Reflection and Transmittance Primitives 9
+
+We adopt the constraint for aligning the normal map values ni with the gradients of the depth maps N d [4] 
+
+Lnorm = 1
+
+NpNp
+
+X
+
+> i=1
+
+(1 − ni · N d) , (14) where N d is computed with finite differences from nearby pixel positions pd in the depth map, using 
+
+N d = ∇xpd × ∇ y pd
+
+∥∇ xpd × ∇ y pd∥ . (15) We follow EnvGS [23] to use monocular normal estimates N m to supervise the normal map values ni and perceptual loss [23] to enhance the perceived quality of the rendered image: 
+
+Lmono = 1
+
+NpNp
+
+X
+
+> i=1
+
+(1 − ni · N m) (16) 
+
+Lperc = ∥Φ(I) − Φ(Igt )∥1 , (17) where Φ is the pre-trained VGG-16 network [17], I is the rendered image and Igt 
+
+is the ground truth image. The final loss function is a weighted combination of these loss terms, such that 
+
+L = Lrgb + λspec Lspec + λdLd + λnorm Lnorm + λmono Lmono + λperc Lperc , (18) where Lrgb is the photometric reconstruction loss combining the L1 with the D-SSIM term [8], and λ values are the weights. We use λspec = 0 .2, λd = 0 .2,
+
+λnorm = 0 .04 , λmono = 0 .01 , λperc = 0 .01 for all experiments in this paper. 
+
+## 4 Implementation and Results 
+
+Our training process is divided into 3 stages. We adopt rasterization of diffuse Gaussians for 3,000 steps to obtain all material maps. Then, we generate spec-ular reflection rays and utilize the differentiable ray tracing framework from EnvGS [23] to reconstruct reflection colors for 17,000 steps. We extract surface mesh of diffuse Gaussians at step 20,000 using the truncated signed distance fusion (TSDF) from 2DGS [4]. After that, the mesh is fixed and we generate transmittance rays guided by the extracted mesh to obtain transmittance colors and jointly optimize these three types of Gaussians for 40,000 steps. The regu-larization Ld is added at step 40,000 to push the depth back into the transparent surfaces. The target value K0 of the constraint to the specular map is set to 0.9. 10 K. Zeng et al. 
+
+Table 1: Quantitative comparison on the Ref-Real [21] dataset. Best results are highlighted as 1st , 2nd , 3rd . Method Sedan Spheres Toycar PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑ LPIPS ↓                                                      
+
+> 3DGS [8] 25.556 0.729 0.294 22.386 0.590 0.239 24.394 0.661 0.229 GaussianShader [6] 22.759 0.648 0.395 22.080 0.599 0.268 23.641 0.661 0.283 Ref-GS [28] 25.522 0.724 0.338 22.236 0.593 0.274 24.237 0.646 0.270 Ref-Gaussian [24] 24.324 0.675 0.380 22.788 0.614 0.278 23.991 0.644 0.279 EnvGS [23] 26.142 0.727 0.300 23.031 0.620 0.196 24.759 0.669 0.206
+> RT-GS (ours) 26.203 0.728 0.298 23.050 0.620 0.198 24.693 0.668 0.231
+
+4.1 Datasets and Comparisons 
+
+We evaluate our method on datasets that contain complex specular reflections and transparent objects in real-world scenes to demonstrate the ability to recon-struct complex specular reflections and transmittance appearance concurrently. Specifically, for reflection scenes, we evaluate three scenes from Ref-Real [21]: Sedan, Spheres and Toycar. For transparent scenes, we evaluate four scenes from NU-NeRF [19]: BallStatue, PopcornCup, RealBottle and TallBottle. We use the standard PSNR, SSIM [22] and LPIPS [26] metrics to evaluate the quality. We compare our method with the following baselines: 3D-GS [8], Gaussian-Shader [6], Ref-GS [28], Ref-Gaussian [24] and EnvGS [23]. 3D-GS are designed for general diffuse appearance and others are the state-of-the-art (SOTA) meth-ods for specular ray effects. For transparent scenes, we add NU-NeRF [19] for comparison, because it is the SOTA method for transparent objects based on neural signed distance field. 
+
+Comparisons on Reflection Datasets. Fig. 5 shows the qualitative compari-son on the Ref-Real [21] dataset. Our method provides better reflection details on the specular surfaces, such as the streetlight reflected on the hood and near-field reflections on the sphere. Table 1 shows the quantitative results, demonstrat-ing that our method achieves the best performance on all other baselines and competitive results compared to EnvGS. 
+
+Comparisons on Transparent Datasets. Fig. 6 shows the qualitative com-parison on the transparent dataset. Our method accurately reconstructs trans-mittance appearance and models specular reflections of the transparent object, while other methods cannot achieve both at the same time. Like 3D-GS, it can handle the transmittance appearance but is not good at specular reflections. Ta-ble 2 shows the quantitative results, where our method achieves the best results on all other baselines working on reflections and competitive results compared to 3D-GS across all transparent scenes. RT-GS: Gaussian Splatting with Reflection and Transmittance Primitives 11 
+
+> Fig. 5: Qualitative comparison on Ref-Real [21] Scenes.
+
+4.2 Ablation Studies 
+
+We present ablation studies on our method to validate the effect of key algorith-mic choices. The quantitative and qualitative comparison results are shown in Table 3, Fig. 7, and Fig. 8 respectively. 
+
+Separate transmittance Gaussians. The “w/o transmittance Gaussians” op-tion removes the separate transmittance Gaussian and directly utilizes the diffuse Gaussian to reconstruct the object inside the transparent object. As shown in Fig. 7(a), it fails to reconstruct the internal object. 
+
+Specular map constraint. The “w/o specular loss” option removes the con-straint Lspec to the specular map. Without this constraint, the diffuse Gaussian 12 K. Zeng et al. 
+
+> Fig. 6: Qualitative comparison on NU-NeRF [19] Scenes.
+
+attempts to reconstruct the internal object, which degrades the training process of the transmittance Gaussian. As shown in Fig. 7(b), the internal object is also failed to be reconstructed. 
+
+Depth map constraint. The “w/o depth loss” option removes the constraint 
+
+Ld to the depth map obtained by the first bounce of transmittance rays. Without this constraint, the transmittance Gaussian attempts to model the outside color in areas where there are no internal objects, which is failed to be reconstructed in multiple views. A low quality first bounce of transmittance rays affects the quality of transmittance colors. As shown in Fig. 7(c), there are artifacts within the transparent object. RT-GS: Gaussian Splatting with Reflection and Transmittance Primitives 13 
+
+Table 2: Quantitative comparison on NU-NeRF [19] scenes. Best results are highlighted as 1st , 2nd , 3rd . Method BallStatue PopcornCup RealBottle TallBottle PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑ LPIPS ↓                                                                                    
+
+> NU-NeRF [19] 23.453 0.706 0.345 17.031 0.727 0.333 25.818 0.722 0.336 18.923 0.707 0.344 3DGS [8] 27.303 0.899 0.142 25.679 0.869 0.202 30.740 0.936 0.162 25.455 0.883 0.173 GaussianShader [6] 25.589 0.872 0.206 16.618 0.701 0.417 22.610 0.824 0.326 18.137 0.734 0.389 Ref-GS [28] 23.891 0.856 0.263 22.919 0.817 0.342 29.527 0.926 0.249 24.818 0.860 0.267 Ref-Gaussian [24] 15.138 0.660 0.479 22.837 0.829 0.279 28.019 0.896 0.236 23.766 0.845 0.261 EnvGS [23] 25.508 0.878 0.182 23.898 0.847 0.232 30.244 0.915 0.178 25.393 0.886 0.183
+> RT-GS (ours) 26.053 0.885 0.174 25.720 0.874 0.199 30.298 0.918 0.174 26.225 0.888 0.172
+
+Fig. 7: Ablation study on the BallStatue scene. 
+
+Mesh-guided ray tracing. The “w/o mesh guiding” option removes the guide of the extracted mesh for tracing transmittance rays. The second bounce of transmittance rays starts from the depth of the first bounce of transmittance rays. Then the depth of the first bounce is free of constraints, like the situation in the "w/o depth loss". Therefore, artifacts show up in Fig. 7(d). 
+
+Split-sum approximation. We also present ablation studies on the split-sum approximation in the microfacet model. The Fig. 8 shows that the split-sum ap-proximation degrades the joint optimization of diffuse and reflection Gaussians. The "with approximation" and "w/o approximation" indicate whether to use or not to use the split-sum approximation in calculating the BRDF term Eq. 8 as shown in Fig. 8(a) and (b), respectively. The "Final Color" is the blended render-ing result combining the "Diffuse Color" with "Reflection Color". In Fig. 8(a), while the car window can produce specular reflections, the diffuse surface is not well trained, like the grass in the background. This is because the blending weight 
+
+ks is not trained well during the joint optimization, and the specular term of the ground takes a more dominant role, resulting in a poor effect on the diffuse ground. In Fig. 8(b), the diffuse and specular reflection terms can be separated well to get both good reflections on the glass and diffuse colors on the ground. 14 K. Zeng et al.                   
+
+> Fig. 8: Ablation study on the Sedan scene. (a) Approximating the BSDF with separate components [13,24] leads to substantial errors in the reconstructions of reflec-tions. (b) Our solution of using the full microfacet model produces better reflections.
+> Table 3: Ablation study on the BallStatue scene.
+> PSNR ↑SSIM ↑LPIPS ↓
+> w/o transmittance Gaussians 24.844 0.866 0.196 w/o specular loss 25.673 0.882 0.174 w/o depth loss 25.941 0.881 0.172 w/o mesh guided ray tracing 25.889 0.880 0.174 Full Model 26.053 0.885 0.174
+
+## 5 Conclusion and Discussion 
+
+We have introduced RT-GS, a unified framework for reconstructing high-quality specular reflections and the appearance of objects observed through transpar-ent surfaces. Our method integrates a microfacet model for complex material properties and represents the scene using separate Gaussian primitives for dif-fuse, reflection, and transmittance components. We have also introduced mesh-guided ray tracing and regularization terms for better reconstruction of complex transmittance effects. Extensive experiments on multiple datasets and ablation studies demonstrate the improvements of our method over existing methods in quantitative metrics and visual quality. 
+
+Limitations and future work. Our method assumes that the thickness of the outer layer of transparent objects is nearly zero, which makes it difficult to handle the case where the light is strongly curved. Future work could be extend our method to reconstruct thicker transparent objects. RT-GS: Gaussian Splatting with Reflection and Transmittance Primitives 15 
+
+## Acknowledgements 
+
+We thank Feng Liang for comments and discussions. We thank the support of the Berkeley AI Research (BAIR) Lab in providing computational resources. 
+
+## References 
+
+1. Burley, B.: Physically-based shading at disney. In: SIGGRAPH 2012 Course Notes: Practical Physically Based Shading in Film and Game Production (2012), https: //media.disneyanimation.com/uploads/production/publication_asset/48/ asset/s2012_pbs_disney_brdf_notes_v3.pdf , course notes 6 2. Cook, R.L., Torrance, K.E.: A reflectance model for computer graphics. ACM Transactions on Graphics 1(1), 7–24 (1982). https://doi.org/10.1145/357290. 357293 , https://doi.org/10.1145/357290.357293 63. He, X., Sun, J., Wang, Y., Peng, S., Huang, Q., Bao, H., Zhou, X.: Detector-free structure from motion. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 21594–21603 (Jun 2024). https: //doi.org/10.1109/CVPR52733.2024.02040 54. Huang, B., Yu, Z., Chen, A., Geiger, A., Gao, S.: 2d gaussian splatting for geo-metrically accurate radiance fields. In: ACM SIGGRAPH 2024 Conference Papers (2024). https://doi.org/10.1145/3641519.3657428 3, 5, 9 5. Huang, L., Ye, D., Dan, J., Tao, C., Liu, H., Zhou, K., Ren, B., Li, Y., Guo, Y., Guo, J.: Transparentgs: Fast inverse rendering of transparent objects with gaussians. ACM Transactions on Graphics 44 (4), 126:1–126:17 (2025). https:// doi.org/10.1145/3730892 2, 3 6. Jiang, Y., Tu, J., Liu, Y., Gao, X., Long, X., Wang, W., Ma, Y.: Gaussianshader: 3d gaussian splatting with shading functions for reflective surfaces. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 5322–5332 (2024). https://doi.org/10.1109/CVPR52733.2024.00509 3, 10, 13 7. Kajiya, J.T.: The rendering equation. ACM SIGGRAPH Computer Graphics 
+
+20 (4), 143–150 (Aug 1986). https://doi.org/10.1145/15886.15902 68. Kerbl, B., Kopanas, G., Leimkühler, T., Drettakis, G.: 3d gaussian splatting for real-time radiance field rendering. ACM Transactions on Graphics 42 (4) (Jul 2023). 
+
+https://doi.org/10.1145/3592433 1, 2, 3, 4, 9, 10, 13 9. Kirillov, A., Mintun, E., Ravi, N., Mao, H., Rolland, C., Gustafson, L., Xiao, T., Whitehead, S., Berg, A.C., Lo, W.Y., Dollár, P., Girshick, R.: Segment anything. In: Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV). pp. 3992–4003 (Oct 2023). https://doi.org/10.1109/ICCV51070.2023. 00371 , https://openaccess.thecvf.com/content/ICCV2023/html/Kirillov_ Segment_Anything_ICCV_2023_paper.html 3, 8 10. Liu, S., Zeng, Z., Ren, T., Li, F., Zhang, H., Yang, J., Jiang, Q., Li, C., Yang, J., Su, H., Zhu, J., Zhang, L.: Grounding DINO: marrying DINO with grounded pre-training for open-set object detection. In: Leonardis, A., Ricci, E., Roth, S., Russakovsky, O., Sattler, T., Varol, G. (eds.) Computer Vision - ECCV 2024 - 18th European Conference, Milan, Italy, September 29-October 4, 2024, Proceedings, Part XLVII. Lecture Notes in Computer Science, vol. 15105, pp. 38–55. Springer (2024). https://doi.org/10.1007/978-3-031-72970-6_3 , https://doi.org/ 10.1007/978-3-031-72970-6_3 3, 8 16 K. Zeng et al. 11. Mildenhall, B., Srinivasan, P.P., Tancik, M., Barron, J.T., Ramamoorthi, R., Ng, R.: Nerf: Representing scenes as neural radiance fields for view synthe-sis. In: Vedaldi, A., Bischof, H., Brox, T., Frahm, J.M. (eds.) Computer Vi-sion – ECCV 2020. Lecture Notes in Computer Science, vol. 12346, pp. 405– 421. Springer, Cham (2020). https://doi.org/10.1007/978-3-030-58452-8_24 ,
+
+https://doi.org/10.1007/978-3-030-58452-8_24 1, 3 12. Müller, T., Evans, A., Schied, C., Keller, A.: Instant neural graphics primitives with a multiresolution hash encoding. ACM Transactions on Graphics 41 (4), 102:1– 102:15 (2022). https://doi.org/10.1145/3528223.3530127 313. Munkberg, J., Hasselgren, J., Shen, T., Gao, J., Chen, W., Evans, A., Müller, T., Fidler, S.: Extracting triangular 3d models, materials, and lighting from images. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 8280–8290 (Jun 2022), https://openaccess.thecvf. com/content/CVPR2022/papers/Munkberg_Extracting_Triangular_3D_Models_ Materials_and_Lighting_From_Images_CVPR_2022_paper.pdf , oral 14 14. Nair, V., Hinton, G.E.: Rectified linear units improve restricted boltzmann ma-chines. In: Fürnkranz, J., Joachims, T. (eds.) Proceedings of the 27th International Conference on Machine Learning (ICML-10), June 21–24, 2010, Haifa, Israel. pp. 807–814. Omnipress (2010), https://icml.cc/Conferences/2010/papers/432. pdf 815. Pharr, M., Jakob, W., Humphreys, G.: Physically Based Rendering: From Theory to Implementation. Morgan Kaufmann, 3 edn. (2016). https://doi.org/10.1016/ C2013-0-15557-2 616. Ravi, N., Gabeur, V., Hu, Y.T., Hu, R., Ryali, C., Ma, T., Khedr, H., Rädle, R., Rolland, C., Gustafson, L., Mintun, E., Pan, J., Alwala, K.V., Carion, N., Wu, C.Y., Girshick, R., Dollár, P., Feichtenhofer, C.: Sam 2: Segment anything in images and videos. arXiv preprint arXiv:2408.00714 (2024). https://doi.org/10. 48550/arXiv.2408.00714 , https://arxiv.org/abs/2408.00714 3, 8 17. Simonyan, K., Zisserman, A.: Very deep convolutional networks for large-scale image recognition. In: 3rd International Conference on Learning Representations (ICLR) (2015), https://arxiv.org/abs/1409.1556 918. Snavely, N., Seitz, S.M., Szeliski, R.: Photo tourism: exploring photo collections in 3D. ACM Transactions on Graphics 25 (3), 835–846 (Jul 2006). https://doi. org/10.1145/1141911.1141964 519. Sun, J.M., Wu, T., Yan, L.Q., Gao, L.: Nu-nerf: Neural reconstruction of nested transparent objects with uncontrolled capture environment. ACM Transactions on Graphics 43 (6), 262:1–262:14 (2024). https://doi.org/10.1145/3687757 , https: //doi.org/10.1145/3687757 3, 10, 12, 13, 18, 19 20. Trowbridge, T.S., Reitz, K.P.: Average irregularity representation of a rough surface for ray reflection. Journal of the Optical Society of America 65 (5), 531–536 (May 1975). https://doi.org/10.1364/JOSA.65.000531 , https://doi.org/10.1364/ JOSA.65.000531 621. Verbin, D., Hedman, P., Mildenhall, B., Zickler, T.E., Barron, J.T., Srinivasan, P.P.: Ref-nerf: Structured view-dependent appearance for neural radiance fields. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recog-nition (CVPR). pp. 5481–5490 (2022). https://doi.org/10.1109/CVPR52688. 2022.00541 3, 10, 11, 18 22. Wang, Z., Bovik, A.C., Sheikh, H.R., Simoncelli, E.P.: Image quality assessment: From error visibility to structural similarity. IEEE Transactions on Image Pro-cessing 13 (4), 600–612 (Apr 2004). https://doi.org/10.1109/TIP.2003.819861 ,
+
+https://doi.org/10.1109/TIP.2003.819861 10 RT-GS: Gaussian Splatting with Reflection and Transmittance Primitives 17 23. Xie, T., Chen, X., Xu, Z., Xie, Y., Jin, Y., Shen, Y., Peng, S., Bao, H., Zhou, X.: Envgs: Modeling view-dependent appearance with environment gaussian. In: Pro-ceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recog-nition (CVPR). pp. 5742–5751 (2025). https://doi.org/10.1109/CVPR52734. 2025.00539 1, 2, 3, 5, 9, 10, 13 24. Yao, Y., Zeng, Z., Gu, C., Zhu, X., Zhang, L.: Reflective gaussian splatting. In: International Conference on Learning Representations (ICLR) (2025). https:// doi.org/10.48550/arXiv.2412.19282 , poster 3, 10, 13, 14 25. Ye, K., Hou, Q., Zhou, K.: 3d gaussian splatting with deferred reflection. In: ACM SIGGRAPH 2024 Conference Papers (2024). https://doi.org/10.1145/3641519. 3657456 326. Zhang, R., Isola, P., Efros, A.A., Shechtman, E., Wang, O.: The unreason-able effectiveness of deep features as a perceptual metric. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 586–595 (Jun 2018). https : / / doi . org / 10 . 1109 / CVPR . 2018 . 00068 , https://openaccess.thecvf.com/content_cvpr_2018/papers/Zhang_ The_Unreasonable_Effectiveness_CVPR_2018_paper.pdf 10 27. Zhang, W., Tang, J., Zhang, W., Fang, Y., Liu, Y.S., Han, Z.: Materialrefgs: Re-flective gaussian splatting with multi-view consistent material inference. arXiv preprint arXiv:2510.11387 (2025). https://doi.org/10.48550/arXiv.2510. 11387 , neurIPS 2025 (poster) 3, 8 28. Zhang, Y., Chen, A., Wan, Y., Song, Z., Yu, J., Luo, Y., Yang, W.: Ref-gs: Directional factorization for 2d gaussian splatting. In: IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 26483–26492. Com-puter Vision Foundation / IEEE (2025). https://doi.org/10.1109/CVPR52734. 2025.02466 , https://openaccess.thecvf.com/content/CVPR2025/html/Zhang_ Ref-GS_Directional_Factorization_for_2D_Gaussian_Splatting_CVPR_2025_ paper.html 10, 13 18 K. Zeng et al. 
+
+This appendix presents additional qualitative comparisons on the Ref-Real [21] and NU-NeRF [19] datasets from different viewpoints. As shown in Fig. 9, our method significantly provides more specular reflection details on specular surfaces. As shown in Fig. 10, our method provides better transmittance ap-pearance results compared to methods that focus on solving reflection problems, while also providing better reflection results compared to other methods. 
+
+> Fig. 9: Qualitative comparison on Ref-Real [21] Scenes.
+
+RT-GS: Gaussian Splatting with Reflection and Transmittance Primitives 19 
+
+Fig. 10: Qualitative comparison on NU-NeRF [19] Scenes.

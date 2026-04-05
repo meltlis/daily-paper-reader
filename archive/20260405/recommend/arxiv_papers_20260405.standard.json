@@ -1,0 +1,822 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-04-05T19:47:23.642286+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 32,
+    "deep_cap": 6,
+    "deep_selected": 10,
+    "quick_candidates": 38,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2603.27516v1",
+      "title": "SGS-Intrinsic: Semantic-Invariant Gaussian Splatting for Sparse-View Indoor Inverse Rendering",
+      "abstract": "We present SGS-Intrinsic, an indoor inverse rendering framework that works well for sparse-view images. Unlike existing 3D Gaussian Splatting (3DGS) based methods that focus on object-centric reconstruction and fail to work under sparse view settings, our method allows to achieve high-quality geometry reconstruction and accurate disentanglement of material and illumination. The core idea is to construct a dense and geometry-consistent Gaussian semantic field guided by semantic and geometric priors, providing a reliable foundation for subsequent inverse rendering. Building upon this, we perform material-illumination disentanglement by combining a hybrid illumination model and material prior to effectively capture illumination-material interactions. To mitigate the impact of cast shadows and enhance the robustness of material recovery, we introduce illumination-invariant material constraint together with a deshadowing model. Extensive experiments on benchmark datasets show that our method consistently improves both reconstruction fidelity and inverse rendering quality over existing 3DGS-based inverse rendering approaches. Our code is available at https://github.com/GrumpySloths/SGS_Intrinsic.github.io.",
+      "authors": [
+        "Jiahao Niu",
+        "Rongjia Zheng",
+        "Wenju Xu",
+        "WeiShi Zheng",
+        "Qing Zhang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-29T04:45:31+00:00",
+      "link": "https://arxiv.org/pdf/2603.27516v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "accurate disentanglement of material and illumination using 3DGS",
+      "llm_evidence_cn": "使用3DGS实现材质与光照的准确解耦",
+      "llm_evidence": "使用3DGS实现材质与光照的准确解耦",
+      "canonical_evidence": "使用3DGS实现材质与光照的准确解耦",
+      "llm_tldr_en": "SGS-Intrinsic enables high-quality indoor inverse rendering and material-illumination disentanglement from sparse views.",
+      "llm_tldr_cn": "SGS-Intrinsic 实现了稀疏视角下的室内逆向渲染以及材质与光照的准确解耦。",
+      "llm_tldr": "SGS-Intrinsic 实现了稀疏视角下的室内逆向渲染以及材质与光照的准确解耦。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Decomposing material and lighting from 3D Gaussian representations",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.27516v2",
+      "title": "SGS-Intrinsic: Semantic-Invariant Gaussian Splatting for Sparse-View Indoor Inverse Rendering",
+      "abstract": "We present SGS-Intrinsic, an indoor inverse rendering framework that works well for sparse-view images. Unlike existing 3D Gaussian Splatting (3DGS) based methods that focus on object-centric reconstruction and fail to work under sparse view settings, our method allows to achieve high-quality geometry reconstruction and accurate disentanglement of material and illumination. The core idea is to construct a dense and geometry-consistent Gaussian semantic field guided by semantic and geometric priors, providing a reliable foundation for subsequent inverse rendering. Building upon this, we perform material-illumination disentanglement by combining a hybrid illumination model and material prior to effectively capture illumination-material interactions. To mitigate the impact of cast shadows and enhance the robustness of material recovery, we introduce illumination-invariant material constraint together with a deshadowing model. Extensive experiments on benchmark datasets show that our method consistently improves both reconstruction fidelity and inverse rendering quality over existing 3DGS-based inverse rendering approaches. Our code is available at https://github.com/GrumpySloths/SGS_Intrinsic.github.io.",
+      "authors": [
+        "Jiahao Niu",
+        "Rongjia Zheng",
+        "Wenju Xu",
+        "Wei-Shi Zheng",
+        "Qing Zhang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-29T04:45:31+00:00",
+      "link": "https://arxiv.org/pdf/2603.27516v2",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "indoor inverse rendering with 3DGS for material and illumination decomposition",
+      "llm_evidence_cn": "利用3DGS进行室内逆向渲染以实现材质和光照分解",
+      "llm_evidence": "利用3DGS进行室内逆向渲染以实现材质和光照分解",
+      "canonical_evidence": "利用3DGS进行室内逆向渲染以实现材质和光照分解",
+      "llm_tldr_en": "SGS-Intrinsic provides a robust framework for indoor inverse rendering and material disentanglement using 3DGS.",
+      "llm_tldr_cn": "SGS-Intrinsic 提供了一个利用3DGS进行室内逆向渲染和材质解耦的鲁棒框架。",
+      "llm_tldr": "SGS-Intrinsic 提供了一个利用3DGS进行室内逆向渲染和材质解耦的鲁棒框架。",
+      "llm_tags": [
+        "query:3dgsir:composite"
+      ],
+      "matched_query_tag": "query:3dgsir:composite",
+      "matched_query_text": "Papers central to 查找3D Gaussian Splatting与逆向渲染（Inverse Rendering）相关的学术论文, especially work that connects or combines: Inverse rendering techniques for 3D reconstruction; G; 3D Gaussian Splatting representation and rendering; Relighting and illumination decomposition using 3DGS; Physically based rendering for Gaussian Splatting; Geometry and surface reconstruction from Gaussians; State of the art methods for inverse rendering using 3D Gaussian Splatting; Decomposing material and lighting from 3D Gaussian representations; Physically based inverse rendering with 3D Gaussian primitives.",
+      "matched_requirement_id": "req-composite-3dgsir",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.28020v1",
+      "title": "Physically Inspired Gaussian Splatting for HDR Novel View Synthesis",
+      "abstract": "High dynamic range novel view synthesis (HDR-NVS) reconstructs scenes with dynamic details by fusing multi-exposure low dynamic range (LDR) views, yet it struggles to capture ambient illumination-dependent appearance. Implicitly supervising HDR content by constraining tone-mapped results fails in correcting abnormal HDR values, and results in limited gradients for Gaussians in under/over-exposed regions. To this end, we introduce PhysHDR-GS, a physically inspired HDR-NVS framework that models scene appearance via intrinsic reflectance and adjustable ambient illumination. PhysHDR-GS employs a complementary image-exposure (IE) branch and Gaussian-illumination (GI) branch to faithfully reproduce standard camera observations and capture illumination-dependent appearance changes, respectively. During training, the proposed cross-branch HDR consistency loss provides explicit supervision for HDR content, while an illumination-guided gradient scaling strategy mitigates exposure-biased gradient starvation and reduces under-densified representations. Experimental results across realistic and synthetic datasets demonstrate our superiority in reconstructing HDR details (e.g., a PSNR gain of 2.04 dB over HDR-GS), while maintaining real-time rendering speed (up to 76 FPS). Code and models are available at https://huimin-zeng.github.io/PhysHDR-GS/.",
+      "authors": [
+        "Huimin Zeng",
+        "Yue Bai",
+        "Hailing Wang",
+        "Yun Fu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-30T04:27:39+00:00",
+      "link": "https://arxiv.org/pdf/2603.28020v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Physically inspired HDR-NVS modeling intrinsic reflectance and illumination",
+      "llm_evidence_cn": "物理启发的HDR-NVS，建模内在反射和光照",
+      "llm_evidence": "物理启发的HDR-NVS，建模内在反射和光照",
+      "canonical_evidence": "物理启发的HDR-NVS，建模内在反射和光照",
+      "llm_tldr_en": "Models scene appearance via intrinsic reflectance and ambient illumination using Gaussian Splatting.",
+      "llm_tldr_cn": "通过高斯泼溅建模内在反射和环境光照，实现物理启发的HDR新视角合成。",
+      "llm_tldr": "通过高斯泼溅建模内在反射和环境光照，实现物理启发的HDR新视角合成。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Physically based inverse rendering with 3D Gaussian primitives",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.28064v1",
+      "title": "\\textit{4DSurf}: High-Fidelity Dynamic Scene Surface Reconstruction",
+      "abstract": "This paper addresses the problem of dynamic scene surface reconstruction using Gaussian Splatting (GS), aiming to recover temporally consistent geometry. While existing GS-based dynamic surface reconstruction methods can yield superior reconstruction, they are typically limited to either a single object or objects with only small deformations, struggling to maintain temporally consistent surface reconstruction of large deformations over time. We propose ``\\textit{4DSurf}'', a novel and unified framework for generic dynamic surface reconstruction that does not require specifying the number or types of objects in the scene, can handle large surface deformations and temporal inconsistency in reconstruction. The key innovation of our framework is the introduction of Gaussian deformations induced Signed Distance Function Flow Regularization that constrains the motion of Gaussians to align with the evolving surface. To handle large deformations, we introduce an Overlapping Segment Partitioning strategy that divides the sequence into overlapping segments with small deformations and incrementally passes geometric information across segments through the shared overlapping timestep. Experiments on two challenging dynamic scene datasets, Hi4D and CMU Panoptic, demonstrate that our method outperforms state-of-the-art surface reconstruction methods by 49\\% and 19\\% in Chamfer distance, respectively, and achieves superior temporal consistency under sparse-view settings.",
+      "authors": [
+        "Renjie Wu",
+        "Hongdong Li",
+        "Jose M. Alvarez",
+        "Miaomiao Liu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-30T06:09:37+00:00",
+      "link": "https://arxiv.org/pdf/2603.28064v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Dynamic scene surface reconstruction using Gaussian Splatting",
+      "llm_evidence_cn": "使用高斯泼溅进行动态场景表面重建",
+      "llm_evidence": "使用高斯泼溅进行动态场景表面重建",
+      "canonical_evidence": "使用高斯泼溅进行动态场景表面重建",
+      "llm_tldr_en": "Proposes 4DSurf for high-fidelity, temporally consistent dynamic surface reconstruction using Gaussian Splatting.",
+      "llm_tldr_cn": "提出4DSurf框架，利用高斯泼溅实现高保真且时间一致的动态场景表面重建。",
+      "llm_tldr": "提出4DSurf框架，利用高斯泼溅实现高保真且时间一致的动态场景表面重建。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Geometry and surface reconstruction from Gaussians",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.29209v1",
+      "title": "LightHarmony3D: Harmonizing Illumination and Shadows for Object Insertion in 3D Gaussian Splatting",
+      "abstract": "3D Gaussian Splatting (3DGS) enables high-fidelity reconstruction of scene geometry and appearance. Building on this capability, inserting external mesh objects into reconstructed 3DGS scenes enables interactive editing and content augmentation for immersive applications such as AR/VR, virtual staging, and digital content creation. However, achieving physically consistent lighting and shadows for mesh insertion remains challenging, as it requires accurate scene illumination estimation and multi-view consistent rendering. To address this challenge, we present LightHarmony3D, a novel framework for illumination-consistent mesh insertion in 3DGS scenes. Central to our approach is our proposed generative module that predicts a full 360° HDR environment map at the insertion location via a single forward pass. By leveraging generative priors instead of iterative optimization, our method efficiently captures dominant scene illumination and enables physically grounded shading and shadows for inserted meshes while maintaining multi-view coherence. Furthermore, we introduce the first dedicated benchmark for mesh insertion in 3DGS, providing a standardized evaluation framework for assessing lighting consistency and photorealism. Extensive experiments across multiple real-world reconstruction datasets demonstrate that LightHarmony3D achieves state-of-the-art realism and multi-view consistency.",
+      "authors": [
+        "Tianyu Huang",
+        "Zhenyang Ren",
+        "Zhenchen Wan",
+        "Jiyang Zheng",
+        "Wenjie Wang",
+        "Runnan Chen",
+        "Mingming Gong",
+        "Tongliang Liu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-31T03:26:30+00:00",
+      "link": "https://arxiv.org/pdf/2603.29209v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Illumination estimation and consistent rendering in 3DGS",
+      "llm_evidence_cn": "3DGS中的光照估计与一致性渲染",
+      "llm_evidence": "3DGS中的光照估计与一致性渲染",
+      "canonical_evidence": "3DGS中的光照估计与一致性渲染",
+      "llm_tldr_en": "Predicts scene illumination for physically consistent object insertion and relighting in 3DGS scenes.",
+      "llm_tldr_cn": "预测场景光照，以在3DGS场景中实现物理一致的对象插入和重打光。",
+      "llm_tldr": "预测场景光照，以在3DGS场景中实现物理一致的对象插入和重打光。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Relighting and illumination decomposition using 3DGS",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.29394v1",
+      "title": "AA-Splat: Anti-Aliased Feed-forward Gaussian Splatting",
+      "abstract": "Feed-forward 3D Gaussian Splatting (FF-3DGS) emerges as a fast and robust solution for sparse-view 3D reconstruction and novel view synthesis (NVS). However, existing FF-3DGS methods are built on incorrect screen-space dilation filters, causing severe rendering artifacts when rendering at out-of-distribution sampling rates. We firstly propose an FF-3DGS model, called AA-Splat, to enable robust anti-aliased rendering at any resolution. AA-Splat utilizes an opacity-balanced band-limiting (OBBL) design, which combines two components: a 3D band-limiting post-filter integrates multi-view maximal frequency bounds into the feed-forward reconstruction pipeline, effectively band-limiting the resulting 3D scene representations and eliminating degenerate Gaussians; an Opacity Balancing (OB) to seamlessly integrate all pixel-aligned Gaussian primitives into the rendering process, compensating for the increased overlap between expanded Gaussian primitives. AA-Splat demonstrates drastic improvements with average 5.4$\\sim$7.5dB PSNR gains on NVS performance over a state-of-the-art (SOTA) baseline, DepthSplat, at all resolutions, between $4\\times$ and $1/4\\times$. Code will be made available.",
+      "authors": [
+        "Taewoo Suh",
+        "Sungpyo Kim",
+        "Jongmin Park",
+        "Munchurl Kim"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-31T07:59:51+00:00",
+      "link": "https://arxiv.org/pdf/2603.29394v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Anti-aliased rendering for feed-forward 3D Gaussian Splatting",
+      "llm_evidence_cn": "前馈3D高斯泼溅的抗锯齿渲染",
+      "llm_evidence": "前馈3D高斯泼溅的抗锯齿渲染",
+      "canonical_evidence": "前馈3D高斯泼溅的抗锯齿渲染",
+      "llm_tldr_en": "AA-Splat introduces an opacity-balanced band-limiting design for robust anti-aliased 3DGS rendering.",
+      "llm_tldr_cn": "AA-Splat引入了透明度平衡带限设计，实现了鲁棒的3DGS抗锯齿渲染。",
+      "llm_tldr": "AA-Splat引入了透明度平衡带限设计，实现了鲁棒的3DGS抗锯齿渲染。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "3D Gaussian Splatting representation and rendering",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.00509v1",
+      "title": "RT-GS: Gaussian Splatting with Reflection and Transmittance Primitives",
+      "abstract": "Gaussian Splatting is a powerful tool for reconstructing diffuse scenes, but it struggles to simultaneously model specular reflections and the appearance of objects behind semi-transparent surfaces. These specular reflections and transmittance are essential for realistic novel view synthesis, and existing methods do not properly incorporate the underlying physical processes to simulate them. To address this issue, we propose RT-GS, a unified framework that integrates a microfacet material model and ray tracing to jointly model specular reflection and transmittance in Gaussian Splatting. We accomplish this by using separate Gaussian primitives for reflections and transmittance, which allow modeling distant reflections and reconstructing objects behind transparent surfaces concurrently. We utilize a differentiable ray tracing framework to obtain the specular reflection and transmittance appearance. Our experiments demonstrate that our method successfully produces reflections and recovers objects behind transparent surfaces in complex environments, achieving significant qualitative improvements over prior methods where these specular light interactions are prominent.",
+      "authors": [
+        "Kunnong Zeng",
+        "Chensheng Peng",
+        "Yichen Xie",
+        "Masayoshi Tomizuka",
+        "Cem Yuksel"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR",
+        "cs.CV"
+      ],
+      "published": "2026-04-01T05:50:03+00:00",
+      "link": "https://arxiv.org/pdf/2604.00509v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "integrates microfacet material model and ray tracing in Gaussian Splatting",
+      "llm_evidence_cn": "在Gaussian Splatting中集成微表面材质模型和光线追踪",
+      "llm_evidence": "在Gaussian Splatting中集成微表面材质模型和光线追踪",
+      "canonical_evidence": "在Gaussian Splatting中集成微表面材质模型和光线追踪",
+      "llm_tldr_en": "RT-GS incorporates physical material models and ray tracing into 3DGS for realistic reflection and transmittance.",
+      "llm_tldr_cn": "RT-GS 将物理材质模型和光线追踪引入3DGS，以实现真实的反射和透射效果。",
+      "llm_tldr": "RT-GS 将物理材质模型和光线追踪引入3DGS，以实现真实的反射和透射效果。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Physically based rendering for Gaussian Splatting",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.01030v1",
+      "title": "Diff3R: Feed-forward 3D Gaussian Splatting with Uncertainty-aware Differentiable Optimization",
+      "abstract": "Recent advances in 3D Gaussian Splatting (3DGS) present two main directions: feed-forward models offer fast inference in sparse-view settings, while per-scene optimization yields high-quality renderings but is computationally expensive. To combine the benefits of both, we introduce Diff3R, a novel framework that explicitly bridges feed-forward prediction and test-time optimization. By incorporating a differentiable 3DGS optimization layer directly into the training loop, our network learns to predict an optimal initialization for test-time optimization rather than a conventional zero-shot result. To overcome the computational cost of backpropagating through the optimization steps, we propose computing gradients via the Implicit Function Theorem and a scalable, matrix-free PCG solver tailored for 3DGS optimization. Additionally, we incorporate a data-driven uncertainty model into the optimization process by adaptively controlling how much the parameters are allowed to change during optimization. This approach effectively mitigates overfitting in under-constrained regions and increases robustness against input outliers. Since our proposed optimization layer is model-agnostic, we show that it can be seamlessly integrated into existing feed-forward 3DGS architectures for both pose-given and pose-free methods, providing improvements for test-time optimization.",
+      "authors": [
+        "Yueh-Cheng Liu",
+        "Jozef Hladký",
+        "Matthias Nießner",
+        "Angela Dai"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-01T15:40:20+00:00",
+      "link": "https://arxiv.org/pdf/2604.01030v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Feed-forward 3D Gaussian Splatting with differentiable optimization for reconstruction",
+      "llm_evidence_cn": "具有可微优化的前馈3D高斯泼溅用于重建",
+      "llm_evidence": "具有可微优化的前馈3D高斯泼溅用于重建",
+      "canonical_evidence": "具有可微优化的前馈3D高斯泼溅用于重建",
+      "llm_tldr_en": "Diff3R combines feed-forward prediction with a differentiable 3DGS optimization layer for high-quality reconstruction.",
+      "llm_tldr_cn": "Diff3R将前馈预测与可微3DGS优化层结合，实现了高质量的场景重建。",
+      "llm_tldr": "Diff3R将前馈预测与可微3DGS优化层结合，实现了高质量的场景重建。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Inverse rendering techniques for 3D reconstruction",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.01551v1",
+      "title": "ColorGradedGaussians: Palette-Based Color Grading for 3D Gaussian Splatting via View-Space Sparse Decomposition",
+      "abstract": "Professional color editing requires precise control over both color (hue and saturation) and lightness, ideally through separate, independent controls. We present a real-time interactive color editing framework for 3D Gaussian Splatting (3DGS) that enables palette-based recoloring, per-palette tone curves for color-aware lightness adjustment, and accurate pixel-level constraints -- capabilities unavailable in prior palette-based 3DGS methods. Existing approaches decompose colors at the primitive level, optimizing per-Gaussian palette weights before splatting. However, sparse primitive-level weights do not guarantee sparse pixel-level decompositions after alpha-blending, causing palette edits to affect unintended regions and degrading editing quality. We address this through view-space palette decomposition, splatting weights instead of colors to optimize the observable appearance of the scene. We introduce a geometric loss using inverse barycentric coordinates to enforce consistent sparsity patterns, ensuring similar colors share similar decompositions. Our approach achieves superior editing quality compared to primitive-space methods, enabling professional color grading workflows for 3DGS scenes with real-time interaction.",
+      "authors": [
+        "Cheng-Kang Ted Chao",
+        "Yotam Gingold"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR"
+      ],
+      "published": "2026-04-02T02:54:01+00:00",
+      "link": "https://arxiv.org/pdf/2604.01551v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Decomposing colors and lightness for 3D Gaussian Splatting editing",
+      "llm_evidence_cn": "为3D高斯泼溅编辑分解颜色与亮度",
+      "llm_evidence": "为3D高斯泼溅编辑分解颜色与亮度",
+      "canonical_evidence": "为3D高斯泼溅编辑分解颜色与亮度",
+      "llm_tldr_en": "ColorGradedGaussians enables precise palette-based color and lightness editing for 3DGS via sparse decomposition.",
+      "llm_tldr_cn": "ColorGradedGaussians通过稀疏分解实现了3DGS精确的调色板颜色与亮度编辑。",
+      "llm_tldr": "ColorGradedGaussians通过稀疏分解实现了3DGS精确的调色板颜色与亮度编辑。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Decomposing material and lighting from 3D Gaussian representations",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.01884v1",
+      "title": "GS^2: Graph-based Spatial Distribution Optimization for Compact 3D Gaussian Splatting",
+      "abstract": "3D Gaussian Splatting (3DGS) has demonstrated breakthrough performance in novel view synthesis and real-time rendering. Nevertheless, its practicality is constrained by the high memory cost due to a huge number of Gaussian points. Many pruning-based 3DGS variants have been proposed for memory saving, but often compromise spatial consistency and may lead to rendering artifacts. To address this issue, we propose graph-based spatial distribution optimization for compact 3D Gaussian Splatting (GS\\textasciicircum2), which enhances reconstruction quality by optimizing the spatial distribution of Gaussian points. Specifically, we introduce an evidence lower bound (ELBO)-based adaptive densification strategy that automatically controls the densification process. In addition, an opacity-aware progressive pruning strategy is proposed to further reduce memory consumption by dynamically removing low-opacity Gaussian points. Furthermore, we propose a graph-based feature encoding module to adjust the spatial distribution via feature-guided point shifting. Extensive experiments validate that GS\\textasciicircum2 achieves a compact Gaussian representation while delivering superior rendering quality. Compared with 3DGS, it achieves higher PSNR with only about 12.5\\% Gaussian points. Furthermore, it outperforms all compared baselines in both rendering quality and memory efficiency.",
+      "authors": [
+        "Xianben Yang",
+        "Tao Wang",
+        "Yuxuan Li",
+        "Yi Jin",
+        "Haibin Ling"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-02T10:41:51+00:00",
+      "link": "https://arxiv.org/pdf/2604.01884v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Optimization of spatial distribution for 3D Gaussian Splatting",
+      "llm_evidence_cn": "3D高斯泼溅的空间分布优化",
+      "llm_evidence": "3D高斯泼溅的空间分布优化",
+      "canonical_evidence": "3D高斯泼溅的空间分布优化",
+      "llm_tldr_en": "GS^2 optimizes Gaussian point distribution using an ELBO-based strategy for compact and high-quality rendering.",
+      "llm_tldr_cn": "GS^2通过基于ELBO的策略优化高斯点分布，实现了紧凑且高质量的渲染。",
+      "llm_tldr": "GS^2通过基于ELBO的策略优化高斯点分布，实现了紧凑且高质量的渲染。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "3D Gaussian Splatting representation and rendering",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2603.21304v1",
+      "title": "F4Splat: Feed-Forward Predictive Densification for Feed-Forward 3D Gaussian Splatting",
+      "abstract": "Feed-forward 3D Gaussian Splatting methods enable single-pass reconstruction and real-time rendering. However, they typically adopt rigid pixel-to-Gaussian or voxel-to-Gaussian pipelines that uniformly allocate Gaussians, leading to redundant Gaussians across views. Moreover, they lack an effective mechanism to control the total number of Gaussians while maintaining reconstruction fidelity. To address these limitations, we present F4Splat, which performs Feed-Forward predictive densification for Feed-Forward 3D Gaussian Splatting, introducing a densification-score-guided allocation strategy that adaptively distributes Gaussians according to spatial complexity and multi-view overlap. Our model predicts per-region densification scores to estimate the required Gaussian density and allows explicit control over the final Gaussian budget without retraining. This spatially adaptive allocation reduces redundancy in simple regions and minimizes duplicate Gaussians across overlapping views, producing compact yet high-quality 3D representations. Extensive experiments demonstrate that our model achieves superior novel-view synthesis performance compared to prior uncalibrated feed-forward methods, while using significantly fewer Gaussians.",
+      "authors": [
+        "Injae Kim",
+        "Chaehyeon Kim",
+        "Minseong Bae",
+        "Minseok Joo",
+        "Hyunwoo J. Kim"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-22T16:03:56+00:00",
+      "link": "https://arxiv.org/pdf/2603.21304v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Feed-forward 3D Gaussian Splatting reconstruction",
+      "llm_evidence_cn": "前馈3D高斯泼溅重建",
+      "llm_evidence": "前馈3D高斯泼溅重建",
+      "canonical_evidence": "前馈3D高斯泼溅重建",
+      "llm_tldr_en": "Presents F4Splat for adaptive Gaussian densification in feed-forward 3DGS reconstruction pipelines.",
+      "llm_tldr_cn": "提出F4Splat，在前馈3DGS重建流程中实现自适应高斯加密。",
+      "llm_tldr": "提出F4Splat，在前馈3DGS重建流程中实现自适应高斯加密。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "3D Gaussian Splatting representation and rendering",
+      "matched_requirement_id": "req-3",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.21304v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.28152v1",
+      "title": "ObjectMorpher: 3D-Aware Image Editing via Deformable 3DGS Models",
+      "abstract": "Achieving precise, object-level control in image editing remains challenging: 2D methods lack 3D awareness and often yield ambiguous or implausible results, while existing 3D-aware approaches rely on heavy optimization or incomplete monocular reconstructions. We present ObjectMorpher, a unified, interactive framework that converts ambiguous 2D edits into geometry-grounded operations. ObjectMorpher lifts target instances with an image-to-3D generator into editable 3D Gaussian Splatting (3DGS), enabling fast, identity-preserving manipulation. Users drag control points; a graph-based non-rigid deformation with as-rigid-as-possible (ARAP) constraints ensures physically sensible shape and pose changes. A composite diffusion module harmonizes lighting, color, and boundaries for seamless reintegration. Across diverse categories, ObjectMorpher delivers fine-grained, photorealistic edits with superior controllability and efficiency, outperforming 2D drag and 3D-aware baselines on KID, LPIPS, SIFID, and user preference.",
+      "authors": [
+        "Yuhuan Xie",
+        "Aoxuan Pan",
+        "Yi-Hua Huang",
+        "Chirui Chang",
+        "Peng Dai",
+        "Xin Yu",
+        "Xiaojuan Qi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-30T08:15:29+00:00",
+      "link": "https://arxiv.org/pdf/2603.28152v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Deformable 3DGS models with harmonized lighting and color for editing",
+      "llm_evidence_cn": "具有协调光照和颜色的可变形3DGS模型用于编辑",
+      "llm_evidence": "具有协调光照和颜色的可变形3DGS模型用于编辑",
+      "canonical_evidence": "具有协调光照和颜色的可变形3DGS模型用于编辑",
+      "llm_tldr_en": "ObjectMorpher enables interactive 3D-aware image editing by lifting 2D images into editable 3DGS representations.",
+      "llm_tldr_cn": "ObjectMorpher通过将2D图像提升为可编辑的3DGS表示，实现了交互式3D感知图像编辑。",
+      "llm_tldr": "ObjectMorpher通过将2D图像提升为可编辑的3DGS表示，实现了交互式3D感知图像编辑。",
+      "llm_tags": [
+        "query:3dgsir:composite"
+      ],
+      "matched_query_tag": "query:3dgsir:composite",
+      "matched_query_text": "Papers central to 查找3D Gaussian Splatting与逆向渲染（Inverse Rendering）相关的学术论文, especially work that connects or combines: Inverse rendering techniques for 3D reconstruction; G; 3D Gaussian Splatting representation and rendering; Relighting and illumination decomposition using 3DGS; Physically based rendering for Gaussian Splatting; Geometry and surface reconstruction from Gaussians; State of the art methods for inverse rendering using 3D Gaussian Splatting; Decomposing material and lighting from 3D Gaussian representations; Physically based inverse rendering with 3D Gaussian primitives.",
+      "matched_requirement_id": "req-composite-3dgsir",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.27151v1",
+      "title": "DiffSoup: Direct Differentiable Rasterization of Triangle Soup for Extreme Radiance Field Simplification",
+      "abstract": "Radiance field reconstruction aims to recover high-quality 3D representations from multi-view RGB images. Recent advances, such as 3D Gaussian splatting, enable real-time rendering with high visual fidelity on sufficiently powerful graphics hardware. However, efficient online transmission and rendering across diverse platforms requires drastic model simplification, reducing the number of primitives by several orders of magnitude. We introduce DiffSoup, a radiance field representation that employs a soup (i.e., a highly unstructured set) of a small number of triangles with neural textures and binary opacity. We show that this binary opacity representation is directly differentiable via stochastic opacity masking, enabling stable training without a mollifier (i.e., smooth rasterization). DiffSoup can be rasterized using standard depth testing, enabling seamless integration into traditional graphics pipelines and interactive rendering on consumer-grade laptops and mobile devices. Code is available at https://github.com/kenji-tojo/diffsoup.",
+      "authors": [
+        "Kenji Tojo",
+        "Bernd Bickel",
+        "Nobuyuki Umetani"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR",
+        "cs.CV"
+      ],
+      "published": "2026-03-28T06:00:57+00:00",
+      "link": "https://arxiv.org/pdf/2603.27151v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Differentiable rasterization for radiance field reconstruction",
+      "llm_evidence_cn": "用于辐射场重建的可微分光栅化",
+      "llm_evidence": "用于辐射场重建的可微分光栅化",
+      "canonical_evidence": "用于辐射场重建的可微分光栅化",
+      "llm_tldr_en": "DiffSoup uses differentiable triangle soup rasterization for extreme radiance field simplification and rendering.",
+      "llm_tldr_cn": "DiffSoup利用可微三角形汤光栅化实现了极端的辐射场简化与渲染。",
+      "llm_tldr": "DiffSoup利用可微三角形汤光栅化实现了极端的辐射场简化与渲染。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Inverse rendering techniques for 3D reconstruction",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.21304v2",
+      "title": "F4Splat: Feed-Forward Predictive Densification for Feed-Forward 3D Gaussian Splatting",
+      "abstract": "Feed-forward 3D Gaussian Splatting methods enable single-pass reconstruction and real-time rendering. However, they typically adopt rigid pixel-to-Gaussian or voxel-to-Gaussian pipelines that uniformly allocate Gaussians, leading to redundant Gaussians across views. Moreover, they lack an effective mechanism to control the total number of Gaussians while maintaining reconstruction fidelity. To address these limitations, we present F4Splat, which performs Feed-Forward predictive densification for Feed-Forward 3D Gaussian Splatting, introducing a densification-score-guided allocation strategy that adaptively distributes Gaussians according to spatial complexity and multi-view overlap. Our model predicts per-region densification scores to estimate the required Gaussian density and allows explicit control over the final Gaussian budget without retraining. This spatially adaptive allocation reduces redundancy in simple regions and minimizes duplicate Gaussians across overlapping views, producing compact yet high-quality 3D representations. Extensive experiments demonstrate that our model achieves superior novel-view synthesis performance compared to prior uncalibrated feed-forward methods, while using significantly fewer Gaussians.",
+      "authors": [
+        "Injae Kim",
+        "Chaehyeon Kim",
+        "Minseong Bae",
+        "Minseok Joo",
+        "Hyunwoo J. Kim"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-22T16:03:56+00:00",
+      "link": "https://arxiv.org/pdf/2603.21304v2",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Feed-forward 3D Gaussian Splatting reconstruction",
+      "llm_evidence_cn": "前馈3D高斯泼溅重建",
+      "llm_evidence": "前馈3D高斯泼溅重建",
+      "canonical_evidence": "前馈3D高斯泼溅重建",
+      "llm_tldr_en": "Presents F4Splat for adaptive Gaussian densification in feed-forward 3DGS reconstruction pipelines.",
+      "llm_tldr_cn": "提出F4Splat，在前馈3DGS重建流程中实现自适应高斯加密。",
+      "llm_tldr": "提出F4Splat，在前馈3DGS重建流程中实现自适应高斯加密。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "3D Gaussian Splatting representation and rendering",
+      "matched_requirement_id": "req-3",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.21304v2",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.28431v1",
+      "title": "GeoHCC: Local Geometry-Aware Hierarchical Context Compression for 3D Gaussian Splatting",
+      "abstract": "Although 3D Gaussian Splatting (3DGS) enables high-fidelity real-time rendering, its prohibitive storage overhead severely hinders practical deployment. Recent anchor-based 3DGS compression schemes reduce redundancy through context modeling, yet overlook explicit geometric dependencies, leading to structural degradation and suboptimal rate-distortion performance. In this paper, we propose GeoHCC, a geometry-aware 3DGS compression framework that incorporates inter-anchor geometric correlations into anchor pruning and entropy coding for compact representation. We first introduce Neighborhood-Aware Anchor Pruning (NAAP), which evaluates anchor importance via weighted neighborhood feature aggregation and merges redundant anchors into salient neighbors, yielding a compact yet geometry-consistent anchor set. Building upon this optimized structure, we further develop a hierarchical entropy coding scheme, in which coarse-to-fine priors are exploited through a lightweight Geometry-Guided Convolution (GG-Conv) operator to enable spatially adaptive context modeling and rate-distortion optimization. Extensive experiments demonstrate that GeoHCC effectively resolves the structure preservation bottleneck, maintaining superior geometric integrity and rendering fidelity over state-of-the-art anchor-based approaches.",
+      "authors": [
+        "Xuan Deng",
+        "Xiandong Meng",
+        "Hengyu Man",
+        "Qiang Zhu",
+        "Tiange Zhang",
+        "Debin Zhao",
+        "Xiaopeng Fan"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-30T13:39:35+00:00",
+      "link": "https://arxiv.org/pdf/2603.28431v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Geometry-aware compression for 3D Gaussian Splatting",
+      "llm_evidence_cn": "3D高斯泼溅的几何感知压缩",
+      "llm_evidence": "3D高斯泼溅的几何感知压缩",
+      "canonical_evidence": "3D高斯泼溅的几何感知压缩",
+      "llm_tldr_en": "GeoHCC incorporates inter-anchor geometric correlations to achieve compact 3DGS representation and compression.",
+      "llm_tldr_cn": "GeoHCC结合了锚点间的几何相关性，实现了紧凑的3DGS表示与压缩。",
+      "llm_tldr": "GeoHCC结合了锚点间的几何相关性，实现了紧凑的3DGS表示与压缩。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Geometry and surface reconstruction from Gaussians",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.29022v1",
+      "title": "UltraG-Ray: Physics-Based Gaussian Ray Casting for Novel Ultrasound View Synthesis",
+      "abstract": "Novel view synthesis (NVS) in ultrasound has gained attention as a technique for generating anatomically plausible views beyond the acquired frames, offering new capabilities for training clinicians or data augmentation. However, current methods struggle with complex tissue and view-dependent acoustic effects. Physics-based NVS aims to address these limitations by including the ultrasound image formation process into the simulation. Recent approaches combine a learnable implicit scene representation with an ultrasound-specific rendering module, yet a substantial gap between simulation and reality remains. In this work, we introduce UltraG-Ray, a novel ultrasound scene representation based on a learnable 3D Gaussian field, coupled to an efficient physics-based module for B-mode synthesis. We explicitly encode ultrasound-specific parameters, such as attenuation and reflection, into a Gaussian-based spatial representation and realize image synthesis within a novel ray casting scheme. In contrast to previous methods, this approach naturally captures view-dependent attenuation effects, thereby enabling the generation of physically informed B-mode images with increased realism. We compare our method to state-of-the-art and observe consistent gains in image quality metrics (up to 15% increase on MS-SSIM), demonstrating clear improvement in terms of realism of the synthesized ultrasound images.",
+      "authors": [
+        "Felix Duelmer",
+        "Jakob Klaushofer",
+        "Magdalena Wysocki",
+        "Nassir Navab",
+        "Mohammad Farid Azampour"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-30T21:30:05+00:00",
+      "link": "https://arxiv.org/pdf/2603.29022v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Physics-based Gaussian ray casting for ultrasound view synthesis",
+      "llm_evidence_cn": "基于物理的高斯射线投射用于超声视角合成",
+      "llm_evidence": "基于物理的高斯射线投射用于超声视角合成",
+      "canonical_evidence": "基于物理的高斯射线投射用于超声视角合成",
+      "llm_tldr_en": "Introduces UltraG-Ray, a learnable 3D Gaussian field for physics-based ultrasound novel view synthesis.",
+      "llm_tldr_cn": "引入UltraG-Ray，一种基于可学习3D高斯场的物理驱动超声新视角合成方法。",
+      "llm_tldr": "引入UltraG-Ray，一种基于可学习3D高斯场的物理驱动超声新视角合成方法。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Physically based rendering for Gaussian Splatting",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.22102v1",
+      "title": "FreeArtGS: Articulated Gaussian Splatting Under Free-moving Scenario",
+      "abstract": "The increasing demand for augmented reality and robotics is driving the need for articulated object reconstruction with high scalability. However, existing settings for reconstructing from discrete articulation states or casual monocular videos require non-trivial axis alignment or suffer from insufficient coverage, limiting their applicability. In this paper, we introduce FreeArtGS, a novel method for reconstructing articulated objects under free-moving scenario, a new setting with a simple setup and high scalability. FreeArtGS combines free-moving part segmentation with joint estimation and end-to-end optimization, taking only a monocular RGB-D video as input. By optimizing with the priors from off-the-shelf point-tracking and feature models, the free-moving part segmentation module identifies rigid parts from relative motion under unconstrained capture. The joint estimation module calibrates the unified object-to-camera poses and recovers joint type and axis robustly from part segmentation. Finally, 3DGS-based end-to-end optimization is implemented to jointly reconstruct visual textures, geometry, and joint angles of the articulated object. We conduct experiments on two benchmarks and real-world free-moving articulated objects. Experimental results demonstrate that FreeArtGS consistently excels in reconstructing free-moving articulated objects and remains highly competitive in previous reconstruction settings, proving itself a practical and effective solution for realistic asset generation. The project page is available at: https://freeartgs.github.io/",
+      "authors": [
+        "Hang Dai",
+        "Hongwei Fan",
+        "Han Zhang",
+        "Duojin Wu",
+        "Jiyao Zhang",
+        "Hao Dong"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.GR",
+        "cs.RO"
+      ],
+      "published": "2026-03-23T15:32:16+00:00",
+      "link": "https://arxiv.org/pdf/2603.22102v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Articulated object reconstruction using Gaussian Splatting",
+      "llm_evidence_cn": "使用高斯泼溅进行关节物体重建",
+      "llm_evidence": "使用高斯泼溅进行关节物体重建",
+      "canonical_evidence": "使用高斯泼溅进行关节物体重建",
+      "llm_tldr_en": "Reconstructs articulated objects from monocular RGB-D video using optimized Gaussian Splatting.",
+      "llm_tldr_cn": "利用优化的3D高斯泼溅，从单目RGB-D视频中重建关节物体。",
+      "llm_tldr": "利用优化的3D高斯泼溅，从单目RGB-D视频中重建关节物体。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Geometry and surface reconstruction from Gaussians",
+      "matched_requirement_id": "req-6",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.22102v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.28431v2",
+      "title": "LG-HCC: Local Geometry-Aware Hierarchical Context Compression for 3D Gaussian Splatting",
+      "abstract": "Although 3D Gaussian Splatting (3DGS) enables high-fidelity real-time rendering, its prohibitive storage overhead severely hinders practical deployment. Recent anchor-based 3DGS compression schemes reduce gaussina redundancy through ome advanced context models. However, overlook explicit geometric dependencies, leading to structural degradation and suboptimal rate-distortion performance. In this paper, we propose LG-HCC, a geometry-aware 3DGS compression framework that incorporates inter-anchor geometric correlations into anchor pruning and entropy coding for compact representation. Specifically, we introduce an Neighborhood-Aware Anchor Pruning (NAAP) strategy, which evaluates anchor importance via weighted neighborhood feature aggregation and merges redundant anchors into salient neighbors, yielding a compact yet geometry-consistent anchor set. Building upon this optimized structure, we further develop a hierarchical entropy coding scheme, in which coarse-to-fine priors are exploited through a lightweight Geometry-Guided Convolution (GG-Conv) operator to enable spatially adaptive context modeling and rate-distortion optimization. Extensive experiments demonstrate that LG-HCC effectively resolves the structure preservation bottleneck, maintaining superior geometric integrity and rendering fidelity over state-of-the-art anchor-based compression approaches.",
+      "authors": [
+        "Xuan Deng",
+        "Xiandong Meng",
+        "Hengyu Man",
+        "Qiang Zhu",
+        "Tiange Zhang",
+        "Debin Zhao",
+        "Xiaopeng Fan"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-30T13:39:35+00:00",
+      "link": "https://arxiv.org/pdf/2603.28431v2",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Geometry-aware 3DGS compression framework",
+      "llm_evidence_cn": "几何感知的高斯泼溅压缩框架",
+      "llm_evidence": "几何感知的高斯泼溅压缩框架",
+      "canonical_evidence": "几何感知的高斯泼溅压缩框架",
+      "llm_tldr_en": "Introduces a geometry-aware compression framework to reduce the storage overhead of 3D Gaussian Splatting.",
+      "llm_tldr_cn": "引入了一种几何感知的压缩框架，以减少3D高斯泼溅的存储开销。",
+      "llm_tldr": "引入了一种几何感知的压缩框架，以减少3D高斯泼溅的存储开销。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "3D Gaussian Splatting representation and rendering",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2604.01207v1",
+      "title": "TRACE: High-Fidelity 3D Scene Editing via Tangible Reconstruction and Geometry-Aligned Contextual Video Masking",
+      "abstract": "We present TRACE, a mesh-guided 3DGS editing framework that achieves automated, high-fidelity scene transformation. By anchoring video diffusion with explicit 3D geometry, TRACE uniquely enables fine-grained, part-level manipulatio--such as local pose shifting or component replacemen--while preserving the structural integrity of the central subject, a capability largely absent in existing editing methods. Our approach comprises three key stages: (1) Multi-view 3D-Anchor Synthesis, which leverages a sparse-view editor trained on our MV-TRACE datase--the first multi-view consistent dataset dedicated to scene-coherent object addition and modificatio--to generate spatially consistent 3D-anchors; (2) Tangible Geometry Anchoring (TGA), which ensures precise spatial synchronization between inserted meshes and the 3DGS scene via two-phase registration; and (3) Contextual Video Masking (CVM), which integrates 3D projections into an autoregressive video pipeline to achieve temporally stable, physically-grounded rendering. Extensive experiments demonstrate that TRACE consistently outperforms existing methods especially in editing versatility and structural integrity.",
+      "authors": [
+        "Jiyuan Hu",
+        "Zechuan Zhang",
+        "Zongxin Yang",
+        "Yi Yang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-01T17:51:00+00:00",
+      "link": "https://arxiv.org/pdf/2604.01207v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "mesh-guided 3DGS editing with explicit 3D geometry",
+      "llm_evidence_cn": "基于显式3D几何的网格引导3DGS编辑",
+      "llm_evidence": "基于显式3D几何的网格引导3DGS编辑",
+      "canonical_evidence": "基于显式3D几何的网格引导3DGS编辑",
+      "llm_tldr_en": "TRACE enables fine-grained 3D scene editing by anchoring video diffusion with explicit 3DGS geometry.",
+      "llm_tldr_cn": "TRACE 通过将视频扩散锚定在显式3DGS几何上，实现了细粒度的3D场景编辑。",
+      "llm_tldr": "TRACE 通过将视频扩散锚定在显式3DGS几何上，实现了细粒度的3D场景编辑。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Geometry and surface reconstruction from Gaussians",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.22792v2",
+      "title": "Instrument-Splatting++: Towards Controllable Surgical Instrument Digital Twin Using Gaussian Splatting",
+      "abstract": "High-quality and controllable digital twins of surgical instruments are critical for Real2Sim in robot-assisted surgery, as they enable realistic simulation, synthetic data generation, and perception learning under novel poses. We present Instrument-Splatting++, a monocular 3D Gaussian Splatting (3DGS) framework that reconstructs surgical instruments as a fully controllable Gaussian asset with high fidelity. Our pipeline starts with part-wise geometry pretraining that injects CAD priors into Gaussian primitives and equips the representation with part-aware semantic rendering. Built on the pretrained model, we propose a semantics-aware pose estimation and tracking (SAPET) method to recover per-frame 6-DoF pose and joint angles from unposed endoscopic videos, where a gripper-tip network trained purely from synthetic semantics provides robust supervision and a loose regularization suppresses singular articulations. Finally, we introduce Robust Texture Learning (RTL), which alternates pose refinement and robust appearance optimization, mitigating pose noise during texture learning. The proposed framework can perform pose estimation and learn realistic texture from unposed videos. We validate our method on sequences extracted from EndoVis17/18, SAR-RARP, and an in-house dataset, showing superior photometric quality and improved geometric accuracy over state-of-the-art baselines. We further demonstrate a downstream keypoint detection task where unseen-pose data augmentation from our controllable instrument Gaussian improves performance.",
+      "authors": [
+        "Shuojue Yang",
+        "Zijian Wu",
+        "Chengjiaao Liao",
+        "Qian Li",
+        "Daiyun Shen",
+        "Chang Han Low",
+        "Septimiu E. Salcudean",
+        "Yueming Jin"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-03-24T04:31:09+00:00",
+      "link": "https://arxiv.org/pdf/2603.22792v2",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "reconstructs surgical instruments as controllable Gaussian assets with CAD priors",
+      "llm_evidence_cn": "利用CAD先验将手术器械重建为可控高斯资产",
+      "llm_evidence": "利用CAD先验将手术器械重建为可控高斯资产",
+      "canonical_evidence": "利用CAD先验将手术器械重建为可控高斯资产",
+      "llm_tldr_en": "Reconstructs controllable surgical instrument digital twins using 3DGS with geometry pretraining.",
+      "llm_tldr_cn": "利用带有几何预训练的3DGS重建可控的手术器械数字孪生。",
+      "llm_tldr": "利用带有几何预训练的3DGS重建可控的手术器械数字孪生。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Geometry and surface reconstruction from Gaussians",
+      "matched_requirement_id": "req-6",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.22792v2",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.28431v3",
+      "title": "LG-HCC: Local Geometry-Aware Hierarchical Context Compression for 3D Gaussian Splatting",
+      "abstract": "Although 3D Gaussian Splatting (3DGS) enables high-fidelity real-time rendering, its prohibitive storage overhead severely hinders practical deployment. Recent anchor-based 3DGS compression schemes reduce gaussian redundancy through some advanced context models. However, they overlook explicit geometric dependencies, leading to structural degradation and suboptimal ratedistortion performance. In this paper, we propose a Local Geometry-aware Hierarchical Context Compression framework for 3DGS(LG-HCC) that incorporates inter-anchor geometric correlations into anchor pruning and entropy coding for compact representation. Specifically, we introduce an Neighborhood-Aware Anchor Pruning (NAAP) strategy, which evaluates anchor importance via weighted neighborhood feature aggregation and then merges low-contribution anchors into salient neighbors, yielding a compact yet geometry-consistent anchor set. Moreover, we further develop a hierarchical entropy coding scheme, in which coarse-to-fine priors are exploited through a lightweight Geometry-Guided Convolution(GG-Conv) operator to enable spatially adaptive context modeling and rate-distortion optimization. Extensive experiments show that LG-HCC effectively alleviates structural preservation issues,achieving superior geometric integrity and rendering fidelity while reducing storage by up to 30.85x compared to the Scaffold-GS baseline on the Mip-NeRF360 dataset",
+      "authors": [
+        "Xuan Deng",
+        "Xiandong Meng",
+        "Hengyu Man",
+        "Qiang Zhu",
+        "Tiange Zhang",
+        "Debin Zhao",
+        "Xiaopeng Fan"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-30T13:39:35+00:00",
+      "link": "https://arxiv.org/pdf/2603.28431v3",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Local geometry-aware compression for 3D Gaussian Splatting representation",
+      "llm_evidence_cn": "针对3D高斯泼溅表示的局部几何感知压缩",
+      "llm_evidence": "针对3D高斯泼溅表示的局部几何感知压缩",
+      "canonical_evidence": "针对3D高斯泼溅表示的局部几何感知压缩",
+      "llm_tldr_en": "LG-HCC reduces 3DGS storage overhead by incorporating inter-anchor geometric correlations into compression.",
+      "llm_tldr_cn": "LG-HCC通过引入锚点间的几何相关性，有效降低了3DGS的存储开销。",
+      "llm_tldr": "LG-HCC通过引入锚点间的几何相关性，有效降低了3DGS的存储开销。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "3D Gaussian Splatting representation and rendering",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

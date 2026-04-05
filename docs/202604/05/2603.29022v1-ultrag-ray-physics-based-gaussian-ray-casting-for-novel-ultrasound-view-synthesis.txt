@@ -1,0 +1,345 @@
+Title: UltraG-Ray: Physics-Based Gaussian Ray Casting for Novel Ultrasound View Synthesis
+
+URL Source: https://arxiv.org/pdf/2603.29022v1
+
+Published Time: Wed, 01 Apr 2026 00:17:15 GMT
+
+Number of Pages: 19
+
+Markdown Content:
+> Proceedings of Machine Learning Research – nnn:1–19, 2026 Full Paper – MIDL 2026
+
+# UltraG-Ray: Physics-Based Gaussian Ray Casting for Novel Ultrasound View Synthesis 
+
+Felix Duelmer 1,2 felix.duelmer@tum.de 
+
+Jakob Klaushofer 1 jakob.klaushofer@tum.de 
+
+Magdalena Wysocki 1,2 magdalena.wysocki@tum.de 
+
+Nassir Navab 1,2 nassir.navab@tum.de 
+
+Mohammad Farid Azampour 1,2 mf.azampour@tum.de  
+
+> 1
+
+Chair for Computer Aided Medical Procedures (CAMP), Technical University of Munich, Germany  
+
+> 2
+
+Munich Center for Machine Learning (MCML), Munich, Germany 
+
+Editors: Accepted for publication at MIDL 2026 
+
+## Abstract 
+
+Novel view synthesis (NVS) in ultrasound has gained attention as a technique for gener-ating anatomically plausible views beyond the acquired frames, offering new capabilities for training clinicians or data augmentation. However, current methods struggle with complex tissue and view-dependent acoustic effects. Physics-based NVS aims to address these lim-itations by including the ultrasound image formation process into the simulation. Recent approaches combine a learnable implicit scene representation with an ultrasound-specific rendering module, yet a substantial gap between simulation and reality remains. In this work, we introduce UltraG-Ray, a novel ultrasound scene representation based on a learn-able 3D Gaussian field, coupled to an efficient physics-based module for B-mode synthesis. We explicitly encode ultrasound-specific parameters, such as attenuation and reflection, into a Gaussian-based spatial representation and realize image synthesis within a novel ray casting scheme. In contrast to previous methods, this approach naturally captures view-dependent attenuation effects, thereby enabling the generation of physically informed B-mode images with increased realism. We compare our method to state-of-the-art and observe consistent gains in image quality metrics (up to 15% increase on MS-SSIM), demon-strating clear improvement in terms of realism of the synthesized ultrasound images. 
+
+Keywords: Ultrasound, Novel View Synthesis, Volumetric Representation, Gaussian Splat-ting, 3D Ultrasound Reconstruction 
+
+## 1. Introduction 
+
+Routine ultrasound examinations are based on 2D B-mode images (Adriaans et al., 2024), forcing clinicians to mentally reconstruct 3D anatomy from multiple slices, a process that depends heavily on spatial reasoning and experience (Kojcev et al., 2017; Kr¨ onke et al., 2022). This cognitively demanding task can be alleviated by 3D reconstruction methods, which provide spatially coherent representations that support more reliable anatomical in-terpretation. When probe poses or overlapping views are available, these methods combine the acquired slices into a coherent representation of the scanned region and enable retro-spective generation of views beyond the physically acquired plane, referred to as novel view synthesis (NVS). NVS has been gaining importance in clinical practice, as it can support simulators for training of clinicians (Blum et al., 2013; Ehricke, 1998), assist clinicians when  
+
+> ©2026 CC-BY 4.0, F. Duelmer, J. Klaushofer, M. Wysocki, N. Navab & M.F. Azampour.
+> arXiv:2603.29022v1 [cs.CV] 30 Mar 2026 Duelmer Klaushofer Wysocki Navab Azampour
+
+reviewing data from robotic ultrasound systems (Jiang et al., 2023; Bi et al., 2024; Cao et al., 2025), and can potentially provide a training environment for emerging ultrasound world models (Yue et al., 2025; Qu et al., 2025). A straightforward strategy for ultrasound NVS is to compound 2D frames into a 3D volume, either via freehand acquisition (Prevost et al., 2018; Wilson et al., 2025) or with robotic, optical, or electromagnetic tracking for higher accuracy (Jiang et al., 2023; Adriaans et al., 2024), and then re-slice the volume. However, ultrasound is highly anisotropic: inten-sity values corresponding to the same voxel but acquired from different orientations can dis-agree, producing inconsistent or blurred representations. Simple aggregation schemes such as mean or maximum compounding (Lasso et al., 2014) cannot resolve these orientation-dependent ambiguities and often fail to preserve the true underlying tissue structure. View-dependent representations were introduced to model the strong dependence of ultrasound appearance on the probe position and orientation, which conventional view-independent reconstructions cannot capture. This motivation led to computational sonog-raphy (Hennersperger et al., 2015; G¨ obl et al., 2018) which models an ultrasound volume as a vector field in which each voxel stores an array of orientation-dependent intensity values, allowing view-specific appearance. However, this voxelized encoding of viewing directions imposes coarse angular resolution and interpolation artifacts, yielding blurred B-mode im-ages. It also lacks physical consistency, reproducing only appearances seen during training. Recent developments in NeRF-based methods have been proposed for ultrasound to mitigate these limitations (Wysocki et al., 2024; Dagli et al., 2024; Gaits et al., 2024; Grut-man et al., 2025). These approaches use pose-annotated ultrasound images to learn an implicit continuous representation of ultrasound-specific parameters, coupled to a differ-entiable, ray-casting-based forward-synthesis module that models anisotropy in B-mode images. However, their sampling-based volumetric rendering inherently smooths out high-frequency structures, which still limits realism. While the physical origin of image formation differs fundamentally between ultrasound and natural images, sampling-based volumetric integration in NeRF leads to analogous over-smoothing effects in both domains. In natural-image NVS, this limitation has been addressed by 3D Gaussian Splatting (3DGS) (Kerbl et al., 2023). By replacing implicit volumetric fields with an explicit set of learnable 3D Gaussians and a GPU-efficient differ-entiable rasterizer, 3DGS enables significantly sharper reconstructions and real-time ren-dering performance. In the medical domain, 3DGS has already been applied to endoscopic scene representation (Liu et al., 2025), novel-view synthesis in X-ray (Cai et al., 2024), and intraoperative surgical navigation (Fehrentz et al., 2025). In ultrasound, two methods using the Gaussian representation have been introduced in this context: UltraGS (Yang et al., 2025) and UltraGauss (Eid et al., 2025). UltraGS follows the original idea of projecting Gaussians onto a two-dimensional canvas. However, the approach assumes placing a virtual camera inside the tissue, directly in front of the acquired B-mode image. This setup would require an explicit selection mechanism to determine which Gaussians fall within the thin slab of tissue corresponding to the current ultrasound slice, yet no such mechanism is specified in the original description (Yang et al., 2025). UltraGauss, on the other hand, follows a more promising direction by avoiding projection onto a distant plane and instead computing the intersection between each Gaussian and the image plane. Although this formulation is better aligned with the acquisition process, it 
+
+> 2UltraG-Ray
+
+does not include ultrasound-specific mechanisms for handling shadowing effects or resolving ambiguities caused by reflective structures (Eid et al., 2025). In this paper, we introduce UltraG-Ray, a novel 3D Gaussian-based method that ad-dresses these limitations by introducing a ray casting framework embedded in a Gaussian representation that follows the physics of ultrasound image formation (compare Fig. 1). Instead of relying on plane intersections or 2D projections, we follow the direction of acous-tic wave propagation and incorporate attenuation directly into the 3D Gaussian field. This allows us to model depth-dependent signal decay, shadowing from strongly absorbing or reflecting structures, and the orientation-dependent visibility changes characteristic of real B-mode imaging. By capturing these ultrasound-specific mechanisms, our approach enables anatomically consistent, view-dependent NVS with enhanced visual realism. In summary, our contributions are as follows: 
+
+• A novel, high-fidelity NVS method for ultrasound that uses a learnable 3D Gaussian representation encoding ultrasound-specific parameters such as reflection and attenu-ation, combined with a physics-based, ray casting forward model for view-dependent real-time B-mode generation. 
+
+• An ultrasound-specific optimization strategy to prune, duplicate, and split Gaussians to enhance scene representation. 
+
+• Two open-source, pose-annotated datasets (in-silico and ex-vivo) containing overlap-ping views and various viewing angles. 
+
+## 2. Basics of Gaussian Splatting 
+
+3DGS (Kerbl et al., 2023) builds upon two established ideas in computer graphics: repre-senting scenes using anisotropic 3D Gaussians with elliptical rasterization (Zwicker et al., 2002), and compositing their contributions using an emission–absorption model as in volu-metric rendering (Mildenhall et al., 2021). Each Gaussian is defined by a mean μi ∈ R3, a covariance matrix Σi ∈ R3×3, an opacity αi, and a color vector ci ∈ R3.In practice, ci is parameterized using low-order spherical harmonics (SH): for a viewing direction v, the emitted color of Gaussian i is given by 
+
+ci(v) = 
+
+> B
+
+X
+
+> b=1
+
+βi,b Yb(v), (1) where Yb are spherical harmonic basis functions and βi,b ∈ R3 are learned coefficients. The number of terms B is set by the SH degree. This enables a compact, view-dependent ap-pearance per Gaussian. To render this representation from a given viewpoint, each Gaussian must be projected onto the image plane. Let Π( ·) denote the camera projection and Ji the Jacobian of Π evaluated at μi. The projection yields a 2D Gaussian footprint with mean 
+
+ui = Π( μi) and covariance Σ2D  
+
+> i
+
+= Ji Σi J⊤ 
+
+> i
+
+.For a pixel location p, the contribution of Gaussian i is determined by the Mahalanobis-weighted footprint 
+
+wi(p) = exp  − 12 (p − ui)⊤(Σ2D  
+
+> i
+
+)−1(p − ui), (2) 
+
+> 3Duelmer Klaushofer Wysocki Navab Azampour
+
+Figure 1: Overview of UltraG-Ray pipeline: a) Progressive adaptation of the learnable 3D Gaussian distribution to match the acquired data b) Image synthesis pipeline: First Gaussians are filtered based on the respective pose, second Gaussian ray-intersection is used to create the echo and transmittance maps and finally the resulting B-Mode image c) Downstream task evaluation based on NVS, where green and orange frames denote novel views which smoothly decays with distance from the projected center. This footprint effectively modulates the effective opacity as αi(p) = αi wi(p). Because multiple Gaussians can over-lap along the viewing direction, their contributions must be composited in a physically meaningful order. All elements are therefore sorted by depth (front-to-back), and visibility is accumulated using transmittance. Starting with T0 = 1, the transmittance after Gaussian 
+
+i is given by 
+
+Ti(p) = Ti−1(p)  1 − αi(p), (3) which accounts for the fraction of light that remains unoccluded after passing through the first i Gaussians. This recursion is equivalent to standard front-to-back alpha blending used in computer graphics. Finally, the pixel color follows the standard emission–absorption formulation 
+
+C(p, v) = 
+
+> N
+
+X
+
+> i=1
+
+Ti−1(p) αi(p) ci(v), (4) where each Gaussian contributes according to its (view-dependent) color, its opacity at p,and its visibility through previously encountered Gaussians. This formulation allows the method to efficiently approximate complex view-dependent appearance while remaining fully differentiable. 
+
+> 4UltraG-Ray
+
+## 3. Methods 
+
+3.1. Ultrasound Physics 
+
+An ultrasound image is typically generated by a transducer positioned to face the tissue and emit acoustic waves into it. Due to the lenses and programmable focusing, the waves concentrate in a thin, but elongated, volume in front of the transducer. Tissue parameters, such as density or the speed of sound, determine how the wave propagates through the body. Due to inhomogeneities caused by variations in these tissues, sound is reflected back to the transducer. Next to this reflection, causing a weakening of the wave, the amplitude of the wave is being attenuated due to spherical decay and relaxation processes. Upon reception of the echo at the transducer surface, the signal is processed through a pipeline where it is beamformed, envelope detected, and log-compressed (Hoskins et al., 2019). 
+
+3.2. Ultrasound-Adaptive Gaussian Forward Model 
+
+Figure 2: Depiction of the attenuation and intensity formation process: a) Transmit-tance accumulation, where each Gaussian gradually reduces the remaining en-ergy along the ray. b) Computation of pixel-wise intensity contributions from view-dependent Gaussian intensity and their distance-weighted influence. c) Final pixel intensity obtained by combining accumulated attenuation with the weighted Gaussian contributions. Acoustic attenuation differs fundamentally from light attenuation (Duelmer et al., 2025), making the standard RGB-based representation through color and opacity insufficient to capture the unique characteristics of ultrasound physics. To model ultrasound attenua-tion, we build on a ray casting scheme previously introduced in (Salehi et al., 2015), with important modifications enabled by the Gaussian formulation. In particular, we simplify the equations by leveraging the Gaussians’ ability to approximate a point-spread function (PSF). Freed from a discretized sampling grid, speckle is represented directly with explicit Gaussians instead of as a distribution. In UltraG-Ray, we define every 3D Gaussian by a mean μi ∈ R3, a covariance matrix 
+
+Σi ∈ R3×3, a transmittance value τi, and an intensity value Ii, which together parameterize the Gaussian used at rendering time. The parameters μi, τi, and Ii are directly optimized. 
+
+> 5Duelmer Klaushofer Wysocki Navab Azampour
+
+To compute Σi, we parameterize each Gaussian by a scale vector si and a quaternion qi,from which the full covariance Σi is obtained analytically. We use this reparameterization because it ensures a stable and unconstrained optimization of anisotropic Gaussian shapes while guaranteeing that the resulting covariance matrices remain positive definite. To ensure efficient computation, we cull Gaussians that cannot contribute to the fi-nal image. In this step, each Gaussian is projected onto the far plane, corresponding to the ultrasound imaging depth, to compute its 2D footprint. The projection follows an orthographic camera model defined by the transducer’s pose and lateral width. For ev-ery potential ray endpoint, we define a small rectangular region on the far plane and test whether the projected Gaussian footprint intersects this rectangle. Only Gaussians whose projected support overlaps these rectangles are forwarded to the ray casting module. Note that the vertical extent is not set to the elevational height of the transducer but rather to a small value to approximate the 2D ultrasound imaging plane. Having restricted the set of Gaussians to those that can influence the image, we next characterize how each remaining Gaussian contributes to the intensity of a pixel. We model the B-mode pixel value as: 
+
+B(p) = T (p) · E(p), (5) In this factorization, T (p) denotes the transmission factor, which is the fraction of the emitted acoustic energy that remains available at location p along the scan line after cu-mulative attenuation on the forward transmit path. The term E(p) denotes the local echo amplitude generated at p by backscattering and specular reflections, and it represents the strength of the received contribution (compare Fig. 2). To model acoustic attenuation, we approximate wave interference with a ray casting model, treating each scan line as a ray emitted from the origin on the transducer surface o and direction d given by the local surface normal (i.e., orthogonal to the transducer surface), parametrized by r(z) = o + zd.
+
+To compute the contribution of a Gaussian Gi to local energy decay, we transform the ray into its canonical space following (Moenne-Loccoz et al., 2024; Yu et al., 2024). This change of variables applies the inverse anisotropic scaling and rotation that map the Gaussian in world coordinates to a standard normal distribution with identity covariance: 
+
+og = S−1 
+
+> i
+
+R⊤ 
+
+> i
+
+(o − μi), dg = S−1 
+
+> i
+
+R⊤ 
+
+> i
+
+d, ℓg = ∥dg∥ ℓ. (6) Here Ri and Si are the Gaussian’s rotation and scale, and ℓ denotes the ray segment length in world space. As a result, the anisotropic Gaussian becomes isotropic in canonical space, which enables an efficient and numerically stable evaluation of the subsequent line integral: 
+
+ψi =
+
+Z ℓ
+
+> 0
+
+exp 
+
+
+
+− 12 ∥og + t dg∥2
+
+dt. (7) This line integral measures the overlap between the scan line and Gaussian Gi, and it in-creases when the ray passes closer to μi. We approximate this integral numerically using a low-order Gaussian quadrature with three evaluation points, namely, the 3-point Gauss-Legendre quadrature. Concretely, we integrate over a short interval centered at the point of closest approach between the ray and the Gaussian, where the integrand concentrates most of its mass. This yields an accurate and differentiable estimate with constant computa-tional cost per Gaussian. We map the ray–Gaussian integral ψi directly to a per-Gaussian 
+
+> 6UltraG-Ray
+
+transmittance and define the total transmission along the ray as: 
+
+T (z) = 
+
+> n
+
+Y
+
+> i=1
+
+Ti, where Ti = τi + (1 − τi) exp( −ψi). (8) Here, τi is the learnable transmittance of Gaussian Gi, exp( −ψi) represents the physically motivated attenuation induced by the Gaussian, and the product over Ti yields a multiplica-tive attenuation model along depth that is consistent with Beer–Lambert type exponential decay, used here as an effective approximation for ultrasound. This approximation is suf-ficient in practice because clinical ultrasound systems apply depth-dependent gain and log compression that largely compensate for global exponential decay. For the echo signal E(p), we compute the intensity contributed by each Gaussian based on its Mahalanobis-weighted distance to the pixel. Unlike splatting Gaussians in the 2D image domain (see Eq. 2), we follow (Eid et al., 2025) and evaluate this contribution directly in 3D using the Mahalanobis distance: wi(p) = exp  − 12 (p − μi)⊤(Σi)−1(p − μi).
+
+To capture view-dependent backscattering, we parameterize the per-Gaussian echo am-plitude as a low-order (degree-1) spherical harmonic (SH) expansion along ray direction d
+
+simplified to a single channel for intensity calculation (see Section 2 and Eq. 1). To ensure smoothness in regions where few or no Gaussians contribute to a pixel, we introduce a soft coverage mechanism that modulates the rendered intensity based on the strength of the pixel’s support from the Gaussian field. Let S(p) = Pni=1 wi(p) denote the total Gaussian footprint at pixel p. We define a soft coverage factor: γ(p) = 1 − exp  −S(p), which remains close to zero when the pixel is only weakly covered by Gaussians and approaches one as the local footprint mass increases. The final echo intensity is then given by 
+
+E(p) = (1 − γ(p)) Ibkg + γ(p)
+
+Pni=1 Ii(d) wi(p)
+
+S(p) + ε , (9) with a small ε > 0 for numerical stability and a constant background intensity Ibkg ∈ R
+
+representing echo-free regions in ultrasound, which we set to black for the whole image. 
+
+3.3. Initialization and Optimization Strategy 
+
+Conventional 3DGS relies on structure-from-motion (Schonberger and Frahm, 2016) to ini-tialize Gaussians and camera poses, which is incompatible with our data due to the fun-damentally different image formation in ultrasound. We therefore initialize all Gaussians randomly within the local scene and set the remaining parameters to defaults (see App. A). Like in 3DGS, we optimize all Gaussian parameters using stochastic gradient descent. To ensure agreement between the rendered slices and the ground truth, we employ a re-construction objective composed of an L1 loss and a SSIM loss. Additionally, we regularize the Gaussian scales to encourage non-contributing or excessively large Gaussians to shrink. The complete training loss is therefore defined as: 
+
+L = (1 − λssim ) L1 + λssim LSSIM + λscale E[exp( S)] . (10) Optimizing with this loss alone is insufficient because a refinement mechanism is required to add Gaussians where detail is missing and remove those that do not contribute. Since 
+
+> 7Duelmer Klaushofer Wysocki Navab Azampour
+
+existing schemes are incompatible with our custom synthesis pipeline, we use a 3DGS-inspired refinement strategy (Kerbl et al., 2023) adapted to ultrasound data. After a brief warm-up, refinement is triggered every t iterations and applies pruning, duplication, and splitting to maintain a compact and expressive Gaussian set. Gaussians with negligible or excessively large scales, which either fail to contribute or oversmooth local structure, are pruned. By tracking the gradients of each Gaussian over t iterations, we compute a mean im-portance score that determines whether a Gaussian should be modified during refinement. Gaussians whose importance exceeds a predefined threshold are either duplicated or split, depending on their scale. Small Gaussians are duplicated to increase local representational capacity, while larger Gaussians are split into two nearby Gaussians to refine structure. We cap the total number of Gaussians to balance computational cost and reconstruction fidelity. Because real ultrasound acquires a thin elevational volume rather than infinitesi-mally thin rays (see Sec. 3.1), we approximate this effect by perturbing all ray origins with a small out-of-plane offset drawn from a cosine-weighted distribution. This perturbation also discourages the Gaussians from collapsing into thin 2D structures tied to individual frames. 
+
+3.4. Implementation 
+
+We implement UltraG-Ray 1 in PyTorch on top of the CUDA-accelerated 3D Gaussian splatting library gsplat (Ye et al., 2025). Our implementation adds custom CUDA kernels for selecting relevant Gaussians per pixel and for efficiently evaluating the ray–Gaussian equations described in Sec. 3.2. All experiments are run on a single desktop workstation with an Intel Core i7-12700 CPU and an NVIDIA RTX 4070 Ti GPU. For training, we use the Adam optimizer with parameter-specific learning rates. We set the loss weights to λssim = 0 .5 and λscale = 10 −3 and train for 30k epochs, which we found sufficient for convergence in all experiments. To approximate the elevational beam width, we perturb all ray origins with an out-of-plane offset sampled from a cosine-weighted distribution with maximum magnitude δ = 2 mm, which is within the range of elevational slice thicknesses for clinical transducers (Scholten et al., 2023). Additional information about parameters used in training and optimization strategy can be found in Appendix A. 
+
+## 4. Experiments and Results 
+
+Datasets To validate UltraG-Ray, we introduce two pose-annotated B-mode datasets. To demonstrate robustness across both strong reflectors and heterogeneous scattering, we evaluate on an in-silico spine phantom and an ex-vivo porcine muscle phantom. Data were acquired with a Siemens 12L3 probe connected to a Siemens Acuson Juniper system mounted on a KUKA LBR iiwa 14 R820 robot using a custom probe holder. Image and tracking data were recorded via the software ImFusion (ImFusion GmbH, Munich, Ger-many). We first applied a coarse calibration based on the probe geometry and the known offsets from the robot’s last joint. This was then refined using a calibration procedure based on the BOBYQA optimization algorithm (Powell et al., 2009), implemented in the software 
+
+> 1Both datasets and the implementation can be found here: https://github.com/jakobkla/UltraG-Ray
+> 8UltraG-Ray
+
+Figure 3: Qualitative comparison of UltraG-Ray and baselines on the spine phantom. ImFusion. For a detailed hardware setup overview, we refer the reader to (Jiang et al., 2023). Both datasets comprise multiple overlapping sweeps acquired at different probe tilt angles. The porcine muscle dataset covers an extent of approximately 5 cm, yielding a volume of about 5 × 5 × 5 cm 3. It contains three sweeps acquired at −3◦, 0 ◦, and +3 ◦, and we evaluate on the −3◦ sweep. In addition, we acquire sweeps at −5◦, −7◦, and −10 ◦ that are held out exclusively for ablation testing (see App. D). Each sweep comprises roughly 100–120 frames with associated poses. The spine phantom dataset consists of six sweeps acquired at −20 ◦, −10 ◦, 0 ◦, +10 ◦, and +20 ◦, with evaluation performed on an additional +15 ◦ sweep. The covered volume is approximately 13 × 5 × 9 cm 3, and each sweep pro-vides around 350–400 frames with associated poses. GPU memory requirements vary with the number of Gaussians. Assuming 500k Gaussians, peak GPU memory is approximately 1.4 GB. End-to-end training takes ≈12 min for the spine phantom and ≈80 min for the porcine muscle phantom. 
+
+Figure 4: NVS comparison on ex vivo porcine muscle. Highlighted regions (red and orange) are enlarged as cut-outs on the right side of the respective image. 
+
+> 9
+
+Duelmer Klaushofer Wysocki Navab Azampour 
+
+Novel View Synthesis We compare our method against Ultra-NeRF (Wysocki et al., 2024) and ImplicitVol (Yeung et al., 2021). ImplicitVol reconstructs a continuous 3D ul-trasound volume as a learned implicit function from 2D frames, without modeling view-dependent appearance. Implementation details for both baselines are provided in App. C. In addition, we include two traditional, non-learning-based baselines based on volume com-pounding and re-slicing. Specifically, we compound the training sweeps into a 3D volume using either maximum or median compounding at an isotropic voxel size of 0.25 mm, and subsequently re-slice the volume with linear interpolation to obtain the corresponding image planes. Both compounding and re-slicing are performed using implementations from ImFu-sion. As both UltraGS (Yang et al., 2025) and UltraGauss (Eid et al., 2025) did not make their source code publicly available 2, we can not directly compare to their implementations. In particular, reproducing the original methods ourselves would risk not doing justice to the respective approaches. For quantitative evaluation, we report multi-scale structural simi-larity (MS-SSIM) and peak signal-to-noise ratio (PSNR). As these metrics can favor overly smooth reconstructions, we additionally include gradient-magnitude similarity (GMS) and gradient-magnitude similarity deviation (GMSD) (Xue et al., 2013), which better capture high-frequency detail and edge preservation. Table 1: Evaluation results for NVS on both datasets. Best values are in bold. Arrows indicate whether higher ( ↑) or lower ( ↓) values correspond to better performance. 
+
+Dataset Method PSNR ↑ MS-SSIM ↑ GMS ↑ GMSD ↓
+
+Porcine Muscle Re-sliced Median Comp. 24.96 ±0.67 0.73 ±0.03 0.87 ±0.01 0.17 ±0.01 
+
+Re-sliced Max Comp. 24.18 ±0.59 0.73 ±0.03 0.87 ±0.01 0.17 ±0.01 
+
+Ultra-NeRF 23.60 ±0.54 0.62 ±0.03 0.81 ±0.02 0.23 ±0.01 
+
+ImplicitVol 25.16 ±0.56 0.74 ±0.02 0.85 ±0.01 0.19 ±0.01 
+
+UltraG-Ray (w/o Trans.) 24.31 ±0.76 0.74 ±0.03 0.86 ±0.01 0.18 ±0.00 
+
+UltraG-Ray (SH=0) 25.10 ±0.69 0.76 ±0.02 0.87 ±0.01 0.17 ±0.01 
+
+UltraG-Ray (no OPS 3) 23.39 ±1.74 0.68 ±0.07 0.86 ±0.02 0.18 ±0.01 
+
+UltraG-Ray 25.49 ±0.60 0.77 ±0.02 0.88 ±0.01 0.16 ±0.01 
+
+Spine Phantom Re-sliced Median Comp. 25.83 ±4.27 0.93 ±0.05 0.96 ±0.02 0.13 ±0.05 
+
+Re-sliced Max Comp. 22.92 ±4.16 0.89 ±0.07 0.94 ±0.03 0.16 ±0.05 
+
+Ultra-NeRF 24.84 ±2.48 0.92 ±0.04 0.96 ±0.02 0.13 ±0.04 
+
+ImplicitVol 23.56 ±3.55 0.91 ±0.06 0.96 ±0.02 0.15 ±0.05 
+
+UltraG-Ray (w/o Trans.) 24.60 ±3.65 0.91 ±0.05 0.96 ±0.02 0.14 ±0.04 
+
+UltraG-Ray (SH=0) 25.76 ±3.00 0.93 ±0.04 0.97 ±0.02 0.12 ±0.04 
+
+UltraG-Ray (no OPS 3) 25.99 ±2.74 0.93 ±0.03 0.97 ±0.01 0.12 ±0.03 
+
+UltraG-Ray 26.92 ±2.35 0.94 ±0.03 0.97 ±0.01 0.10 ±0.03 
+
+As shown in Fig. 4, UltraG-Ray produces high-fidelity reconstructions in which individ-ual muscle fibers are clearly distinguishable. Ultra-NeRF and ImplicitVol both oversmooth the generated images, suppressing high-frequency texture in the porcine muscle. ImplicitVol 
+
+> 2At the time of submission of this paper.
+> 3Out-of-plane sampling
+
+10 UltraG-Ray 
+
+Figure 5: NVS examples from both datasets for the intermediate echo and transmittance maps, the synthesized B-mode output, and the corresponding ground truth image. nevertheless retains finer structural detail than Ultra-NeRF, which largely recovers only the dominant fiber orientation. In contrast, UltraG-Ray resolves fine structural variations more consistently and renders them with higher contrast. The re-sliced compounding baselines preserve more local detail than the learning-based baselines, but still appear smoother cim comparison to UltraG-Ray due to interpolation during volume re-slicing. This qualita-tive improvement is consistent with the quantitative results in Table 1, where UltraG-Ray achieves the strongest overall performance and the gradient-based metrics reflect the en-hanced structural detail. For the spine phantom, qualitative examples are shown in Fig. 3. Despite relatively high quantitative scores on the spine phantom (Table 1), Fig. 3 indi-cates that re-slicing baselines and methods without attenuation modeling do not recover the expected shadowing. In particular, they produce echoes underneath the spinous pro-cess, where the ground truth shows no reflections. The ablation of UltraG-Ray without transmittance exhibits the same failure, whereas the full model and Ultra-NeRF reproduce attenuation-induced shadows and better agree with the ground truth. Representative echo and transmittance maps are shown in Fig. 5, illustrating how separating transmittance from echo intensity helps capture view-dependent shadowing effects. To further assess the contribution of individual components, we conduct ablations in which we remove spherical harmonics (by setting the SH level to zero), and out-of-plane sampling (OPS), as reported in Table 1. Each ablation results in a measurable degradation in reconstruction quality on at least one dataset, indicating that the modules jointly contribute to the final per-formance. In addition, Appendix D reports an out-of-plane angle ablation, showing the expected monotonic performance degradation as the evaluation tilt moves further from the training distribution. Although we cap the scene at 500k Gaussians, the optimization does not always reach this limit: the porcine muscle dataset increases to the full 500k, whereas the spine phantom converges with only about 90k Gaussians. Further analysis of how the Gaussian count influences image quality is provided in App. B. At inference, this yields approximately 680 fps for the spine phantom and about 95 fps for the porcine muscle, with peak GPU memory of 0.09 GB and 0.32 GB (allocated), respectively. 
+
+> 11 Duelmer Klaushofer Wysocki Navab Azampour
+
+## 5. Discussion & Conclusion 
+
+In this paper, we present UltraG-Ray, a novel approach to representing and synthesizing ultrasound images that combines the flexibility of 3D Gaussian fields with the fidelity of a physically grounded ray casting model. Unlike previous Gaussian-splatting approaches for ultrasound, which rely on intensity–opacity blending, our formulation directly incorporates ultrasound phenomena such as attenuation, view-dependent backscattering, and ray-aligned energy decay. These allow UltraG-Ray to capture shadowing behaviour and reflection am-plitude, which is essential for realistic NVS. Our experiments on both in-silico and ex-vivo phantoms demonstrate that UltraG-Ray can synthesize realistic B-mode images with higher fidelity than state-of-the-art methods. The improvements in image quality metrics indicate that our ultrasound formation model helps resolve view-dependent ambiguities. Despite its benefits, the method has limitations. First, it relies on a single straight-ray approximation that cannot model complex wave phenomena such as interference or multi-path propagation. Extending the model with secondary ray paths, as used in natural-image rendering, could improve physical fidelity. Second, the Gaussian field is an explicit represen-tation. Although interpretable and easy to manipulate, it lacks inherent spatial continuity, which can leave sparsely sampled regions poorly represented. In practice, acquisition density remains a key deployment constraint. While in-plane coverage is typically sufficient, recon-struction quality depends strongly on the spacing between consecutive slices (i.e., acquisition speed) and on the amount of overlap provided by multiple sweeps. OPS partially mitigates limited coverage by providing additional constraints away from the observed planes, but it cannot fully compensate for sparse acquisitions. In the porcine muscle dataset, disabling OPS leads to a considerable performance drop, suggesting that further reducing the available information, for example, by increasing the inter slice spacing beyond the current ≈ 0.5 mm or by relying on fewer overlapping sweeps (two in our setting), would likely degrade recon-struction stability and novel view consistency. Incorporating anatomical or statistical priors may allow further generalization to unseen tissue and improve continuity across viewpoints, which we plan to validate on in-vivo data across. In addition, we observe that the method is strongest at interpolation between observed poses but struggles with extrapolation beyond the training distribution, which is expected given ultrasound’s strongly view-dependent appearance. This also motivates a practical angle-selection guideline: when B-mode ap-pearance is dominated by speckle and rapidly decorrelating fine structures, smaller tilt ranges are recommended to avoid multi-view inconsistencies and oversmoothing. Beyond NVS, the explicit Gaussian parameterization enables simple post-processing and provides a natural interface for future extensions. Likewise, NeRF-based methods for ultrasound suggest promising applications beyond NVS, including occupancy estima-tion (Wysocki et al., 2025) and shape completion (Wysocki et al., 2026). Building on top of our proposed representation, pruning low contributing Gaussians can offer a straight-forward mechanism for perceptual smoothing, while associating subsets of Gaussians with anatomical labels could support semantic and structure-aware rendering and editing. Over-all, UltraG-Ray demonstrates that combining an explicit 3D Gaussian scene representa-tion with a physically grounded ultrasound formation model improves the fidelity of view-dependent effects in ultrasound NVS, and provides a promising basis for more structured and controllable ultrasound scene models. 
+
+> 12 UltraG-Ray
+
+## Acknowledgments 
+
+We thank ImFusion GmbH for providing access to their software, which supported the data acquisition and processing in this work. 
+
+## References 
+
+Chrissy A Adriaans, Mark Wijkhuizen, Lennard M van Karnenbeek, Freija Geldof, and Be-hdad Dashtbozorg. Trackerless 3d freehand ultrasound reconstruction: a review. Applied Sciences , 14(17):7991, 2024. Yuan Bi, Zhongliang Jiang, Felix Duelmer, Dianye Huang, and Nassir Navab. Machine learning in robotic ultrasound imaging: Challenges and perspectives. Annual Review of Control, Robotics, and Autonomous Systems , 7, 2024. Tobias Blum, Andreas Rieger, Nassir Navab, Helmut Friess, and Marc Martignoni. Areview of computer-based simulators for ultrasound training. Simulation in Healthcare ,8(2):98–108, 2013. Yuanhao Cai, Yixun Liang, Jiahao Wang, Angtian Wang, Yulun Zhang, Xiaokang Yang, Zongwei Zhou, and Alan Yuille. Radiative gaussian splatting for efficient x-ray novel view synthesis. In European Conference on Computer Vision , pages 283–299. Springer, 2024. Guanglin Cao, Danqian Cao, and Hongbin Liu. Respiratory motion-robust robotic ultra-sound acquisitions via vision-haptic fusion control and 3d compensation. IEEE Transac-tions on Instrumentation and Measurement , 2025. Rishit Dagli, Atsuhiro Hibi, Rahul G Krishnan, and Pascal N Tyrrell. Nerf-us: Remov-ing ultrasound imaging artifacts from neural radiance fields in the wild. arXiv preprint arXiv:2408.10258 , 2024. Felix Duelmer, Mohammad Farid Azampour, Magdalena Wysocki, and Nassir Navab. Ul-traray: Introducing full-path ray tracing in physics-based ultrasound simulation. In Inter-national Conference on Medical Image Computing and Computer-Assisted Intervention ,pages 653–662. Springer, 2025. Hans-Heino Ehricke. Sonosim3d: a multimedia system for sonography simulation and ed-ucation with an extensible case database. European journal of ultrasound , 7(3):225–230, 1998. Mark C Eid, Ana IL Namburete, and Jo˜ ao F Henriques. Ultragauss: Ultrafast gaussian reconstruction of 3d ultrasound volumes. arXiv preprint arXiv:2505.05643 , 2025. Maximilian Fehrentz, Alexander Winkler, Thomas Heiliger, Nazim Haouchine, Christian Heiliger, and Nassir Navab. Bridgesplat: Bidirectionally coupled ct and non-rigid gaussian splatting for deformable intraoperative surgical navigation. In International Conference on Medical Image Computing and Computer-Assisted Intervention , pages 44–53. Springer, 2025. 
+
+> 13 Duelmer Klaushofer Wysocki Navab Azampour
+
+Fran¸ cois Gaits, Nicolas Mellado, and Adrian Basarab. Ultrasound volume reconstruction from 2d freehand acquisitions using neural implicit representations. In 2024 IEEE Inter-national Symposium on Biomedical Imaging (ISBI) , pages 1–5. IEEE, 2024. R¨ udiger G¨ obl, Diana Mateus, Christoph Hennersperger, Maximilian Baust, and Nassir Navab. Redefining ultrasound compounding: Computational sonography. arXiv preprint arXiv:1811.01534 , 2018. Tal Grutman, Mike Bismuth, Bar Glickstein, and Tali Ilovitsh. Implicit neural representa-tion for scalable 3d reconstruction from sparse ultrasound images. npj Acoustics , 1(1):14, 2025. Christoph Hennersperger, Maximilian Baust, Diana Mateus, and Nassir Navab. Computa-tional sonography. In International conference on medical image computing and computer-assisted intervention , pages 459–466. Springer, 2015. Peter Hoskins, Kevin Martin, and Abigail Thrush. Diagnostic ultrasound: physics and equipment . CRC Press, 2019. Zhongliang Jiang, Felix Duelmer, and Nassir Navab. Dopus-net: Quality-aware robotic ultrasound imaging based on doppler signal. IEEE Transactions on Automation Science and Engineering , 21(3):3229–3242, 2023. Bernhard Kerbl, Georgios Kopanas, Thomas Leimk¨ uhler, and George Drettakis. 3d gaussian splatting for real-time radiance field rendering. ACM Trans. Graph. , 42(4):139–1, 2023. Risto Kojcev, Ashkan Khakzar, Bernhard Fuerst, Oliver Zettinig, Carole Fahkry, Robert DeJong, Jeremy Richmon, Russell Taylor, Edoardo Sinibaldi, and Nassir Navab. On the reproducibility of expert-operated and robotic ultrasound acquisitions. International journal of computer assisted radiology and surgery , 12(6):1003–1011, 2017. Markus Kr¨ onke, Christine Eilers, Desislava Dimova, Melanie K¨ ohler, Gabriel Buschner, Lilit Schweiger, Lemonia Konstantinidou, Marcus Makowski, James Nagarajah, Nassir Navab, et al. Tracked 3d ultrasound and deep neural network-based thyroid segmentation reduce interobserver variability in thyroid volumetry. Plos one , 17(7):e0268550, 2022. Andras Lasso, Tamas Heffter, Adam Rankin, Csaba Pinter, Tamas Ungi, and Gabor Fichtinger. Plus: open-source toolkit for ultrasound-guided intervention systems. IEEE transactions on biomedical engineering , 61(10):2527–2537, 2014. Yifan Liu, Chenxin Li, Hengyu Liu, Chen Yang, and Yixuan Yuan. Foundation model-guided gaussian splatting for 4d reconstruction of deformable tissues. IEEE Transactions on Medical Imaging , 2025. Ben Mildenhall, Pratul P Srinivasan, Matthew Tancik, Jonathan T Barron, Ravi Ra-mamoorthi, and Ren Ng. Nerf: Representing scenes as neural radiance fields for view synthesis. Communications of the ACM , 65(1):99–106, 2021. 
+
+> 14 UltraG-Ray
+
+Nicolas Moenne-Loccoz, Ashkan Mirzaei, Or Perel, Riccardo de Lutio, Janick Martinez Es-turo, Gavriel State, Sanja Fidler, Nicholas Sharp, and Zan Gojcic. 3d gaussian ray tracing: Fast tracing of particle scenes. ACM Transactions on Graphics (TOG) , 43(6):1–19, 2024. Michael JD Powell et al. The bobyqa algorithm for bound constrained optimization without derivatives. Cambridge NA Report NA2009/06, University of Cambridge, Cambridge , 26: 26–46, 2009. Raphael Prevost, Mehrdad Salehi, Simon Jagoda, Navneet Kumar, Julian Sprung, Alexan-der Ladikos, Robert Bauer, Oliver Zettinig, and Wolfgang Wein. 3d freehand ultrasound without external tracking using deep learning. Medical image analysis , 48:187–202, 2018. Jingguo Qu, Xinyang Han, Tonghuan Xiao, Jia Ai, Juan Wu, Tong Zhao, Jing Qin, Ann Dorothy King, Winnie Chiu-Wing Chu, Jing Cai, et al. Adapting vision-language foundation model for next generation medical ultrasound image analysis. arXiv preprint arXiv:2506.08849 , 2025. Mehrdad Salehi, Seyed-Ahmad Ahmadi, Raphael Prevost, Nassir Navab, and Wolfgang Wein. Patient-specific 3d ultrasound simulation based on convolutional ray-tracing and appearance optimization. In International Conference on Medical Image Computing and Computer-Assisted Intervention , pages 510–518. Springer, 2015. Harm J Scholten, Gert Weijers, Marco de Wild, Hendrikus HM Korsten, Chris L de Ko-rte, and R Arthur Bouwman. Differences in ultrasound elevational beam width (slice thickness) between popular handheld devices. WFUMB Ultrasound Open , 1(2):100009, 2023. Johannes L Schonberger and Jan-Michael Frahm. Structure-from-motion revisited. In 
+
+Proceedings of the IEEE conference on computer vision and pattern recognition , pages 4104–4113, 2016. Paul FR Wilson, Matteo Ronchetti, R¨ udiger G¨ obl, Viktoria Markova, Sebastian Rosen-zweig, Raphael Prevost, Parvin Mousavi, and Oliver Zettinig. Dualtrack: Sensorless 3d ultrasound needs local and global context. In International Workshop on Advances in Simplifying Medical Ultrasound , pages 3–12. Springer, 2025. Magdalena Wysocki, Mohammad Farid Azampour, Christine Eilers, Benjamin Busam, Mehrdad Salehi, and Nassir Navab. Ultra-nerf: Neural radiance fields for ultrasound imaging. In Medical Imaging with Deep Learning , pages 382–401. PMLR, 2024. Magdalena Wysocki, Felix Duelmer, Ananya Bal, Nassir Navab, and Mohammad Farid Azampour. Ultron: Ultrasound occupancy networks. In International Conference on Medical Image Computing and Computer-Assisted Intervention , pages 606–615. Springer, 2025. Magdalena Wysocki, Kadir Burak Buldu, Miruna-Alexandra Gafencu, Mohammad Farid Azampour, and Nassir Navab. Oscar: Occupancy-based shape completion via acoustic neural implicit representations. arXiv preprint arXiv:2603.08279 , 2026. 
+
+> 15 Duelmer Klaushofer Wysocki Navab Azampour
+
+Wufeng Xue, Lei Zhang, Xuanqin Mou, and Alan C Bovik. Gradient magnitude similarity deviation: A highly efficient perceptual image quality index. IEEE transactions on image processing , 23(2):684–695, 2013. Yuezhe Yang, Wenjie Cai, Dexin Yang, Yufang Dong, Xingbo Dong, and Zhe Jin. Ultrags: Gaussian splatting for ultrasound novel view synthesis. arXiv preprint arXiv:2511.07743 ,2025. Vickie Ye, Ruilong Li, Justin Kerr, Matias Turkulainen, Brent Yi, Zhuoyang Pan, Otto Seiskari, Jianbo Ye, Jeffrey Hu, Matthew Tancik, and Angjoo Kanazawa. gsplat: An open-source library for gaussian splatting. Journal of Machine Learning Research , 26 (34):1–17, 2025. Pak-Hei Yeung, Linde Hesse, Moska Aliasi, Monique Haak, Weidi Xie, Ana IL Nambu-rete, INTERGROWTH 21st Consortium, et al. Implicitvol: Sensorless 3d ultrasound reconstruction with deep implicit representation. arXiv preprint arXiv:2109.12108 , 2021. Zehao Yu, Torsten Sattler, and Andreas Geiger. Gaussian opacity fields: Efficient adaptive surface reconstruction in unbounded scenes. ACM Transactions on Graphics (ToG) , 43 (6):1–13, 2024. Yang Yue, Yulin Wang, Haojun Jiang, Pan Liu, Shiji Song, and Gao Huang. Echoworld: Learning motion-aware world models for echocardiography probe guidance. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 25993–26003, 2025. Matthias Zwicker, Hanspeter Pfister, Jeroen Van Baar, and Markus Gross. Ewa splatting. 
+
+IEEE Transactions on Visualization and Computer Graphics , 8(3):223–238, 2002. 
+
+## Appendix A. Training and implementation details 
+
+Optimization. We train UltraG-Ray using the Adam optimizer with parameter-specific learning rates. The learning rate for 3D Gaussian means is set to 1 × 10 −4, for Gaussian scales and quaternions to 5 × 10 −3, and for transmittances to 5 × 10 −4. For the spherical harmonic (SH) coefficients, we use 5 × 10 −3 for the zero-order band and 1 × 10 −5 for the first-order band. All Gaussians are initialized with a transmittance of 0 .99 and an isotropic scale of 0 .5 mm. The SH expansion starts at degree 0 and is increased to degree 1 after 1000 iterations, which progressively introduces higher-frequency detail in a stable manner. A learning-rate scheduler decays all rates smoothly to 10% of their initial value by the end of training. We use a batch size of 8. We found that this parameterization yields the most stable optimization and the highest reconstruction fidelity across datasets. 
+
+Refinement Strategy For the ultrasound optimization strategy, we employ an importance-driven Gaussian refinement strategy. Refinement is triggered every r = 2500 iterations, with importance scores accumulated over the same interval. Refinement begins after 1k epochs and terminates at 20k epochs, while training continues until 30k epochs. Gaussians whose scales fall below smin = 5 ×10 −5 or exceed smax = 5 mm are pruned, and the total number of Gaussians is capped at Nmax = 500k to balance reconstruction fidelity and computational efficiency. 
+
+> 16 UltraG-Ray
+
+Figure 6: Evolution of GMSD scores of novel views for the porcine muscle dataset and number of Gaussians over training steps. 
+
+Optimization Dynamics In order to demonstrate our optimization strategy, we evaluate our datasets every 500 iterations and capture statistics of the Gaussian parameters. Fig. 6 clearly illustrates the refinement steps every 2500 iterations. Due to random initialization, a considerable number of Gaussians do not contribute meaningfully to reconstruction. Scale regularization continuously shrinks those Gaussians, and most are subsequently pruned during the first refinement cycle due to their small scales. This can be observed as a sharp reduction in Gaussian count after the first refinement step. In subsequent cycles, the Gaussian count increases again due to Gaussians being split/duplicated in order to model increasingly fine detail. We also observe a temporary degradation in metrics after applying refinement, since duplication/splitting adds Gaussians that require optimization before contributing in a positive manner. For this reason, we disable refinement for the last 10k Gaussians. 
+
+## Appendix B. Impact of Gaussian Count on Image Quality 
+
+We evaluate how the number of Gaussians affects image quality by performing an ablation on the porcine dataset. As shown in Table 2, reducing the number of Gaussians results in only small changes in the image quality metrics. We only start seeing a noticeable reduction in these metrics below 10k Gaussians, demonstrating our method’s ability to adapt to varying levels of geometric detail. This allows us to sacrifice fine detail preservation in favor of faster training and inference speeds. These results highlight the flaws of standard evaluation metrics when applied to ul-trasound imaging. Fig. 4 reveals a significant disparity in detail. The variant with 10k Gaussians manages to capture the overall anatomical structure but fails to model speckle 
+
+> 17 Duelmer Klaushofer Wysocki Navab Azampour
+
+Figure 7: Comparison of novel views with differing number of max. Gaussians in the porcine muscle dataset. The metrics are comparable with Table 2. Table 2: Comparison of image quality metrics for different maximum numbers of Gaussians. 
+
+Dataset #Gaussians PSNR ↑ MS-SSIM ↑ GMS ↑ GMSD ↓
+
+Porcine Muscle 500k 25.49 ±0.60 0.77 ±0.02 0.88 ±0.01 0.16 ±0.01 
+
+300k 25.39 ±0.62 0.77 ±0.02 0.87 ±0.01 0.17 ±0.01 
+
+100k 25.46 ±0.66 0.77 ±0.02 0.87 ±0.01 0.17 ±0.01 
+
+10k 25.39 ±0.54 0.75 ±0.01 0.85 ±0.01 0.18 ±0.00 
+
+and other fine textures. Even so, the variant with 10k Gaussians manages to achieve quality metrics similar to higher Gaussian counts. Here, GMS and GMSD manage to detect the degradation, even if it is larger than the score difference might suggest. 
+
+## Appendix C. Baseline Implementation Details 
+
+We trained Ultra-NeRF (Wysocki et al., 2024) and ImplicitVol (Yeung et al., 2021) using the authors’ official implementations and default configuration files with no hyperparameter tuning. For Ultra-NeRF, we reused the provided dataloader after adapting our pose trans-formation to match the imaging axis convention, with the ray direction along y instead of z. For ImplicitVol, we provided ground truth poses for all frames and disabled pose learning to avoid pose appearance ambiguity. We additionally adapted the dataloader to our file for-mat. Both baselines were trained until convergence on the training data using the original optimizer and learning rate schedule. All methods used the same input preprocessing and the same train-test split. 
+
+> 18
+
+UltraG-Ray 
+
+## Appendix D. Angle Generalization Ablation 
+
+We analyze how performance degrades when evaluating UltraG-Ray at probe tilt angles that progressively depart from the training distribution. The model is trained on the same two in-plane sweeps as in the main experiments (0 ◦ and +3 ◦) and evaluated on increasingly out-of-plane tilts on the porcine muscle dataset. Table 3 reports results for −3◦ (identical to the main evaluation) and additional test angles further away from the training range. As expected, reconstruction quality decreases monotonically with increasing angular deviation, reflecting the growing appearance changes and limited overlap between the training views and the queried out-of-plane slices. Table 3: Out-of-plane generalization on the porcine muscle dataset. We evaluate UltraG-Ray at increasingly out-of-plane probe tilt angles on the same training dataset (two sweeps at 0 ◦ and +3 ◦. −3◦ represents the same values as in Table 1, and the remaining evaluations are further tilts. Best values are in bold. Arrows indicate whether higher ( ↑) or lower ( ↓) values correspond to better performance. 
+
+Eval. angle PSNR ↑ MS-SSIM ↑ GMS ↑ GMSD ↓−3◦ 25.42 ±0.59 0.77 ±0.02 0.87 ±0.01 0.16 ±0.01 
+
+−5◦ 23.96 ±0.54 0.70 ±0.04 0.86 ±0.01 0.18 ±0.01 
+
+−7◦ 22.77 ±0.54 0.63 ±0.03 0.85 ±0.01 0.19 ±0.00 
+
+−10 ◦ 21.59 ±0.35 0.55 ±0.03 0.83 ±0.00 0.20 ±0.00 
+
+19
