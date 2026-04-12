@@ -1,0 +1,318 @@
+Title: 3D Gaussian Splatting for Annular Dark Field Scanning Transmission Electron Microscopy Tomography Reconstruction
+
+URL Source: https://arxiv.org/pdf/2604.04693v1
+
+Published Time: Tue, 07 Apr 2026 01:46:41 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# 3D Gaussian Splatting for Annular Dark Field Scanning Transmission Electron Microscopy Tomography Reconstruction 
+
+# Beiyuan Zhang Hesong Li Ruiwen Shao Ying Fu †
+
+# Beijing Institute of Technology 
+
+{byzh,lihesong2,rwshao,fuying }@bit.edu.cn 
+
+# Abstract 
+
+Analytical Dark Field Scanning Transmission Electron Mi-croscopy (ADF-STEM) tomography reconstructs nanoscale materials in 3D by integrating multi-view tilt-series images, enabling precise analysis of their structural and composi-tional features. Although integrating more tilt views im-proves 3D reconstruction, it requires extended electron ex-posure that risks damaging dose-sensitive materials and in-troduces drift and misalignment, making it difficult to bal-ance reconstruction fidelity with sample preservation. In practice, sparse-view acquisition is frequently required, yet conventional ADF-STEM methods degrade under limited views, exhibiting artifacts and reduced structural fidelity. To resolve these issues, in this paper, we adapt 3D GS to this domain with three key components. We first model the local scattering strength as a learnable scalar field, denza, to address the mismatch between 3DGS and ADF-STEM imaging physics. Then we introduce a coefficient γ
+
+to stabilize scattering across tilt angles, ensuring consis-tent denza via scattering view normalization. Finally, We incorporate a loss function that includes a 2D Fourier am-plitude term to suppress missing wedge artifacts in sparse-view reconstruction. Experiments on 45-view and 15-view tilt series show that DenZa-Gaussian produces high-fidelity reconstructions and 2D projections that align more closely with original tilts, demonstrating superior robustness under sparse-view conditions. 
+
+# 1. Introduction 
+
+Nanoscale materials science relies heavily on advanced characterization techniques to decode the relationship be-tween 3D structure and functionality [14, 15, 19, 22]. Among these, ADF-STEM has become indispensable for studying nanoscale materials, offering atomic-level resolu-tion [23, 32]. This unique capability enables visualization of critical nanoscale features, such as core-shell nanoparti- 
+
+> †Corresponding author.
+
+Figure 1. Projection comparison under 15-view reconstruc-tion across traditional reconstruction methods and our approach. Brightness is enhanced while contrast is reduced to highlight ar-tifacts. FDK exhibits the most severe artifacts, followed by SIRT and GENFIRE. Our method yields the cleanest projections. 
+
+cle morphologies, pore distributions in catalytic supports, and phase segregation in nanocomposites [15, 29, 33]. To fully exploit this potential, ADF-STEM tomography reconstructs 3D structural and compositional distributions from 2D projections acquired at varying tilt angles, un-covering spatial heterogeneities that drive material perfor-mance [3, 25]. However, delicate nanomaterials cannot withstand dense tilt-series acquisitions due to their high dose sensitivity. Due to the risk of beam-induced damage, dose-sensitive materials cannot tolerate extensive tilt-series acquisition. Consequently, sparse-view imaging is com-monly adopted, despite its inherent reconstruction limita-tions [13, 40]. This severely limits the application of ADF-STEM tomography in characterizing such materials, while tradeoffs between reconstruction speed and fidelity further exacerbate this limitation. Traditional ADF-STEM tomog-raphy workflows struggle to address these challenges simul-taneously. Analytical methods [7, 10, 27] introduce severe missing wedge artifacts when projections are sparse. Itera-tive methods [4, 8, 25, 30] reduce artifacts but are computa-tionally cumbersome and often over-smooth fine nanoscale details. 3D Gaussian Splatting (3DGS) [11] has emerged as a transformative technique in view synthesis, offering real-
+
+> arXiv:2604.04693v1 [cs.CV] 6 Apr 2026
+
+time rendering via parallelized rasterization and outper-forming neural fields in speed and flexibility. To address the limitations of ADF-STEM tomographic reconstruction mentioned above, we adapt 3D Gaussian ADF-STEM to-mography and present DenZa-Gaussian for high-quality, ef-ficient and robust reconstruction. We first reconcile the mismatch between 3DGS and ADF-STEM imaging physics by grounding its design in Rutherford elastic scattering [23]. This rule explicitly en-codes Z-contrast as proportional to the product of local den-sity and Zα that governs electron scattering in ADF-STEM. We simplify density · Zα into a learnable scalar field, de-noted as denza, enabling a closed-form forward model con-sistent with ADF-STEM imaging geometry. Then, we in-troduce a Scattering-View-Consistent coefficient γ to en-sure cross-view consistency of this product. This modifi-cation eliminates inconsistency from standard 3DGS’s ne-glect of covariance-related scaling during 3D-to-2D projec-tion, preserves the true scattering power of each nanoscale region across all tilt angles. Finally, loss is computed be-tween the projected images and ground truth, along with regularization on the 3D volume. While pixel-wise losses enforce local grayscale consistency, they fail to constrain global frequency-domain structure, witch is crucial for sup-pressing missing wedge artifacts in sparse-view tomogra-phy. To resolve this, we incorporate a 2D Fourier amplitude loss that promotes spatial-frequency coherence, enhancing DenZa-Gaussian’s robustness to sparse projections and pre-serving fine morphological details. Experiments on real tilt series with 45-view and 15-view show that DenZa-Gaussian outperforms traditional analyt-ical methods, traditional iterative methods and 3D Gaus-sian splatting in reconstruction quality. As illustrated by the projection images in Figure.1, traditional methods in-troduce noticeable artifacts to varying extents. 3D Gaussian splatting proves inadequate for this task. In comparison, our approach produces clean projections with smooth edges and minimal artifacts, demonstrating the superiority of our method under both standard and sparse-view conditions. In summary, our main contributions are that we 1.Adapt 3D Gaussian Splatting to ADF-STEM tomogra-phy reconstruction, simulate the scattering process of a con-ical electron beam during projection, derive and simplify the scattering integral formulation, and introduce view-dependent normalization coefficient to enforce consistency of scattering strength across different projection angles. 2.Combine pixel-domain and frequency-domain losses with 3D total variation regularization, suppress artifacts in the reconstructed volume. 3.Conduct experiments and discussion, validate the ef-fectiveness and necessity of our approach, highlight av-enues for future research. 
+
+# 2. Related Work 
+
+In this section, we provide an overview of the related work, including ADF-STEM tomography reconstruction and 3D Gaussian Splatting. 
+
+ADF-STEM tomography reconstruction. ADF-STEM to-mography reconstruction originated from SIRT/ART iter-ative schemes developed to suppress missing-wedge arti-facts, and was later refined to achieve sub- ˚ Angstr¨ om lat-tice imaging under low-dose conditions. Subsequent algo-rithms such as GENFIRE, RESIRE [24], CS-based meth-ods [2, 6, 34], and QURT [1] combined oversampled Fourier constraints with real-space positivity, thereby im-proving noise tolerance and resolution and establishing the approach as a multimodal and multiscale standard. The integration of cryogenic stages, which preserve labile in-terfaces such as the solid–electrolyte interphase [35], to-gether with deep learning methods including 3D-Unet [5] for missing data and U-Net [28] for noise filtering, now en-ables routine three-dimensional mapping of chemistry and valence states in beam-sensitive electrodes such as silicon and catalysts such as PtNi. Coupling with atomic electron tomography allows single-atom three-dimensional coordi-nate and strain determination with a precision of 15 pm in platinum [14], while in-situ setups capture dynamic pro-cesses such as alloying and dislocation motion [18] in four dimensions. 
+
+3D Gaussian Splatting. 3D Gaussian Splatting (3DGS) en-ables real-time novel-view synthesis by employing explicit anisotropic Gaussians and differentiable rasterization, out-performing NeRF [20] in both training speed and rendering quality, achieving smooth visual effects even for complex scenes on consumer GPUs. This representation has been widely adopted across practical scenarios, including dy-namic scene modeling that decomposes static and dynamic elements for high-fidelity reconstruction [37, 42], human pose reconstruction that fuses structural priors for fast and accurate results [12, 21], 3D content generation that sup-ports text-driven scene creation [16, 31], and industrial in-spection that eliminates pose and illumination sensitivity for defect detection [17]. Recent works further introduce it into medical imaging, achieving reliable sparse-view CT recon-struction with reduced radiation dose [39, 41] and accurate cryo-EM structure recovery [26] that resolves fine-grained molecular conformations, highlighting its significant poten-tial in advancing scientific research. 
+
+# 3. Method 
+
+In this section, we first introduce our motivation. Then we propose Scattering-Aware Gaussian Splatting, architecture of DenZa-Gaussian and the learning details. Figure 2. Pipeline of Denza-Gaussian. DenZa-Gaussian is a two-stage Architecture tailored for sparse-view ADF-STEM tomography. The first stage uses FDK initialization to rapidly generate a rough 3D volume capturing the sample’s overall structural topology. The second stage converts this rough volume into a point cloud for Gaussian initialization. We use a custom 2D rendering pipeline optimized for ADF-STEM’s cone-beam imaging geometry to project the initialized 3D Gaussian cloud into 2D images. Loss is computed between these projections and ground truth images, complemented by regularization constraints on the 3D volume. Iterative optimization delivers a high-quality 3D reconstruction. 
+
+3.1. Motivation 
+
+ADF-STEM tomography reconstructs 3D nanoscale mor-phology from multi-view electron projections. However, due to the destructive nature of high-energy electron beams, the number of available views is often severely limited to minimize sample damage, especially for beam-sensitive materials such as biological specimens, polymers, or low-dimensional nanostructures. This constraint not only re-duces angular coverage but also exacerbates the missing wedge problem, posing significant challenges for accurate 3D reconstruction. Given 3D Gaussian Splatting offers continuous vol-umetric representation, view-consistent rendering, sub-voxel precision, and efficient and high-fidelity synthesis, we consider it particularly suitable for achieving high-quality reconstruction under sparse-view conditions in ADF-STEM tomography. We bring 3D Gaussian Splat-ting into this area through physics calibration, Scattering-View-Consistent covariance scaling, combined pixel-wise and Fourier-amplitude losses, alongside 3D total variation regularization. Physics-informed calibration is rooted in Rutherford elastic scattering, embedding the Z-contrast mechanism into each Gaussian kernel via a unified scalar field, denza. This formulation preserves physical fidelity while remain-ing tractable under unknown elemental distributions. To ac-count for ADF-STEM’s cone-beam geometry, we introduce a Scattering-View-Consistent coefficient γ, ensuring each Gaussian’s contribution aligns with the linear integration of scattering along beam paths and remains consistent across tilt angles. The loss function combines pixel-wise intensity match-ing with a 2D Fourier amplitude loss, promoting both local detail and global frequency coherence. While pixel losses capture fine grayscale variations, the Fourier term compen-sates for missing spatial frequencies in sparse-view settings by enforcing structural consistency in the frequency do-main. Finally, a 3D total variation penalty encourages piece-wise smoothness in the reconstructed volume and sup-presses noise amplification. Together, these components enhance robustness to sparse projections and preserve sub-50 nm morphological details through balanced spatial and frequency-domain constraints. 
+
+3.2. Scattering-Aware Gaussian Splatting 
+
+To adapt 3D Gaussian Splatting to ADF-STEM tomogra-phy, we embed fundamental electron scattering physics into the Gaussian parameterization. Native 3DGS, originally developed for photometric rendering via color and opacity blending, lacks compatibility with the scattering-driven pro-jection mechanisms of ADF-STEM, where image forma-tion arises from electron–sample interactions under a con-vergent cone-shaped beam. Our scattering-consistent for-mulation resolves this physical mismatch by aligning Gaus-sian representation with the principles of Rutherford scat-tering and cone-beam integration. This scattering process is driven by a convergent elec-tron beam, which is focused by an electromagnetic lens into a cone-shaped probe defined by its convergence angle and spatial extent. The probe scans point-by-point across the sample surface, and scattered electrons are subsequently collected by an annular dark-field (ADF) detector. Its scat-tering intensity follows the Rutherford principle, being pro-portional to the product of local atomic density and the atomic number Z raised to a power α. Here, α is a cor-rection exponent that quantifies the deviation of electron scattering intensity from the ideal Zα dependence due to electron cloud shielding effects in ADF-STEM imaging. It typically falls in the range [1.3, 2.0], and we set it as a fixed value of 1.7. ADF-STEM employs a cone-shaped electron beam, and its projection intensity stems from the linear integra-tion of electron scattering intensity along the beam paths. This physical mechanism underpins our framework design. Mathematically, the cone-shaped electron beam in ADF-STEM can be characterized by its convergence angle θ and probe size σ, which refers to the full width at half maxi-mum. For a scanning point {x, y }, on the sample surface, the electron beam propagates along a conical path parame-terized by r(t) = ( x, y, z 0) + tn , where n is the unit direc-tion vector within the cone, t is the path length, and z0 is the initial depth. The scattering intensity at position r(t) is given by 
+
+I(r(t)) = k · ρ(r(t)) · Zα(r(t)) , (1) where k is a constant related to electron beam energy and experimental setup, ρ is local atomic density, and α ∈
+
+[1 .3, 2.0] as defined. The ADF-STEM projection intensity at {x, y } is the integral of I(r(t)) along the conical path, 
+
+i.e. ,
+
+P (x, y ) = 
+
+Z tmax 
+
+> tmin
+
+I(r(t)) dt = k
+
+Z tmax 
+
+> tmin
+
+ρ(r(t)) ·Zα(r(t)) dt. 
+
+(2) Given the unknown elemental distribution of nanoma-terials in experiments and the current focus on external morphology reconstruction rather than quantitative elemen-tal analysis, this framework collapses the physical quan-tity local atomic density times Zα into a single learnable scalar field termed the denza coefficient, denoted as di.
+
+di physically acts as a “macroscopic proxy” for the inte-grated scattering capability of the nanoscale volume repre-sented by its corresponding 3D Gaussian. It encapsulates not only the collective effect of atomic number and density but also the spatial extent of the region through the support 
+
+Ωi. This makes di a direct link between the microscopic atomic arrangement, unobservable in experiments, and the macroscopic ADF-STEM intensity, a measurable signal. A larger di indicates a stronger scattering contribution from that region to the final image. With the denza coefficient 
+
+d = density · Zα, Equation (2) simplifies to 
+
+P (x, y ) = k
+
+Z tmax 
+
+> tmin
+
+d(r(t)) dt,  (3) directly linking the cone-beam geometry to scattering inten-sity integration. Each 3D Gaussian is paired with the denza coefficient 
+
+di, which directly encodes the effective scattering intensity of the nanoscale region it represents, thereby transforming Gaussians from color carriers in native 3DGS to scattering intensity carriers in ADF-STEM imaging. This design en-ables the Gaussian point cloud to adaptively match scatter-ing intensity variations across heterogeneous regions, such as the shell and core of core-shell nanoparticles, or pores and matrices in composite materials. To conform to ADF-STEM’s physical mechanisms and cone-beam geometric constraints, we introduce the Scattering-View-Consistent coefficient γi, a covariance de-terminant ratio-based scaling factor overlooked by generic 3DGS. It rectifies 3D-to-2D projection scaling discrepan-cies, ensuring view-invariant scattering contributions from 
+
+di across tilt angles. Unlike native 3DGS, which violates Rutherford scattering intensity conservation, our coefficient explicitly enforces this physical constraint. Mathemati-cally, this link is manifested in the projection integral as γi
+
+weighting the product of di and the 2D Gaussian projection of the 3D Gaussian, such that, 
+
+P (u) ∝ X
+
+> i
+
+γi · di · G 2D (·), (4) which directly translates the physical scattering strength into image contrast. 
+
+3.3. Architecture of Denza-Gaussian 
+
+DenZa-Gaussian is a two stage architecture developed for sparse view ADF STEM tomography. The pipeline is shown in Figure.2, and the workflow balances computa-tional efficiency and reconstruction quality by tightly inte-grating a physics based model of ADF STEM image forma-tion with data driven optimization. In the first stage, Feldkamp-Davis-Kress(FDK) recon-struction is used to quickly produce a coarse three dimen-sional volume. This volume captures the specimen over-all structural topology and provides a stable starting point grounded in classical tomographic reconstruction rather than a random initialization. Since FDK is computationally efficient, the initialization imposes minimal computational overhead. The second stage converts the coarse volume into a point cloud that initializes the three dimensional Gaussians. Each Gaussian carries two learned coefficients that make it a physically meaningful scattering intensity element. The first coefficient di encodes the integrated scattering capabil-ity of the nanoscale region and serves as a learnable proxy that collapses atomic density and effective Zα as defined in Sec.3.2. The second coefficient γi is a normalization fac-tor based on the covariance determinant ratio described in Sec.3.2 and corrects three dimensional to two dimensional projection biases to ensure view invariant scattering contri-butions across tilt angles. This dual coefficient formulation converts Gaussians from generic color carriers into repre-sentations of ADF-STEM scattering intensity. We then simulate the cone-beam integration of ADF-STEM by accumulating the weighted contribution of ev-ery 3D Gaussian along the electron trajectories, where the weight is the product of denza and γ. The resulting 2D pro-jections are compared with experimental images through a composite loss that combines the pixel-wise intensity error, the frequency-domain magnitude mismatch, the structural similarity index, and a 3D total-variation penalty to enforce geometric plausibility. 
+
+3.4. Learning Details 
+
+The optimization objective of Denza-Gaussian is formu-lated as a synergistic combination of data loss terms and regularization terms, separately Corresponding to the lower and right regions in Figure.2. These terms are designed to achieve multi-dimensional alignment between rendered projections and experimental measurements while enforc-ing the structural plausibility of the 3D volume. This in-tegrated design balances data fidelity, which ensures close agreement with observed signals, and structural robustness, which prevents artifacts or overfitting to noise. It does so by leveraging constraints across pixel, frequency, percep-tual, and 3D structural domains. Data loss terms anchor the fitting process across comple-mentary signal domains. The pixel-wise L1 loss enforces baseline intensity consistency via 
+
+Lpixel = 1
+
+N |Ω|
+
+> N
+
+X
+
+> θ=1
+
+Iθ 
+
+> render
+
+− Iθ  
+
+> meas 1
+
+, (5) where N is the number of projections and Ω denotes pixel sets. To recover the degraded frequencies of the missing wedge, the 2D Fourier magnitude loss aligns FFT magni-tudes using 
+
+Lfreq = 1
+
+N
+
+> N
+
+X
+
+> θ=1
+
+"
+
+1
+
+|Ψ|
+
+X 
+
+> (ku,k v)∈Ψ
+
+(1 + λHF · w(ku, k v )) ·
+
+Fθ
+
+> render
+
+(ku, k v ) − Fθ
+
+> meas
+
+(ku, k v )
+
+#
+
+(6)    
+
+> Figure 3. Results of qualitative comparison under 45-view. We performed 3-D reconstruction of PtNi nanomaterial blocks from 45 tilt-series projections. Compared methods are SIRT [32], FDK [7], GENFIRE [25], and 3D GS [11]. Table 1. Quantitative comparison under 45-view reconstruction.
+
+Train view Test view Method PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑
+
+SIRT [32] 26 .41 0.645 23 .58 0.519 
+
+FDK [7] 17 .17 0.478 15 .53 0.336 
+
+GENFIRE [25] 28 .19 0.697 26 .05 0.587 
+
+3D GS [11] 8.93 0.201 8.93 0.201 
+
+Ours 33.02 0.885 29.17 0.790 
+
+to capture spatial frequency distributions critical to ADF-STEM. The weighting term  w(ku, k v ) emphasizes high-frequency regions, which are more susceptible to angular undersampling and noise. This encourages recovery of fine structural details that are otherwise suppressed by the miss-ing wedge effect. To enhance perceptual alignment and preserve high-contrast edges such as core-shell interfaces, we employ an SSIM-based loss that quantifies structural similarity within sliding windows across each projection, i.e. ,
+
+Lssim = 1
+
+N
+
+> N
+
+X
+
+> θ=1
+
+1 − SSIM (Iθ
+
+> render
+
+, I θ
+
+> meas
+
+; W ) . (7) A 3D total variation (TV) regularization term promotes structural smoothness in the voxelized volume by penaliz-ing abrupt changes across neighboring voxels. Formally, the anisotropic TV loss is defined as enforces structural smoothness in the voxelized volume V via 
+
+R3DTV = X
+
+> (x,y,z )∈V
+
+ ∥∇ xV ∥1 + ∥∇ y V ∥1 + ∥∇ z V ∥1
+
+,
+
+(8) where ∇xV , ∇y V , ∇z V denote finite differences along the three spatial axes. This formulation can be intuitively inter-preted as a clamped neighbor sum. For each voxel, direc-tional differences with its adjacent neighbors are computed, clamped via absolute value to ignore sign, and aggregated with directional weights. In our implementation, we extend this idea to a 3D 8-neighbor configuration, as illustrated in the right of Fig-ure.2, where each voxel interacts with its immediate neigh-bors along both axial and diagonal directions. The result-ing regularization encourages local consistency while pre-serving sharp transitions, especially in sparsely sampled or noisy volumes. We summarize the total loss formulation as 
+
+Ltotal = λpixel Lpixel + λfreq Lfreq (9) 
+
++ λssim Lssim + λ3DTV R3DTV . (10) 
+
+# 4. Experiments 
+
+In this section, we evaluate DenZa-Gaussian on real nano-material tilt series from Atomic-scale identification of ac-tive sites of oxygen reduction nanocatalysts [38]. Evalua-tion metrics are defined to assess reconstruction quality. We compare DenZa-Gaussian with traditional iterative and re-cent neural methods under two settings: (1) 45-view recon-struction with sufficient projections, and (2) 15-view sparse reconstruction for low-dose scenarios. These settings test adaptability to varying projection densities. We also per-form discussions to assess the contribution of key compo-nents and input configurations. 
+
+4.1. Experimental Settings. 
+
+Environment. All experiments were conducted on a single NVIDIA RTX 3090 GPU. 
+
+Datasets. Our dataset consists of ADF-STEM tilt series of PtNi and Mo-doped PtNi oxygen reduction nanocatalysts, originally published in Atomic-scale identification of active sites of oxygen reduction nanocatalysts . Following stan-dard 3DGS protocols, the 2D projections are utilized as our ground truth. [11] Each projection was binned to a reso-lution of 256×256 pixels. We divided the multi-view im-ages into training and test subsets using two protocols, 45 projections representing adequate angular sampling and 15 projections yielding sparse angular sampling, enabling as-sessment of reconstruction quality under both standard and limited view conditions. 
+
+Evaluation metrics. We adopt Peak Signal-to-Noise Ra-tio (PSNR) [9] and Structural Similarity Index (SSIM) [36] as core metrics for evaluating reconstruction quality. PSNR measures pixel-level fidelity by directly comparing the re-constructed 3D volume with the ground truth, where higher values indicate lower reconstruction error and better overall    
+
+> Figure 4. Results of qualitative comparison under 15-view. We performed 3-D reconstruction of PtNi nanomaterial blocks from 15 tilt-series projections. Compared methods are SIRT [32], FDK [7], GENFIRE [25], and 3D GS [11]. Table 2. Quantitative comparison under 15-view reconstruction.
+
+Train view Test view Method PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑
+
+SIRT [32] 22 .93 0.603 21 .54 0.499 
+
+FDK [7] 15 .09 0.445 14 .13 0.314 
+
+GENFIRE [25] 25 .23 0.672 24 .07 0.508 
+
+3D GS [11] 8.93 0.201 8.93 0.201 
+
+Ours 31.73 0.798 27.53 0.751 
+
+quality. SSIM emphasizes structural consistency and de-tail preservation. To compute it, we extract 2D slices from the reconstructed volume along axial, coronal, and sagit-tal planes, and average the SSIM scores across all slices. Higher SSIM values reflect stronger structural agreement with the ground truth. 
+
+4.2. 45-view reconstruction 
+
+In this section, we present comprehensive experiments on 45-view reconstruction of PtNi nanocatalysts to validate the effectiveness of our method. The sufficient number of pro-jections provides a well-conditioned setting that enables fair comparison across methods. We benchmark our approach against traditional iterative algorithms and the neural ren-dering technique 3D Gaussian Splatting, assessing perfor-mance through both qualitative visualizations and quantita-tive metrics. 
+
+Qualitative Comparison. As shown in Figure.3, we present qualitative results of 45-view reconstruction, high-lighting contour accuracy, artifact suppression, and inten-sity consistency with the ground truth. SIRT yields ac-curate global contours but introduces noticeable artifacts. FDK preserves overall outlines yet suffers from more pro-Table 3. Ablation on Scattering-View-Consistent coefficient γ.
+
+Train view Test view Method PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑
+
+w/o 10 .32 0.321 9.15 0.253 
+
+w 31.73 0.798 27.53 0.751 
+
+nounced distortions. GENFIRE produces sharper contours than our method but fails to capture the intensity relation-ships in projection images, resulting in brightness misalign-ment with the ground truth. 3D Gaussian Splatting fails to generate valid reconstructions, producing nearly black outputs. In contrast, our method preserves fine structural details and achieves consistent intensity alignment with the ground truth, demonstrating robust performance across both training and testing views. 
+
+Quantitative Comparison. We quantify reconstruction performance using PSNR and SSIM. PSNR is reported be-cause higher values indicate superior pixel-level fidelity. SSIM is reported because higher values indicate greater structural consistency, both metrics are evaluated on train-ing and test views. As presented in Table 1, traditional methods and 3D GS exhibit significant limitations across all metrics. SIRT achieves PSNR values of 26.41 for train-ing view and 23.58 for testing view, with SSIM scores of 0.645 and 0.519 respectively. FDK performs worse, with PSNR as low as 17.17 for training view and 15.53 for test-ing view, and SSIM of 0.478 and 0.336. GENFIRE shows a relatively higher training view PSNR of 28.19 and 26.05 in the testing view, with SSIM values of 0.697 for training and 0.587 for testing revealing poor structural consistency. 3D GS fails to generate valid reconstructions, yielding the low-est PSNR of 8.93, and SSIM of 0.201 both for training and testing. Our method demonstrates substantial superiority, PSNR further improves to 33.02 for training and 29.17 for testing, and SSIM reaches 0.885 and 0.790. These results align closely with qualitative observations, confirming our method maintains high pixel-level fidelity and robust struc-tural consistency, outperforming all compared methods in 45-view reconstruction. 
+
+4.3. 15-view reconstruction 
+
+In this section, we investigate the performance of each method under 15-view reconstruction settings for PtNi nanocatalysts. Given the limited number of projections, this scenario challenges the robustness of methods in handling data insufficiency. 
+
+Qualitative Comparison. As shown in Figure.4, we visual-ize the qualitative results of 15-view reconstruction, focus-ing on structural fidelity, artifact presence, and consistency between training and testing views. In the training view, SIRT appears noticeably blurry, failing to capture the fine    
+
+> Table 4. Ablation on Density ·Zα.
+
+Train view Test view Method PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑
+
+Denza 31 .02 0.885 28 .17 0.790 
+
+Density+Z 31.20 0.890 28.30 0.797 
+
+details of the PtNi structure. In the testing view, it suffers from severe blurring, losing structural clarity. FDK exhibits substantial artifacts in both training and testing views, par-ticularly in the testing view, the artifacts are prominent and accompanied by significant blurring, making the structure barely recognizable. 3D Gaussian Splatting fails to generate valid reconstructions, producing nearly black images, simi-lar to its performance in the 45-view setting. In contrast, our method reconstructs the fine structural details, maintaining high consistency with the ground truth across both training and testing views, demonstrating robust performance even under the data-scarce 15-view conditions. 
+
+Quantitative Comparison. As shown in Table 2, SIRT achieves a training view PSNR of 22.93 and SSIM of 0.603, while its testing view performance drops to 21.54 in PSNR and 0.499 in SSIM, indicating limited robustness. FDK per-forms worse, with training view PSNR as low as 15.09 and SSIM of 0.445, and testing view PSNR further decreas-ing to 14.13 with SSIM of 0.314, reflecting poor pixel fi-delity and structural consistency. 3D GS fails to generate valid reconstructions, yielding the lowest PSNR and SSIM across all metrics. In contrast, our method shows signifi-cant superiority, reaching the highest training view PSNR of 31.73 and SSIM of 0.798, along with the best testing view PSNR of 27.53 and SSIM of 0.751. These quanti-tative results align with qualitative observations, confirm-ing that our method maintains high pixel-level fidelity and structural consistency even under the data-scarce 15-view conditions, outperforming all compared methods. 
+
+4.4. 3D Volume 
+
+To further illustrate the superiority of our method in 3D vol-ume reconstruction, we analyze the comparison figures in Figure.5(a). The left group of images corresponds to the result of GENFIRE, which achieves the best performance in 3D volume reconstruction among comparison methods. While the right group belongs to our method. Visually, GENFIRE yields relatively uniform overall structures but suffers from notable noise, and atoms fail to be reconstructed as individual, distinct bright spots, lead-ing to blurred details. In contrast, our method presents each atom as a single clear bright spot with significantly reduced noise, and the edges are much neater and smoother. This superior detail preservation and structural fidelity make our method more valuable in practical applications, such Figure 5. Comparison of 3D volume reconstruction results. The left panel compares the reconstructed 3D volume surfaces, while the right panel focuses on edge reconstruction. Part (a) presents a comparison between GENFIRE and our method on full 3D vol-umes, and part (b) shows an ablation study of the 2D Fourier loss under sparse-view conditions. 
+
+as atomic-scale structural analysis and characterization of nanomaterials, where precise and reliable structural infor-mation is crucial. 
+
+4.5. Discussion 
+
+Scattering-View-Consistent coefficient Γ. We evaluated the proposed bias correction coefficient γ through ablation experiments on 45-view ADF-STEM 3D reconstructions. Models with and without this correction were trained on PtNi and Mo-doped PtNi nanocatalyst tilt series. Recon-struction quality was assessed using PSNR and SSIM across training and test views. As shown in Table 3, the baseline without correction achieved only 10.32 PSNR and 0.321 SSIM on training views, and 9.15 PSNR and 0.253 SSIM on test views. The corrected model significantly improved these metrics to 31.73 PSNR and 0.798 SSIM for training, and 27.53 PSNR and 0.751 SSIM for testing. These results demonstrate that our proposed correction effectively miti-gates the severe reconstruction quality degradation caused by scattering integration bias. 
+
+2D Fourier Loss. Figure.5(b) presents ablation experi-ments on the 2D Fourier loss under 15-view projection. The figure compares reconstructed 3D volume surfaces and edges without and with this loss. A clear contrast emerges: surfaces reconstructed with the Fourier loss retain distinct atomic bright spots absent in the baseline. Meanwhile, edges utilizing the Fourier loss appear sharp and smooth, whereas those without exhibit severe artifacts. These ob-servations confirm that our 2D Fourier loss effectively preserves high-frequency details and suppresses missing-wedge artifacts under sparse-view conditions. 
+
+Density · Zα. We validate simplifying Density · Zα
+
+into a single denza parameter by comparing it against a vari-ant learning density and Z separately. While Table 4 shows 
+
+> Figure 6. Impact of ground truth (GT) image resolution. In each block, the left panel shows the surface of the reconstructed 3D volume using input images downsampled by merging every four pixels into one, while the right panel corresponds to reconstruction from the original resolution input.
+
+this separated configuration yields slightly higher metrics, its learned Z values deviate from true Pt and Ni atomic numbers. This indicates the marginal gains stem from math-ematical flexibility rather than physical accuracy. We dis-card this setup to preserve physical validity and consistency with ADF-STEM principles. Future work will explore mul-timodal imaging constraints to reliably estimate Z.
+
+The impact of GT images. Figure 6 compares 3D recon-structions using normal-resolution inputs against downsam-pled versions merging four pixels into one. The down-sampled results appear noticeably smoother and lack fine details due to the irreversible loss of high-frequency in-formation during pixel merging. This demonstrates that high-frequency content in ground truth images is essen-tial for preserving structural precision in high-fidelity 3D reconstructions. Future work will address this degrada-tion by enhancing high-frequency features via input prepro-cessing and incorporating explicit frequency-domain con-straints, like our 2D Fourier amplitude loss, to further im-prove detail fidelity. 
+
+# 5. Conclusion 
+
+We propose DenZa-Gaussian, an approach tailored for sparse-view ADF-STEM tomography reconstruction that addresses the tradeoff between sample preservation and re-construction fidelity. By adapting 3D Gaussian Splatting to ADF-STEM physical imaging mechanisms, we introduce the learnable denza coefficient, Scattering-View-Consistent efficient γ, and a composite loss combining pixel-wise, frequency-domain, and 3D TV regularization. This de-sign resolves physical mismatches and suppresses missing wedge artifacts. Experiments on 45-view and 15-view tilt series show that DenZa-Gaussian consistently outperforms traditional and neural baselines in both quantitative met-rics and qualitative fidelity, preserving fine nanoscale details even under sparse-view conditions. This work advances ADF-STEM tomography for dose-sensitive nanomaterials and lays the foundation for future improvements in high-frequency enhancement and multi-modal integration. Acknowledgements 
+
+This work is supported by the National Natural Sci-ence Foundation of China (62331006), and the Fun-damental Research Funds for the Central Universi-ties. 
+
+# References 
+
+[1] Norio Baba, Kenji Kaneko, and Misuzu Baba. Novel nonlin-ear reconstruction method with grey-level quantisation units for electron tomography. Scientific reports , 10(1):20146, 2020. 2 [2] Emmanuel J Cand` es, Justin Romberg, and Terence Tao. Ro-bust uncertainty principles: Exact signal reconstruction from highly incomplete frequency information. IEEE Transac-tions on information theory , 52(2):489–509, 2006. 2 [3] Chien-Chun Chen, Chun Zhu, Edward R White, Chin-Yi Chiu, MC Scott, BC Regan, Laurence D Marks, Yu Huang, and Jianwei Miao. Three-dimensional imaging of disloca-tions in a nanoparticle at atomic resolution. Nature , 496 (7443):74–77, 2013. 1 [4] Se Young Chun, Yuni K Dewaraja, and Jeffrey A Fessler. Alternating direction method of multiplier for tomography with nonlocal regularizers. IEEE transactions on medical imaging , 33(10):1960–1968, 2014. 1 [5] ¨Ozg¨ un C ¸ ic ¸ek, Ahmed Abdulkadir, Soeren S Lienkamp, Thomas Brox, and Olaf Ronneberger. 3d u-net: learning dense volumetric segmentation from sparse annotation. In 
+
+International conference on medical image computing and computer-assisted intervention , pages 424–432. Springer, 2016. 2 [6] David L Donoho. Compressed sensing. IEEE Transactions on information theory , 52(4):1289–1306, 2006. 2 [7] Lee A Feldkamp, Lloyd C Davis, and James W Kress. Prac-tical cone-beam algorithm. Journal of the Optical Society of America A , 1(6):612–619, 1984. 1, 5, 6 [8] Louis A Hageman and David M Young. Applied iterative methods . Courier Corporation, 2012. 1 [9] Bernd J¨ ahne. Digital image processing . Springer, 2005. 6 [10] Avinash C Kak and Malcolm Slaney. Principles of comput-erized tomographic imaging . SIAM, 2001. 1 [11] Bernhard Kerbl, Georgios Kopanas, Thomas Leimk¨ uhler, and George Drettakis. 3d gaussian splatting for real-time radiance field rendering. ACM Trans. Graph. , 42(4):139–1, 2023. 1, 5, 6 [12] Muhammed Kocabas, Jen-Hao Rick Chang, James Gabriel, Oncel Tuzel, and Anurag Ranjan. Hugs: Human gaussian splats. In Proceedings of the IEEE/CVF conference on com-puter vision and pattern recognition , pages 505–515, 2024. 2[13] Rowan Leary, Zineb Saghi, Paul A Midgley, and Daniel J Holland. Compressed sensing electron tomography. Ultra-microscopy , 131:70–91, 2013. 1 [14] Juhyeok Lee, Chaehwa Jeong, and Yongsoo Yang. Single-atom level determination of 3-dimensional surface atomic structure via neural network-assisted atomic electron tomog-raphy. Nature Communications , 12(1):1962, 2021. 1, 2 [15] Joseph A Lemberg and Robert O Ritchie. Mo-si-b alloys for ultrahigh-temperature structural applications. Advanced Materials , 24(26):3445–3480, 2012. 1 [16] Haoran Li, Haolin Shi, Wenli Zhang, Wenjun Wu, Yong Liao, Lin Wang, Lik-hang Lee, and Peng Yuan Zhou. Dreamscene: 3d gaussian-based text-to-3d scene generation via formation pattern sampling. In European Conference on Computer Vision , pages 214–230. Springer, 2024. 2 [17] Yizhe Liu, Yan Song Hu, Yuhao Chen, and John Zelek. Splatpose+: Real-time image-based pose-agnostic 3d anomaly detection. In European Conference on Computer Vision , pages 378–391. Springer, 2024. 2 [18] Fanling Meng, Jiaqi Zhu, Heyi Wang, Jiayi Li, and Yang Lu. In situ tem investigation of dislocation-mediated defor-mation in eutectic fe36ni18mn33al13 alloy. Crystals , 15(9): 792, 2025. 2 [19] Jianwei Miao, Peter Ercius, and Simon JL Billinge. Atomic electron tomography: 3d structures without crystals. Sci-ence , 353(6306):aaf2157, 2016. 1 [20] Ben Mildenhall, Pratul P Srinivasan, Matthew Tancik, Jonathan T Barron, Ravi Ramamoorthi, and Ren Ng. Nerf: Representing scenes as neural radiance fields for view syn-thesis. Communications of the ACM , 65(1):99–106, 2021. 2[21] Arthur Moreau, Jifei Song, Helisa Dhamo, Richard Shaw, Yiren Zhou, and Eduardo P´ erez-Pellitero. Human gaussian splatting: Real-time rendering of animatable avatars. In Pro-ceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 788–798, 2024. 2 [22] Jaewhan Oh, Sunggu Kim, Chaehwa Jeong, Jason Man-assa, Jonathan Schwartz, Sangmoon Yoon, Robert Hovden, Hye Ryung Byon, and Yongsoo Yang. Correlative 3d map-ping of structure, composition, and valence state dynamics in battery cathodes via simultaneous adf-eds-eels tomography. 
+
+arXiv preprint arXiv:2509.23034 , 2025. 1 [23] Stephen J Pennycook and Peter D Nellist. Scanning transmission electron microscopy: imaging and analysis .Springer Science & Business Media, 2011. 1, 2 [24] Minh Pham, Yakun Yuan, Arjun Rana, Stanley Osher, and Jianwei Miao. Accurate real space iterative reconstruction (resire) algorithm for tomography. Scientific Reports , 13(1): 5624, 2023. 2 [25] Alan Pryor Jr, Yongsoo Yang, Arjun Rana, Marcus Gallagher-Jones, Jihan Zhou, Yuan Hung Lo, Georgian Melinte, Wah Chiu, Jose A Rodriguez, and Jianwei Miao. Genfire: A generalized fourier iterative reconstruction algo-rithm for high-resolution 3d imaging. Scientific reports , 7 (1):10409, 2017. 1, 5, 6 [26] Huaizhi Qu, Xiao Wang, Gengwei Zhang, Jie Peng, and Tianlong Chen. Gem: 3d gaussian splatting for effi-cient and accurate cryo-em reconstruction. arXiv preprint arXiv:2509.25075 , 2025. 2 [27] Johann Radon. On the determination of functions from their integral values along certain manifolds. IEEE transactions on medical imaging , 5(4):170–176, 2007. 1 [28] Olaf Ronneberger, Philipp Fischer, and Thomas Brox. U-net: Convolutional networks for biomedical image segmen-tation. In International Conference on Medical image com-puting and computer-assisted intervention , pages 234–241. Springer, 2015. 2 [29] Emil Y Sidky and Xiaochuan Pan. Image reconstruction in circular cone-beam computed tomography by constrained, total-variation minimization. Physics in Medicine & Biol-ogy , 53(17):4777, 2008. 1 [30] Carlos Oscar S Sorzano, J Vargas, J Ot´ on, JM De La Rosa-Trev´ ın, JL Vilas, M Kazemi, R Melero, L Del Ca˜ no, J Cuenca, P Conesa, et al. A survey of the use of iterative reconstruction algorithms in electron microscopy. BioMed research international , 2017(1):6482567, 2017. 1 [31] Jiaxiang Tang, Jiawei Ren, Hang Zhou, Ziwei Liu, and Gang Zeng. Dreamgaussian: Generative gaussian splatting for effi-cient 3d content creation. arXiv preprint arXiv:2309.16653 ,2023. 2 [32] Jeannot Trampert and Jean-Jacques Leveque. Simultane-ous iterative reconstruction technique: Physical interpreta-tion based on the generalized least squares solution. Jour-nal of Geophysical Research: Solid Earth , 95(B8):12553– 12559, 1990. 1, 5, 6 [33] Takuji Ube. Three-dimensional nanostructure analysis of non-stained nafion in fuel-cell electrode by combined adf-stem tomography. Microscopy , 73(4):318–328, 2024. 1 [34] Baoping Wang, Yan Zhang, Yang Fang, and Zuxun Song. Parametric narrow-band inisar 3d imaging based on com-pressed sensing. Chinese Journal of Electronics , 29(3):508– 514, 2020. 2 [35] Xuefeng Wang, Yejing Li, and Ying Shirley Meng. Cryo-genic electron microscopy for characterizing and diagnosing batteries. Joule , 2(11):2225–2234, 2018. 2 [36] Zhou Wang, Alan C Bovik, Hamid R Sheikh, and Eero P Si-moncelli. Image quality assessment: from error visibility to structural similarity. IEEE transactions on image processing ,13(4):600–612, 2004. 6 [37] Guanjun Wu, Taoran Yi, Jiemin Fang, Lingxi Xie, Xiaopeng Zhang, Wei Wei, Wenyu Liu, Qi Tian, and Xinggang Wang. 4d gaussian splatting for real-time dynamic scene rendering. In Proceedings of the IEEE/CVF conference on computer vi-sion and pattern recognition , pages 20310–20320, 2024. 2 [38] Yao Yang, Jihan Zhou, Zipeng Zhao, Geng Sun, Saman Moniri, Colin Ophus, Yongsoo Yang, Ziyang Wei, Yakun Yuan, Cheng Zhu, et al. Atomic-scale identification of active sites of oxygen reduction nanocatalysts. Nature Catalysis , 7 (7):796–806, 2024. 6 [39] Weihao Yu, Yuanhao Cai, Ruyi Zha, Zhiwen Fan, Chenxin Li, and Yixuan Yuan. X2-gaussian: 4d radiative gaussian splatting for continuous-time tomographic reconstruction. 
+
+arXiv preprint arXiv:2503.21779 , 2025. 2 [40] Ruyi Zha, Yanhao Zhang, and Hongdong Li. Naf: neural attenuation fields for sparse-view cbct reconstruction. In In-ternational Conference on Medical Image Computing and Computer-Assisted Intervention , pages 442–452. Springer, 2022. 1 [41] Ruyi Zha, Tao Jun Lin, Yuanhao Cai, Jiwen Cao, Yanhao Zhang, and Hongdong Li. R2-gaussian: Rectifying radia-tive gaussian splatting for tomographic reconstruction. arXiv preprint arXiv:2405.20693 , 2024. 2 [42] Hanyue Zhang, Zhiliu Yang, Xinhe Zuo, Yuxin Tong, Ying Long, and Chen Liu. Garfield++: Reinforced gaussian ra-diance fields for large-scale 3d scene reconstruction. arXiv preprint arXiv:2409.12774 , 2024. 2

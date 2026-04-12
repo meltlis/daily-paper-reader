@@ -6,85 +6,88 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-04-05
-- 运行时间：2026-04-05 19:50:22 UTC
+- 最新运行日期：2026-04-12
+- 运行时间：2026-04-12 19:54:22 UTC
 - 运行状态：成功
-- 本次总论文数：21
-- 精读区：10
+- 本次总论文数：22
+- 精读区：11
 - 速读区：11
 
 ### 今日简报（AI）
-今日聚焦 21 篇 3D 重建前沿进展，深度解析 Gaussian Splatting 在逆渲染与动态建模中的核心突破。
-满分论文 SGS-Intrinsic 成功攻克稀疏视角室内逆渲染难题，F4Splat 与 FreeArtGS 则分别在预测加密与关节建模上表现亮眼。
-建议重点关注语义不变性对复杂场景重建的增益，探索 3DGS 从静态展示向高效生成与动态交互的跨越。
-- 详情：[/202604/05/README](/202604/05/README)
+今日深度解析 22 篇前沿论文，聚焦射频逆渲染与高斯泼溅（GS）在自动驾驶及三维重建中的核心突破。
+重点关注满分论文提出的无线环境射频逆渲染，以及 SpectralSplat 在驾驶场景下实现的外观解耦快速重建。
+建议读者从 GS 技术与语义 SLAM、个性化头像建模的跨界融合中寻找应用灵感。
+- 详情：[/202604/12/README](/202604/12/README)
 
 ### 精读区论文标签
-1. [SGS-Intrinsic: Semantic-Invariant Gaussian Splatting for Sparse-View Indoor Inverse Rendering](/202604/05/2603.27516v1-sgs-intrinsic-semantic-invariant-gaussian-splatting-for-sparse-view-indoor-inverse-rendering)  
+1. [Radio-Frequency Inverse Rendering for Wireless Environment Modeling](/202604/12/2604.07086v1-radio-frequency-inverse-rendering-for-wireless-environment-modeling)  
    标签：评分：10.0/10、query:3dgsir
-   evidence：使用3DGS实现材质与光照的准确解耦
-2. [SGS-Intrinsic: Semantic-Invariant Gaussian Splatting for Sparse-View Indoor Inverse Rendering](/202604/05/2603.27516v2-sgs-intrinsic-semantic-invariant-gaussian-splatting-for-sparse-view-indoor-inverse-rendering)  
-   标签：评分：10.0/10、query:3dgsir
-   evidence：利用3DGS进行室内逆向渲染以实现材质和光照分解
-3. [Physically Inspired Gaussian Splatting for HDR Novel View Synthesis](/202604/05/2603.28020v1-physically-inspired-gaussian-splatting-for-hdr-novel-view-synthesis)  
-   标签：评分：10.0/10、query:3dgsir
-   evidence：物理启发的HDR-NVS，建模内在反射和光照
-4. [\textit{4DSurf}: High-Fidelity Dynamic Scene Surface Reconstruction](/202604/05/2603.28064v1-textit4dsurf-high-fidelity-dynamic-scene-surface-reconstruction)  
+   evidence：嵌入高斯泼溅范式的物理基础射频逆向渲染
+2. [SpectralSplat: Appearance-Disentangled Feed-Forward Gaussian Splatting for Driving Scenes](/202604/12/2604.03462v1-spectralsplat-appearance-disentangled-feed-forward-gaussian-splatting-for-driving-scenes)  
    标签：评分：9.0/10、query:3dgsir
-   evidence：使用高斯泼溅进行动态场景表面重建
-5. [LightHarmony3D: Harmonizing Illumination and Shadows for Object Insertion in 3D Gaussian Splatting](/202604/05/2603.29209v1-lightharmony3d-harmonizing-illumination-and-shadows-for-object-insertion-in-3d-gaussian-splatting)  
+   evidence：将外观与几何解耦以实现基于高斯泼溅的重光照
+3. [CGHair: Compact Gaussian Hair Reconstruction with Card Clustering](/202604/12/2604.03716v1-cghair-compact-gaussian-hair-reconstruction-with-card-clustering)  
    标签：评分：9.0/10、query:3dgsir
-   evidence：3DGS中的光照估计与一致性渲染
-6. [AA-Splat: Anti-Aliased Feed-forward Gaussian Splatting](/202604/05/2603.29394v1-aa-splat-anti-aliased-feed-forward-gaussian-splatting)  
+   evidence：将发卡结构与3DGS渲染相结合
+4. [AvatarPointillist: AutoRegressive 4D Gaussian Avatarization](/202604/12/2604.04787v1-avatarpointillist-autoregressive-4d-gaussian-avatarization)  
    标签：评分：9.0/10、query:3dgsir
-   evidence：前馈3D高斯泼溅的抗锯齿渲染
-7. [RT-GS: Gaussian Splatting with Reflection and Transmittance Primitives](/202604/05/2604.00509v1-rt-gs-gaussian-splatting-with-reflection-and-transmittance-primitives)  
+   evidence：生成用于4D头像渲染的3D高斯泼溅属性
+5. [Free-Range Gaussians: Non-Grid-Aligned Generative 3D Gaussian Reconstruction](/202604/12/2604.04874v1-free-range-gaussians-non-grid-aligned-generative-3d-gaussian-reconstruction)  
    标签：评分：9.0/10、query:3dgsir
-   evidence：在Gaussian Splatting中集成微表面材质模型和光线追踪
-8. [Diff3R: Feed-forward 3D Gaussian Splatting with Uncertainty-aware Differentiable Optimization](/202604/05/2604.01030v1-diff3r-feed-forward-3d-gaussian-splatting-with-uncertainty-aware-differentiable-optimization)  
+   evidence：预测3D高斯的多视图重建方法
+6. [Appearance Decomposition Gaussian Splatting for Multi-Traversal Reconstruction](/202604/12/2604.05908v1-appearance-decomposition-gaussian-splatting-for-multi-traversal-reconstruction)  
    标签：评分：9.0/10、query:3dgsir
-   evidence：具有可微优化的前馈3D高斯泼溅用于重建
-9. [ColorGradedGaussians: Palette-Based Color Grading for 3D Gaussian Splatting via View-Space Sparse Decomposition](/202604/05/2604.01551v1-colorgradedgaussians-palette-based-color-grading-for-3d-gaussian-splatting-via-view-space-sparse-decomposition)  
+   evidence：使用高斯泼溅进行外观分解以减轻不同遍历之间的耦合
+7. [AnchorSplat: Feed-Forward 3D Gaussian SplattingWith 3D Geometric Priors](/202604/12/2604.07053v1-anchorsplat-feed-forward-3d-gaussian-splattingwith-3d-geometric-priors)  
    标签：评分：9.0/10、query:3dgsir
-   evidence：为3D高斯泼溅编辑分解颜色与亮度
-10. [GS^2: Graph-based Spatial Distribution Optimization for Compact 3D Gaussian Splatting](/202604/05/2604.01884v1-gs2-graph-based-spatial-distribution-optimization-for-compact-3d-gaussian-splatting)  
+   evidence：用于场景级重建的前馈3D高斯泼溅框架
+8. [AnchorSplat: Feed-Forward 3D Gaussian Splatting with 3D Geometric Priors](/202604/12/2604.07053v2-anchorsplat-feed-forward-3d-gaussian-splatting-with-3d-geometric-priors)  
    标签：评分：9.0/10、query:3dgsir
-   evidence：3D高斯泼溅的空间分布优化
+   evidence：用于场景级重建的前馈3D高斯泼溅框架
+9. [From Blobs to Spokes: High-Fidelity Surface Reconstruction via Oriented Gaussians](/202604/12/2604.07337v1-from-blobs-to-spokes-high-fidelity-surface-reconstruction-via-oriented-gaussians)  
+   标签：评分：9.0/10、query:3dgsir
+   evidence：基于高斯泼溅的原则性占用场和定向法线用于表面重建
+10. [ReconPhys: Reconstruct Appearance and Physical Attributes from Single Video](/202604/12/2604.07882v1-reconphys-reconstruct-appearance-and-physical-attributes-from-single-video)  
+   标签：评分：9.0/10、query:3dgsir
+   evidence：联合学习物理属性估计与 3D 高斯泼溅重建
+11. [SurfelSplat: Learning Efficient and Generalizable Gaussian Surfel Representations for Sparse-View Surface Reconstruction](/202604/12/2604.08370v1-surfelsplat-learning-efficient-and-generalizable-gaussian-surfel-representations-for-sparse-view-surface-reconstruction)  
+   标签：评分：9.0/10、query:3dgsir
+   evidence：生成用于稀疏视图表面重建的高斯面元表示
 
 ### 速读区论文标签
-1. [F4Splat: Feed-Forward Predictive Densification for Feed-Forward 3D Gaussian Splatting](/202604/05/2603.21304v1-f4splat-feed-forward-predictive-densification-for-feed-forward-3d-gaussian-splatting)  
+1. [From None to All: Self-Supervised 3D Reconstruction via Novel View Synthesis](/202604/12/2603.27455v1-from-none-to-all-self-supervised-3d-reconstruction-via-novel-view-synthesis)  
    标签：评分：8.0/10、query:3dgsir
-   evidence：前馈3D高斯泼溅重建
-2. [F4Splat: Feed-Forward Predictive Densification for Feed-Forward 3D Gaussian Splatting](/202604/05/2603.21304v2-f4splat-feed-forward-predictive-densification-for-feed-forward-3d-gaussian-splatting)  
+   evidence：通过显式3D高斯几何进行自监督3D重建
+2. [GS3LAM: Gaussian Semantic Splatting SLAM](/202604/12/2603.27781v1-gs3lam-gaussian-semantic-splatting-slam)  
    标签：评分：8.0/10、query:3dgsir
-   evidence：前馈3D高斯泼溅重建
-3. [FreeArtGS: Articulated Gaussian Splatting Under Free-moving Scenario](/202604/05/2603.22102v1-freeartgs-articulated-gaussian-splatting-under-free-moving-scenario)  
+   evidence：用于SLAM场景表示的高斯语义泼溅
+3. [DipGuava: Disentangling Personalized Gaussian Features for 3D Head Avatars from Monocular Video](/202604/12/2603.28003v1-dipguava-disentangling-personalized-gaussian-features-for-3d-head-avatars-from-monocular-video)  
    标签：评分：8.0/10、query:3dgsir
-   evidence：使用高斯泼溅进行关节物体重建
-4. [Instrument-Splatting++: Towards Controllable Surgical Instrument Digital Twin Using Gaussian Splatting](/202604/05/2603.22792v2-instrument-splatting-towards-controllable-surgical-instrument-digital-twin-using-gaussian-splatting)  
+   evidence：将面部外观解耦为几何驱动的基础层和个性化细节
+4. [SVGS: Single-View to 3D Object Editing via Gaussian Splatting](/202604/12/2603.28126v1-svgs-single-view-to-3d-object-editing-via-gaussian-splatting)  
    标签：评分：8.0/10、query:3dgsir
-   evidence：利用CAD先验将手术器械重建为可控高斯资产
-5. [ObjectMorpher: 3D-Aware Image Editing via Deformable 3DGS Models](/202604/05/2603.28152v1-objectmorpher-3d-aware-image-editing-via-deformable-3dgs-models)  
+   evidence：使用高斯泼溅表示进行3D物体编辑
+5. [4C4D: 4 Camera 4D Gaussian Splatting](/202604/12/2604.04063v1-4c4d-4-camera-4d-gaussian-splatting)  
    标签：评分：7.0/10、query:3dgsir
-   evidence：具有协调光照和颜色的可变形3DGS模型用于编辑
-6. [GeoHCC: Local Geometry-Aware Hierarchical Context Compression for 3D Gaussian Splatting](/202604/05/2603.28431v1-geohcc-local-geometry-aware-hierarchical-context-compression-for-3d-gaussian-splatting)  
+   evidence：基于极稀疏相机视图的4D高斯泼溅
+6. [GA-GS: Generation-Assisted Gaussian Splatting for Static Scene Reconstruction](/202604/12/2604.04331v1-ga-gs-generation-assisted-gaussian-splatting-for-static-scene-reconstruction)  
    标签：评分：7.0/10、query:3dgsir
-   evidence：3D高斯泼溅的几何感知压缩
-7. [LG-HCC: Local Geometry-Aware Hierarchical Context Compression for 3D Gaussian Splatting](/202604/05/2603.28431v2-lg-hcc-local-geometry-aware-hierarchical-context-compression-for-3d-gaussian-splatting)  
+   evidence：生成辅助的高斯泼溅用于静态场景重建
+7. [PR-IQA: Partial-Reference Image Quality Assessment for Diffusion-Based Novel View Synthesis](/202604/12/2604.04576v2-pr-iqa-partial-reference-image-quality-assessment-for-diffusion-based-novel-view-synthesis)  
    标签：评分：7.0/10、query:3dgsir
-   evidence：几何感知的高斯泼溅压缩框架
-8. [LG-HCC: Local Geometry-Aware Hierarchical Context Compression for 3D Gaussian Splatting](/202604/05/2603.28431v3-lg-hcc-local-geometry-aware-hierarchical-context-compression-for-3d-gaussian-splatting)  
+   evidence：评估扩散生成的视图以辅助3D高斯泼溅重建
+8. [LSRM: High-Fidelity Object-Centric Reconstruction via Scaled Context Windows](/202604/12/2604.05182v1-lsrm-high-fidelity-object-centric-reconstruction-via-scaled-context-windows)  
    标签：评分：7.0/10、query:3dgsir
-   evidence：针对3D高斯泼溅表示的局部几何感知压缩
-9. [DiffSoup: Direct Differentiable Rasterization of Triangle Soup for Extreme Radiance Field Simplification](/202604/05/2603.27151v1-diffsoup-direct-differentiable-rasterization-of-triangle-soup-for-extreme-radiance-field-simplification)  
+   evidence：使用缩放上下文窗口的前馈3D重建和逆向渲染
+9. [HOIGS: Human-Object Interaction Gaussian Splatting](/202604/12/2604.04016v1-hoigs-human-object-interaction-gaussian-splatting)  
    标签：评分：6.0/10、query:3dgsir
-   evidence：用于辐射场重建的可微分光栅化
-10. [UltraG-Ray: Physics-Based Gaussian Ray Casting for Novel Ultrasound View Synthesis](/202604/05/2603.29022v1-ultrag-ray-physics-based-gaussian-ray-casting-for-novel-ultrasound-view-synthesis)  
+   evidence：使用高斯泼溅进行人机交互动态场景重建
+10. [PR-IQA: Partial-Reference Image Quality Assessment for Diffusion-Based Novel View Synthesis](/202604/12/2604.04576v1-pr-iqa-partial-reference-image-quality-assessment-for-diffusion-based-novel-view-synthesis)  
    标签：评分：6.0/10、query:3dgsir
-   evidence：基于物理的高斯射线投射用于超声视角合成
-11. [TRACE: High-Fidelity 3D Scene Editing via Tangible Reconstruction and Geometry-Aligned Contextual Video Masking](/202604/05/2604.01207v1-trace-high-fidelity-3d-scene-editing-via-tangible-reconstruction-and-geometry-aligned-contextual-video-masking)  
+   evidence：扩散视图质量评估以辅助3DGS重建
+11. [3D Gaussian Splatting for Annular Dark Field Scanning Transmission Electron Microscopy Tomography Reconstruction](/202604/12/2604.04693v1-3d-gaussian-splatting-for-annular-dark-field-scanning-transmission-electron-microscopy-tomography-reconstruction)  
    标签：评分：6.0/10、query:3dgsir
-   evidence：基于显式3D几何的网格引导3DGS编辑
+   evidence：用于STEM断层扫描重建的3D高斯泼溅
 
 
 <div class="dpr-home-promo-card">
