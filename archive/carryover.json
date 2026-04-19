@@ -1,417 +1,8 @@
 {
-  "generated_at": "2026-04-12T19:51:36.063769+00:00",
-  "updated_date": "20260412",
+  "generated_at": "2026-04-19T19:51:11.416435+00:00",
+  "updated_date": "20260419",
   "carryover_days": 9,
   "items": [
-    {
-      "id": "2604.00538v1",
-      "title": "TRiGS: Temporal Rigid-Body Motion for Scalable 4D Gaussian Splatting",
-      "abstract": "Recent 4D Gaussian Splatting (4DGS) methods achieve impressive dynamic scene reconstruction but often rely on piecewise linear velocity approximations and short temporal windows. This disjointed modeling leads to severe temporal fragmentation, forcing primitives to be repeatedly eliminated and regenerated to track complex nonlinear dynamics. This makeshift approximation eliminates the long-term temporal identity of objects and causes an inevitable proliferation of Gaussians, hindering scalability to extended video sequences. To address this, we propose TRiGS, a novel 4D representation that utilizes unified, continuous geometric transformations. By integrating $SE(3)$ transformations, hierarchical Bezier residuals, and learnable local anchors, TRiGS models geometrically consistent rigid motions for individual primitives. This continuous formulation preserves temporal identity and effectively mitigates unbounded memory growth. Extensive experiments demonstrate that TRiGS achieves high fidelity rendering on standard benchmarks while uniquely scaling to extended video sequences (e.g., 600 to 1200 frames) without severe memory bottlenecks, significantly outperforming prior works in temporal stability.",
-      "authors": [
-        "Suwoong Yeom",
-        "Joonsik Nam",
-        "Seunggyu Choi",
-        "Lucas Yunkyu Lee",
-        "Sangmin Kim",
-        "Jaesik Park",
-        "Joonsoo Kim",
-        "Kugjin Yun",
-        "Kyeongbo Kong",
-        "Sukju Kang"
-      ],
-      "primary_category": "cs.CV",
-      "categories": [
-        "cs.CV"
-      ],
-      "published": "2026-04-01T06:35:13+00:00",
-      "link": "https://arxiv.org/pdf/2604.00538v1",
-      "tags": [
-        "keyword:3DGSIR",
-        "query:3DGSIR"
-      ],
-      "llm_score": 8.0,
-      "llm_evidence_en": "Scalable 4D Gaussian Splatting for dynamic scene reconstruction",
-      "llm_evidence_cn": "用于动态场景重建的可扩展4D高斯泼溅",
-      "llm_evidence": "用于动态场景重建的可扩展4D高斯泼溅",
-      "canonical_evidence": "用于动态场景重建的可扩展4D高斯泼溅",
-      "llm_tldr_en": "TRiGS uses continuous geometric transformations to improve the scalability and identity of 4D Gaussian Splatting.",
-      "llm_tldr_cn": "TRiGS利用连续几何变换提升了4D高斯泼溅的可扩展性和身份一致性。",
-      "llm_tldr": "TRiGS利用连续几何变换提升了4D高斯泼溅的可扩展性和身份一致性。",
-      "llm_tags": [
-        "query:3dgsir"
-      ],
-      "matched_query_tag": "query:3dgsir",
-      "matched_query_text": "3D Gaussian Splatting representation and rendering",
-      "matched_requirement_id": "req-3",
-      "selection_source": "carryover_cache",
-      "paper_id": "2604.00538v1",
-      "carry_days": 8
-    },
-    {
-      "id": "2604.00494v1",
-      "title": "ARGS: Auto-Regressive Gaussian Splatting via Parallel Progressive Next-Scale Prediction",
-      "abstract": "Auto-regressive frameworks for next-scale prediction of 2D images have demonstrated strong potential for producing diverse and sophisticated content by progressively refining a coarse input. However, extending this paradigm to 3D object generation remains largely unexplored. In this paper, we introduce auto-regressive Gaussian splatting (ARGS), a framework for making next-scale predictions in parallel for generation according to levels of detail. We propose a Gaussian simplification strategy and reverse the simplification to guide next-scale generation. Benefiting from the use of hierarchical trees, the generation process requires only \\(\\mathcal{O}(\\log n)\\) steps, where \\(n\\) is the number of points. Furthermore, we propose a tree-based transformer to predict the tree structure auto-regressively, allowing leaf nodes to attend to their internal ancestors to enhance structural consistency. Extensive experiments demonstrate that our approach effectively generates multi-scale Gaussian representations with controllable levels of detail, visual fidelity, and a manageable time consumption budget.",
-      "authors": [
-        "Quanyuan Ruan",
-        "Kewei Shi",
-        "Jiabao Lei",
-        "Xifeng Gao",
-        "Xiaoguang Han"
-      ],
-      "primary_category": "cs.CV",
-      "categories": [
-        "cs.CV"
-      ],
-      "published": "2026-04-01T05:21:59+00:00",
-      "link": "https://arxiv.org/pdf/2604.00494v1",
-      "tags": [
-        "keyword:3DGSIR",
-        "query:3DGSIR"
-      ],
-      "llm_score": 8.0,
-      "llm_evidence_en": "Auto-regressive framework for 3D Gaussian Splatting generation",
-      "llm_evidence_cn": "用于3D高斯泼溅生成的自回归框架",
-      "llm_evidence": "用于3D高斯泼溅生成的自回归框架",
-      "canonical_evidence": "用于3D高斯泼溅生成的自回归框架",
-      "llm_tldr_en": "ARGS introduces an auto-regressive framework for parallel next-scale prediction in 3D Gaussian generation.",
-      "llm_tldr_cn": "ARGS引入了一个自回归框架，用于3D高斯生成中的并行次级尺度预测。",
-      "llm_tldr": "ARGS引入了一个自回归框架，用于3D高斯生成中的并行次级尺度预测。",
-      "llm_tags": [
-        "query:3dgsir"
-      ],
-      "matched_query_tag": "query:3dgsir",
-      "matched_query_text": "3D Gaussian Splatting representation and rendering",
-      "matched_requirement_id": "req-3",
-      "selection_source": "carryover_cache",
-      "paper_id": "2604.00494v1",
-      "carry_days": 8
-    },
-    {
-      "id": "2604.00648v1",
-      "title": "DirectFisheye-GS: Enabling Native Fisheye Input in Gaussian Splatting with Cross-View Joint Optimization",
-      "abstract": "3D Gaussian Splatting (3DGS) has enabled efficient 3D scene reconstruction from everyday images with real-time, high-fidelity rendering, greatly advancing VR/AR applications. Fisheye cameras, with their wider field of view (FOV), promise high-quality reconstructions from fewer inputs and have recently attracted much attention. However, since 3DGS relies on rasterization, most subsequent works involving fisheye camera inputs first undistort images before training, which introduces two problems: 1) Black borders at image edges cause information loss and negate the fisheye's large FOV advantage; 2) Undistortion's stretch-and-interpolate resampling spreads each pixel's value over a larger area, diluting detail density -- causes 3DGS overfitting these low-frequency zones, producing blur and floating artifacts. In this work, we integrate fisheye camera model into the original 3DGS framework, enabling native fisheye image input for training without preprocessing. Despite correct modeling, we observed that the reconstructed scenes still exhibit floaters at image edges: Distortion increases toward the periphery, and 3DGS's original per-iteration random-selecting-view optimization ignores the cross-view correlations of a Gaussian, leading to extreme shapes (e.g., oversized or elongated) that degrade reconstruction quality. To address this, we introduce a feature-overlap-driven cross-view joint optimization strategy that establishes consistent geometric and photometric constraints across views-a technique equally applicable to existing pinhole-camera-based pipelines. Our DirectFisheye-GS matches or surpasses state-of-the-art performance on public datasets.",
-      "authors": [
-        "Zhengxian Yang",
-        "Fei Xie",
-        "Xutao Xue",
-        "Rui Zhang",
-        "Taicheng Huang",
-        "Yang Liu",
-        "Mengqi Ji",
-        "Tao Yu"
-      ],
-      "primary_category": "cs.CV",
-      "categories": [
-        "cs.CV"
-      ],
-      "published": "2026-04-01T09:00:04+00:00",
-      "link": "https://arxiv.org/pdf/2604.00648v1",
-      "tags": [
-        "keyword:3DGSIR",
-        "query:3DGSIR"
-      ],
-      "llm_score": 8.0,
-      "llm_evidence_en": "3D scene reconstruction from fisheye images using 3DGS",
-      "llm_evidence_cn": "使用3DGS从鱼眼图像进行3D场景重建",
-      "llm_evidence": "使用3DGS从鱼眼图像进行3D场景重建",
-      "canonical_evidence": "使用3DGS从鱼眼图像进行3D场景重建",
-      "llm_tldr_en": "DirectFisheye-GS enables native fisheye input for 3DGS to improve reconstruction quality and field of view.",
-      "llm_tldr_cn": "DirectFisheye-GS支持3DGS的原生鱼眼输入，提升了重建质量和视野范围。",
-      "llm_tldr": "DirectFisheye-GS支持3DGS的原生鱼眼输入，提升了重建质量和视野范围。",
-      "llm_tags": [
-        "query:3dgsir"
-      ],
-      "matched_query_tag": "query:3dgsir",
-      "matched_query_text": "Inverse rendering techniques for 3D reconstruction",
-      "matched_requirement_id": "req-1",
-      "selection_source": "carryover_cache",
-      "paper_id": "2604.00648v1",
-      "carry_days": 8
-    },
-    {
-      "id": "2604.01994v1",
-      "title": "Resonance4D: Frequency-Domain Motion Supervision for Preset-Free Physical Parameter Learning in 4D Dynamic Physical Scene Simulation",
-      "abstract": "Physics-driven 4D dynamic simulation from static 3D scenes remains constrained by an overlooked contradiction: reliable motion supervision often relies on online video diffusion or optical-flow pipelines whose computational cost exceeds that of the simulator itself. Existing methods further simplify inverse physical modeling by optimizing only partial material parameters, limiting realism in scenes with complex materials and dynamics. We present Resonance4D, a physics-driven 4D dynamic simulation framework that couples 3D Gaussian Splatting with the Material Point Method through lightweight yet physically expressive supervision. Our key insight is that dynamic consistency can be enforced without dense temporal generation by jointly constraining motion in complementary domains. To this end, we introduce Dual-domain Motion Supervision (DMS), which combines spatial structural consistency for local deformation with frequency-domain spectral consistency for oscillatory and global dynamic patterns, substantially reducing training cost and memory overhead while preserving physically meaningful motion cues. To enable stable full-parameter physical recovery, we further combine zero-shot text-prompted segmentation with simulation-guided initialization to automatically decompose Gaussians into object-part-level regions and support joint optimization of full material parameters. Experiments on both synthetic and real scenes show that Resonance4D achieves strong physical fidelity and motion consistency while reducing peak GPU memory from over 35\\,GB to around 20\\,GB, enabling high-fidelity physics-driven 4D simulation on a single consumer-grade GPU.",
-      "authors": [
-        "Changshe Zhang",
-        "Jie Feng",
-        "Siyu Chen",
-        "Guanbin Li",
-        "Ronghua Shang",
-        "Junpeng Zhang"
-      ],
-      "primary_category": "cs.CV",
-      "categories": [
-        "cs.CV"
-      ],
-      "published": "2026-04-02T13:00:22+00:00",
-      "link": "https://arxiv.org/pdf/2604.01994v1",
-      "tags": [
-        "keyword:3DGSIR",
-        "query:3DGSIR"
-      ],
-      "llm_score": 8.0,
-      "llm_evidence_en": "inverse physical modeling coupling 3DGS with Material Point Method",
-      "llm_evidence_cn": "将3DGS与物质点法结合的逆向物理建模",
-      "llm_evidence": "将3DGS与物质点法结合的逆向物理建模",
-      "canonical_evidence": "将3DGS与物质点法结合的逆向物理建模",
-      "llm_tldr_en": "Resonance4D couples 3DGS with physical simulation for learning material parameters in dynamic scenes.",
-      "llm_tldr_cn": "Resonance4D 将3DGS与物理模拟结合，用于学习动态场景中的材质参数。",
-      "llm_tldr": "Resonance4D 将3DGS与物理模拟结合，用于学习动态场景中的材质参数。",
-      "llm_tags": [
-        "query:3dgsir"
-      ],
-      "matched_query_tag": "query:3dgsir",
-      "matched_query_text": "Physically based inverse rendering with 3D Gaussian primitives",
-      "matched_requirement_id": "req-9",
-      "selection_source": "carryover_cache",
-      "paper_id": "2604.01994v1",
-      "carry_days": 8
-    },
-    {
-      "id": "2604.02120v1",
-      "title": "GEMM-GS: Accelerating 3D Gaussian Splatting on Tensor Cores with GEMM-Compatible Blending",
-      "abstract": "Neural Radiance Fields (NeRF) enables 3D scene reconstruction from several 2D images but incurs high rendering latency via its point-sampling design. 3D Gaussian Splatting (3DGS) improves on NeRF with explicit scene representation and an optimized pipeline yet still fails to meet practical real-time demands. Existing acceleration works overlook the evolving Tensor Cores of modern GPUs because 3DGS pipeline lacks General Matrix Multiplication (GEMM) operations. This paper proposes GEMM-GS, an acceleration approach utilizing tensor cores on GPUs via GEMM-friendly blending transformation. It equivalently reformulates the 3DGS blending process into a GEMM-compatible form to utilize Tensor Cores. A high-performance CUDA kernel is designed, integrating a three-stage double-buffered pipeline that overlaps computation and memory access. Extensive experiments show that GEMM-GS achieves $1.42\\times$ speedup over vanilla 3DGS and provides an additional $1.47\\times$ speedup on average when combining with existing acceleration approaches. Code is released at https://github.com/shieldforever/GEMM-GS.",
-      "authors": [
-        "Haomin Li",
-        "Bowen Zhu",
-        "Fangxin Liu",
-        "Zongwu Wang",
-        "Xinran Liang",
-        "Li Jiang",
-        "Haibing Guan"
-      ],
-      "primary_category": "cs.AR",
-      "categories": [
-        "cs.AR",
-        "cs.GR"
-      ],
-      "published": "2026-04-02T14:56:06+00:00",
-      "link": "https://arxiv.org/pdf/2604.02120v1",
-      "tags": [
-        "keyword:3DGSIR",
-        "query:3DGSIR"
-      ],
-      "llm_score": 8.0,
-      "llm_evidence_en": "Accelerating 3D Gaussian Splatting rendering via GEMM-compatible blending",
-      "llm_evidence_cn": "通过GEMM兼容混合加速3D高斯泼溅渲染",
-      "llm_evidence": "通过GEMM兼容混合加速3D高斯泼溅渲染",
-      "canonical_evidence": "通过GEMM兼容混合加速3D高斯泼溅渲染",
-      "llm_tldr_en": "GEMM-GS reformulates 3DGS blending to utilize GPU Tensor Cores for faster rendering.",
-      "llm_tldr_cn": "GEMM-GS通过重构3DGS混合过程以利用GPU Tensor Core，显著提升了渲染速度。",
-      "llm_tldr": "GEMM-GS通过重构3DGS混合过程以利用GPU Tensor Core，显著提升了渲染速度。",
-      "llm_tags": [
-        "query:3dgsir"
-      ],
-      "matched_query_tag": "query:3dgsir",
-      "matched_query_text": "3D Gaussian Splatting representation and rendering",
-      "matched_requirement_id": "req-3",
-      "selection_source": "carryover_cache",
-      "paper_id": "2604.02120v1",
-      "carry_days": 8
-    },
-    {
-      "id": "2604.01204v1",
-      "title": "Neural Harmonic Textures for High-Quality Primitive Based Neural Reconstruction",
-      "abstract": "Primitive-based methods such as 3D Gaussian Splatting have recently become the state-of-the-art for novel-view synthesis and related reconstruction tasks. Compared to neural fields, these representations are more flexible, adaptive, and scale better to large scenes. However, the limited expressivity of individual primitives makes modeling high-frequency detail challenging. We introduce Neural Harmonic Textures, a neural representation approach that anchors latent feature vectors on a virtual scaffold surrounding each primitive. These features are interpolated within the primitive at ray intersection points. Inspired by Fourier analysis, we apply periodic activations to the interpolated features, turning alpha blending into a weighted sum of harmonic components. The resulting signal is then decoded in a single deferred pass using a small neural network, significantly reducing computational cost. Neural Harmonic Textures yield state-of-the-art results in real-time novel view synthesis while bridging the gap between primitive- and neural-field-based reconstruction. Our method integrates seamlessly into existing primitive-based pipelines such as 3DGUT, Triangle Splatting, and 2DGS. We further demonstrate its generality with applications to 2D image fitting and semantic reconstruction.",
-      "authors": [
-        "Jorge Condor",
-        "Nicolas Moenne-Loccoz",
-        "Merlin Nimier-David",
-        "Piotr Didyk",
-        "Zan Gojcic",
-        "Qi Wu"
-      ],
-      "primary_category": "cs.CV",
-      "categories": [
-        "cs.CV",
-        "cs.AI",
-        "cs.GR",
-        "cs.LG"
-      ],
-      "published": "2026-04-01T17:48:22+00:00",
-      "link": "https://arxiv.org/pdf/2604.01204v1",
-      "tags": [
-        "keyword:3DGSIR",
-        "query:3DGSIR"
-      ],
-      "llm_score": 8.0,
-      "llm_evidence_en": "Neural representation for high-quality 3D Gaussian Splatting reconstruction",
-      "llm_evidence_cn": "用于高质量3D高斯泼溅重建的神经常规表示",
-      "llm_evidence": "用于高质量3D高斯泼溅重建的神经常规表示",
-      "canonical_evidence": "用于高质量3D高斯泼溅重建的神经常规表示",
-      "llm_tldr_en": "Neural Harmonic Textures enhance 3DGS by anchoring latent features on a virtual scaffold for high-frequency detail.",
-      "llm_tldr_cn": "神经谐波纹理通过在虚拟支架上锚定潜变量，增强了3DGS对高频细节的建模能力。",
-      "llm_tldr": "神经谐波纹理通过在虚拟支架上锚定潜变量，增强了3DGS对高频细节的建模能力。",
-      "llm_tags": [
-        "query:3dgsir"
-      ],
-      "matched_query_tag": "query:3dgsir",
-      "matched_query_text": "3D Gaussian Splatting representation and rendering",
-      "matched_requirement_id": "req-3",
-      "selection_source": "carryover_cache",
-      "paper_id": "2604.01204v1",
-      "carry_days": 8
-    },
-    {
-      "id": "2604.01678v1",
-      "title": "Director: Instance-aware Gaussian Splatting for Dynamic Scene Modeling and Understanding",
-      "abstract": "Volumetric video seeks to model dynamic scenes as temporally coherent 4D representations. While recent Gaussian-based approaches achieve impressive rendering fidelity, they primarily emphasize appearance but are largely agnostic to instance-level structure, limiting stable tracking and semantic reasoning in highly dynamic scenarios. In this paper, we present Director, a unified spatio-temporal Gaussian representation that jointly models human performance, high-fidelity rendering, and instance-level semantics. Our key insight is that embedding instance-consistent semantics naturally complements 4D modeling, enabling more accurate scene decomposition while supporting robust dynamic scene understanding. To this end, we leverage temporally aligned instance masks and sentence embeddings derived from Multimodal Large Language Models to supervise the learnable semantic features of each Gaussian via two MLP decoders, enabling language-aligned 4D representations and enforcing identity consistency over time. To enhance temporal stability, we bridge 2D optical flow with 4D Gaussians and finetune their motions, yielding reliable initialization and reducing drift. For the training, we further introduce a geometry-aware SDF constraints, along with regularization terms that enforces surface continuity, enhancing temporal coherence in dynamic foreground modeling. Experiments demonstrate that Director achieves temporally coherent 4D reconstructions while simultaneously enabling instance segmentation and open-vocabulary querying.",
-      "authors": [
-        "Yuheng Jiang",
-        "Yiwen Cai",
-        "Zihao Wang",
-        "Yize Wu",
-        "Sicheng Li",
-        "Zhuo Su",
-        "Shaohui Jiao",
-        "Lan Xu"
-      ],
-      "primary_category": "cs.CV",
-      "categories": [
-        "cs.CV"
-      ],
-      "published": "2026-04-02T06:29:53+00:00",
-      "link": "https://arxiv.org/pdf/2604.01678v1",
-      "tags": [
-        "keyword:3DGSIR",
-        "query:3DGSIR"
-      ],
-      "llm_score": 8.0,
-      "llm_evidence_en": "Instance-aware Gaussian Splatting for dynamic scene modeling",
-      "llm_evidence_cn": "用于动态场景建模的实例感知高斯泼溅",
-      "llm_evidence": "用于动态场景建模的实例感知高斯泼溅",
-      "canonical_evidence": "用于动态场景建模的实例感知高斯泼溅",
-      "llm_tldr_en": "Proposes a unified spatio-temporal Gaussian representation for dynamic scene modeling and semantic understanding.",
-      "llm_tldr_cn": "提出了一种统一的时空高斯表示，用于动态场景建模和语义理解。",
-      "llm_tldr": "提出了一种统一的时空高斯表示，用于动态场景建模和语义理解。",
-      "llm_tags": [
-        "query:3dgsir"
-      ],
-      "matched_query_tag": "query:3dgsir",
-      "matched_query_text": "3D Gaussian Splatting representation and rendering",
-      "matched_requirement_id": "req-3",
-      "selection_source": "carryover_cache",
-      "paper_id": "2604.01678v1",
-      "carry_days": 8
-    },
-    {
-      "id": "2603.29296v1",
-      "title": "MotionScale: Reconstructing Appearance, Geometry, and Motion of Dynamic Scenes with Scalable 4D Gaussian Splatting",
-      "abstract": "Realistic reconstruction of dynamic 4D scenes from monocular videos is essential for understanding the physical world. Despite recent progress in neural rendering, existing methods often struggle to recover accurate 3D geometry and temporally consistent motion in complex environments. To address these challenges, we propose MotionScale, a 4D Gaussian Splatting framework that scales efficiently to large scenes and extended sequences while maintaining high-fidelity structural and motion coherence. At the core of our approach is a scalable motion field parameterized by cluster-centric basis transformations that adaptively expand to capture diverse and evolving motion patterns. To ensure robust reconstruction over long durations, we introduce a progressive optimization strategy comprising two decoupled propagation stages: 1) A background extension stage that adapts to newly visible regions, refines camera poses, and explicitly models transient shadows; 2) A foreground propagation stage that enforces motion consistency through a specialized three-stage refinement process. Extensive experiments on challenging real-world benchmarks demonstrate that MotionScale significantly outperforms state-of-the-art methods in both reconstruction quality and temporal stability. Project page: https://hrzhou2.github.io/motion-scale-web/.",
-      "authors": [
-        "Haoran Zhou",
-        "Gim Hee Lee"
-      ],
-      "primary_category": "cs.CV",
-      "categories": [
-        "cs.CV"
-      ],
-      "published": "2026-03-31T06:03:59+00:00",
-      "link": "https://arxiv.org/pdf/2603.29296v1",
-      "tags": [
-        "keyword:3DGSIR",
-        "query:3DGSIR"
-      ],
-      "llm_score": 8.0,
-      "llm_evidence_en": "Reconstructing geometry and motion with 4D Gaussian Splatting",
-      "llm_evidence_cn": "利用4D高斯泼溅重建几何与运动",
-      "llm_evidence": "利用4D高斯泼溅重建几何与运动",
-      "canonical_evidence": "利用4D高斯泼溅重建几何与运动",
-      "llm_tldr_en": "Scalable 4D Gaussian Splatting for reconstructing appearance, geometry, and motion in dynamic scenes.",
-      "llm_tldr_cn": "可扩展的4D高斯泼溅技术，用于重建动态场景的外观、几何和运动。",
-      "llm_tldr": "可扩展的4D高斯泼溅技术，用于重建动态场景的外观、几何和运动。",
-      "llm_tags": [
-        "query:3dgsir"
-      ],
-      "matched_query_tag": "query:3dgsir",
-      "matched_query_text": "Geometry and surface reconstruction from Gaussians",
-      "matched_requirement_id": "req-6",
-      "selection_source": "carryover_cache",
-      "paper_id": "2603.29296v1",
-      "carry_days": 8
-    },
-    {
-      "id": "2604.05721v1",
-      "title": "GaussianGrow: Geometry-aware Gaussian Growing from 3D Point Clouds with Text Guidance",
-      "abstract": "3D Gaussian Splatting has demonstrated superior performance in rendering efficiency and quality, yet the generation of 3D Gaussians still remains a challenge without proper geometric priors. Existing methods have explored predicting point maps as geometric references for inferring Gaussian primitives, while the unreliable estimated geometries may lead to poor generations. In this work, we introduce GaussianGrow, a novel approach that generates 3D Gaussians by learning to grow them from easily accessible 3D point clouds, naturally enforcing geometric accuracy in Gaussian generation. Specifically, we design a text-guided Gaussian growing scheme that leverages a multi-view diffusion model to synthesize consistent appearances from input point clouds for supervision. To mitigate artifacts caused by fusing neighboring views, we constrain novel views generated at non-preset camera poses identified in overlapping regions across different views. For completing the hard-to-observe regions, we propose to iteratively detect the camera pose by observing the largest un-grown regions in point clouds and inpainting them by inpainting the rendered view with a pretrained 2D diffusion model. The process continues until complete Gaussians are generated. We extensively evaluate GaussianGrow on text-guided Gaussian generation from synthetic and even real-scanned point clouds. Project Page: https://weiqi-zhang.github.io/GaussianGrow",
-      "authors": [
-        "Weiqi Zhang",
-        "Junsheng Zhou",
-        "Haotian Geng",
-        "Kanle Shi",
-        "Shenkun Xu",
-        "Yi Fang",
-        "Yu-Shen Liu"
-      ],
-      "primary_category": "cs.CV",
-      "categories": [
-        "cs.CV"
-      ],
-      "published": "2026-04-07T11:23:23+00:00",
-      "link": "https://arxiv.org/pdf/2604.05721v1",
-      "tags": [
-        "keyword:3DGSIR",
-        "query:3DGSIR"
-      ],
-      "llm_score": 8.0,
-      "llm_evidence_en": "generates 3D Gaussians from 3D point clouds with text guidance",
-      "llm_evidence_cn": "在文本引导下从3D点云生成3D高斯",
-      "llm_evidence": "在文本引导下从3D点云生成3D高斯",
-      "canonical_evidence": "在文本引导下从3D点云生成3D高斯",
-      "llm_tldr_en": "GaussianGrow generates geometry-aware 3D Gaussians by growing them from point clouds with text-guided diffusion.",
-      "llm_tldr_cn": "GaussianGrow通过文本引导的扩散模型从点云中生长出具有几何感知能力的3D高斯。",
-      "llm_tldr": "GaussianGrow通过文本引导的扩散模型从点云中生长出具有几何感知能力的3D高斯。",
-      "llm_tags": [
-        "query:3dgsir"
-      ],
-      "matched_query_tag": "query:3dgsir",
-      "matched_query_text": "Geometry and surface reconstruction from Gaussians",
-      "matched_requirement_id": "req-6",
-      "selection_source": "carryover_cache",
-      "paper_id": "2604.05721v1",
-      "carry_days": 1
-    },
-    {
-      "id": "2604.05070v1",
-      "title": "Part-Level 3D Gaussian Vehicle Generation with Joint and Hinge Axis Estimation",
-      "abstract": "Simulation is essential for autonomous driving, yet current frameworks often model vehicles as rigid assets and fail to capture part-level articulation. With perception algorithms increasingly leveraging dynamics such as wheel steering or door opening, realistic simulation requires animatable vehicle representations. Existing CAD-based pipelines are limited by library coverage and fixed templates, preventing faithful reconstruction of in-the-wild instances.   We propose a generative framework that, from a single image or sparse multi-view input, synthesizes an animatable 3D Gaussian vehicle. Our method addresses two challenges: (i) large 3D asset generators are optimized for static quality but not articulation, leading to distortions at part boundaries when animated; and (ii) segmentation alone cannot provide the kinematic parameters required for motion. To overcome this, we introduce a part-edge refinement module that enforces exclusive Gaussian ownership and a kinematic reasoning head that predicts joint positions and hinge axes of movable parts. Together, these components enable faithful part-aware simulation, bridging the gap between static generation and animatable vehicle models.",
-      "authors": [
-        "Shiyao Qian",
-        "Yuan Ren",
-        "Dongfeng Bai",
-        "Bingbing Liu"
-      ],
-      "primary_category": "cs.AI",
-      "categories": [
-        "cs.AI",
-        "cs.CV",
-        "cs.RO"
-      ],
-      "published": "2026-04-06T18:16:12+00:00",
-      "link": "https://arxiv.org/pdf/2604.05070v1",
-      "tags": [
-        "keyword:3DGSIR",
-        "query:3DGSIR"
-      ],
-      "llm_score": 8.0,
-      "llm_evidence_en": "synthesizes an animatable 3D Gaussian vehicle from images",
-      "llm_evidence_cn": "从图像中合成可动画化的3D高斯车辆",
-      "llm_evidence": "从图像中合成可动画化的3D高斯车辆",
-      "canonical_evidence": "从图像中合成可动画化的3D高斯车辆",
-      "llm_tldr_en": "A generative framework for part-level 3D Gaussian vehicle reconstruction and articulation estimation.",
-      "llm_tldr_cn": "一种用于部件级3D高斯车辆重建和关节估计的生成框架。",
-      "llm_tldr": "一种用于部件级3D高斯车辆重建和关节估计的生成框架。",
-      "llm_tags": [
-        "query:3dgsir"
-      ],
-      "matched_query_tag": "query:3dgsir",
-      "matched_query_text": "3D Gaussian Splatting representation and rendering",
-      "matched_requirement_id": "req-3",
-      "selection_source": "carryover_cache",
-      "paper_id": "2604.05070v1",
-      "carry_days": 1
-    },
     {
       "id": "2604.07986v1",
       "title": "DP-DeGauss: Dynamic Probabilistic Gaussian Decomposition for Egocentric 4D Scene Reconstruction",
@@ -450,46 +41,7 @@
       "matched_requirement_id": "req-8",
       "selection_source": "carryover_cache",
       "paper_id": "2604.07986v1",
-      "carry_days": 1
-    },
-    {
-      "id": "2604.06739v1",
-      "title": "DOC-GS: Dual-Domain Observation and Calibration for Reliable Sparse-View Gaussian Splatting",
-      "abstract": "Sparse-view reconstruction with 3D Gaussian Splatting (3DGS) is fundamentally ill-posed due to insufficient geometric supervision, often leading to severe overfitting and the emergence of structural distortions and translucent haze-like artifacts. While existing approaches attempt to alleviate this issue via dropout-based regularization, they are largely heuristic and lack a unified understanding of artifact formation. In this paper, we revisit sparse-view 3DGS reconstruction from a new perspective and identify the core challenge as the unobservability of Gaussian primitive reliability. Unreliable Gaussians are insufficiently constrained during optimization and accumulate as haze-like degradations in rendered images. Motivated by this observation, we propose a unified Dual-domain Observation and Calibration (DOC-GS) framework that models and corrects Gaussian reliability through the synergy of optimization-domain inductive bias and observation-domain evidence. Specifically, in the optimization domain, we characterize Gaussian reliability by the degree to which each primitive is constrained during training, and instantiate this signal via a Continuous Depth-Guided Dropout (CDGD) strategy, where the dropout probability serves as an explicit proxy for primitive reliability. This imposes a smooth depth-aware inductive bias to suppress weakly constrained Gaussians and improve optimization stability. In the observation domain, we establish a connection between floater artifacts and atmospheric scattering, and leverage the Dark Channel Prior (DCP) as a structural consistency cue to identify and accumulate anomalous regions. Based on cross-view aggregated evidence, we further design a reliability-driven geometric pruning strategy to remove low-confidence Gaussians.",
-      "authors": [
-        "Hantang Li",
-        "Qiang Zhu",
-        "Xiandong Meng",
-        "Debin Zhao",
-        "Xiaopeng Fan"
-      ],
-      "primary_category": "cs.CV",
-      "categories": [
-        "cs.CV"
-      ],
-      "published": "2026-04-08T07:01:24+00:00",
-      "link": "https://arxiv.org/pdf/2604.06739v1",
-      "tags": [
-        "keyword:3DGSIR",
-        "query:3DGSIR"
-      ],
-      "llm_score": 8.0,
-      "llm_evidence_en": "Sparse-view 3D Gaussian Splatting reconstruction and artifact calibration",
-      "llm_evidence_cn": "稀疏视角3D高斯泼溅重建与伪影校准",
-      "llm_evidence": "稀疏视角3D高斯泼溅重建与伪影校准",
-      "canonical_evidence": "稀疏视角3D高斯泼溅重建与伪影校准",
-      "llm_tldr_en": "Addresses artifacts in sparse-view 3DGS by identifying and calibrating unreliable Gaussian primitives.",
-      "llm_tldr_cn": "通过识别和校准不可靠的高斯基元，解决了稀疏视角3DGS中的伪影问题。",
-      "llm_tldr": "通过识别和校准不可靠的高斯基元，解决了稀疏视角3DGS中的伪影问题。",
-      "llm_tags": [
-        "query:3dgsir"
-      ],
-      "matched_query_tag": "query:3dgsir",
-      "matched_query_text": "3D Gaussian Splatting representation and rendering",
-      "matched_requirement_id": "req-3",
-      "selection_source": "carryover_cache",
-      "paper_id": "2604.06739v1",
-      "carry_days": 1
+      "carry_days": 8
     },
     {
       "id": "2604.07728v1",
@@ -529,77 +81,44 @@
       "matched_requirement_id": "req-6",
       "selection_source": "carryover_cache",
       "paper_id": "2604.07728v1",
-      "carry_days": 1
+      "carry_days": 8
     },
     {
-      "id": "2604.07177v1",
-      "title": "Splats under Pressure: Exploring Performance-Energy Trade-offs in Real-Time 3D Gaussian Splatting under Constrained GPU Budgets",
-      "abstract": "We investigate the feasibility of real-time 3D Gaussian Splatting (3DGS) rasterisation on edge clients with varying Gaussian splat counts and GPU computational budgets. Instead of evaluating multiple physical devices, we adopt an emulation-based approach that approximates different GPU capability tiers on a single high-end GPU. By systematically under-clocking the GPU core frequency and applying power caps, we emulate a controlled range of floating-point performance levels that approximate different GPU capability tiers. At each point in this range, we measure frame rate, runtime behaviour, and power consumption across scenes of varying complexity, pipelines, and optimisations, enabling analysis of power-performance relationships such as FPS-power curves, energy per frame, and performance per watt. This method allows us to approximate the performance envelope of a diverse class of GPUs, from embedded and mobile-class devices to high-end consumer-grade systems.   Our objective is to explore the practical lower bounds of client-side 3DGS rasterisation and assess its potential for deployment in energy-constrained environments, including standalone headsets and thin clients. Through this analysis, we provide early insights into the performance-energy trade-offs that govern the viability of edge-deployed 3DGS systems.",
+      "id": "2604.10578v2",
+      "title": "Rein3D: Reinforced 3D Indoor Scene Generation with Panoramic Video Diffusion Models",
+      "abstract": "The growing demand for Embodied AI and VR applications has highlighted the need for synthesizing high-quality 3D indoor scenes from sparse inputs. However, existing approaches struggle to infer massive amounts of missing geometry in large unseen areas while maintaining global consistency, often producing locally plausible but globally inconsistent reconstructions. We present Rein3D, a framework that reconstructs full 360-degree indoor environments by coupling explicit 3D Gaussian Splatting (3DGS) with temporally coherent priors from video diffusion models. Our approach follows a \"restore-and-refine\" paradigm: we employ a radial exploration strategy to render imperfect panoramic videos along trajectories starting from the origin, effectively uncovering occluded regions from a coarse 3DGS initialization. These sequences are restored by a panoramic video-to-video diffusion model and further enhanced via video super-resolution to synthesize high-fidelity geometry and textures. Finally, these refined videos serve as pseudo-ground truths to update the global 3D Gaussian field. To support this task, we construct PanoV2V-15K, a dataset of over 15K paired clean and degraded panoramic videos for diffusion-based scene restoration. Experiments demonstrate that Rein3D produces photorealistic and globally consistent 3D scenes and significantly improves long-range camera exploration compared with existing baselines.",
       "authors": [
-        "Muhammad Fahim Tajwar",
-        "Arthur Wuhrlin",
-        "Bhojan Anand"
-      ],
-      "primary_category": "cs.GR",
-      "categories": [
-        "cs.GR",
-        "cs.LG"
-      ],
-      "published": "2026-04-08T15:05:29+00:00",
-      "link": "https://arxiv.org/pdf/2604.07177v1",
-      "tags": [
-        "keyword:3DGSIR",
-        "query:3DGSIR"
-      ],
-      "llm_score": 8.0,
-      "llm_evidence_en": "Analyzes real-time 3D Gaussian Splatting rasterization performance",
-      "llm_evidence_cn": "分析实时3D高斯泼溅光栅化性能",
-      "llm_evidence": "分析实时3D高斯泼溅光栅化性能",
-      "canonical_evidence": "分析实时3D高斯泼溅光栅化性能",
-      "llm_tldr_en": "Evaluates performance and energy trade-offs for 3D Gaussian Splatting on constrained GPU hardware.",
-      "llm_tldr_cn": "评估了受限GPU硬件上3D高斯泼溅的性能与能耗权衡。",
-      "llm_tldr": "评估了受限GPU硬件上3D高斯泼溅的性能与能耗权衡。",
-      "llm_tags": [
-        "query:3dgsir"
-      ],
-      "matched_query_tag": "query:3dgsir",
-      "matched_query_text": "3D Gaussian Splatting representation and rendering",
-      "matched_requirement_id": "req-3",
-      "selection_source": "carryover_cache",
-      "paper_id": "2604.07177v1",
-      "carry_days": 1
-    },
-    {
-      "id": "2604.03773v1",
-      "title": "M2StyleGS: Multi-Modality 3D Style Transfer with Gaussian Splatting",
-      "abstract": "Conventional 3D style transfer methods rely on a fixed reference image to apply artistic patterns to 3D scenes. However, in practical applications such as virtual or augmented reality, users often prefer more flexible inputs, including textual descriptions and diverse imagery. In this work, we introduce a novel real-time styling technique M2StyleGS to generate a sequence of precisely color-mapped views. It utilizes 3D Gaussian Splatting (3DGS) as a 3D presentation and multi-modality knowledge refined by CLIP as a reference style. M2StyleGS resolves the abnormal transformation issue by employing a precise feature alignment, namely subdivisive flow, it strengthens the projection of the mapped CLIP text-visual combination feature to the VGG style feature. In addition, we introduce observation loss, which assists in the stylized scene better matching the reference style during the generation, and suppression loss, which suppresses the offset of reference color information throughout the decoding process. By integrating these approaches, M2StyleGS can employ text or images as references to generate a set of style-enhanced novel views. Our experiments show that M2StyleGS achieves better visual quality and surpasses the previous work by up to 32.92% in terms of consistency.",
-      "authors": [
-        "Xingyu Miao",
-        "Xueqi Qiu",
-        "Haoran Duan",
-        "Yawen Huang",
-        "Xian Wu",
-        "Jingjing Deng",
-        "Yang Long"
+        "Dehui Wang",
+        "Congsheng Xu",
+        "Rong Wei",
+        "Yue Shi",
+        "Shoufa Chen",
+        "Dingxiang Luo",
+        "Tianshuo Yang",
+        "Xiaokang Yang",
+        "Wei Sui",
+        "Yusen Qin",
+        "Rui Tang",
+        "Yao Mu"
       ],
       "primary_category": "cs.CV",
       "categories": [
         "cs.CV"
       ],
-      "published": "2026-04-04T15:51:56+00:00",
-      "link": "https://arxiv.org/pdf/2604.03773v1",
+      "published": "2026-04-12T10:55:14+00:00",
+      "link": "https://arxiv.org/pdf/2604.10578v2",
       "tags": [
         "keyword:3DGSIR",
         "query:3DGSIR"
       ],
       "llm_score": 8.0,
-      "llm_evidence_en": "utilizes 3D Gaussian Splatting as a 3D presentation for style transfer",
-      "llm_evidence_cn": "利用3D高斯泼溅作为风格迁移的3D表示",
-      "llm_evidence": "利用3D高斯泼溅作为风格迁移的3D表示",
-      "canonical_evidence": "利用3D高斯泼溅作为风格迁移的3D表示",
-      "llm_tldr_en": "Introduces a real-time 3D style transfer technique using 3D Gaussian Splatting and CLIP.",
-      "llm_tldr_cn": "介绍了一种利用3D高斯泼溅和CLIP的实时3D风格迁移技术。",
-      "llm_tldr": "介绍了一种利用3D高斯泼溅和CLIP的实时3D风格迁移技术。",
+      "llm_evidence_en": "3D Gaussian Splatting for 360-degree indoor environment reconstruction",
+      "llm_evidence_cn": "用于360度室内环境重建的3D高斯泼溅",
+      "llm_evidence": "用于360度室内环境重建的3D高斯泼溅",
+      "canonical_evidence": "用于360度室内环境重建的3D高斯泼溅",
+      "llm_tldr_en": "Couples 3DGS with video diffusion models for consistent 360-degree indoor scene reconstruction.",
+      "llm_tldr_cn": "将3DGS与视频扩散模型结合，实现一致的360度室内场景重建。",
+      "llm_tldr": "将3DGS与视频扩散模型结合，实现一致的360度室内场景重建。",
       "llm_tags": [
         "query:3dgsir"
       ],
@@ -607,7 +126,395 @@
       "matched_query_text": "3D Gaussian Splatting representation and rendering",
       "matched_requirement_id": "req-3",
       "selection_source": "carryover_cache",
-      "paper_id": "2604.03773v1",
+      "paper_id": "2604.10578v2",
+      "carry_days": 1
+    },
+    {
+      "id": "2604.11142v1",
+      "title": "Naka-GS: A Bionics-inspired Dual-Branch Naka Correction and Progressive Point Pruning for Low-Light 3DGS",
+      "abstract": "Low-light conditions severely hinder 3D restoration and reconstruction by degrading image visibility, introducing color distortions, and contaminating geometric priors for downstream optimization. We present NAKA-GS, a bionics-inspired framework for low-light 3D Gaussian Splatting that jointly improves photometric restoration and geometric initialization. Our method starts with a Naka-guided chroma-correction network, which combines physics-prior low-light enhancement, dual-branch input modeling, frequency-decoupled correction, and mask-guided optimization to suppress bright-region chromatic artifacts and edge-structure errors. The enhanced images are then fed into a feed-forward multi-view reconstruction model to produce dense scene priors. To further improve Gaussian initialization, we introduce a lightweight Point Preprocessing Module (PPM) that performs coordinate alignment, voxel pooling, and distance-adaptive progressive pruning to remove noisy and redundant points while preserving representative structures. Without introducing heavy inference overhead, NAKA-GS improves restoration quality, training stability, and optimization efficiency for low-light 3D reconstruction. The proposed method was presented in the NTIRE 3D Restoration and Reconstruction (3DRR) Challenge, and outperformed the baseline methods by a large margin. The code is available at https://github.com/RunyuZhu/Naka-GS",
+      "authors": [
+        "Runyu Zhu",
+        "SiXun Dong",
+        "Zhiqiang Zhang",
+        "Qingxia Ye",
+        "Zhihua Xu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-13T07:58:58+00:00",
+      "link": "https://arxiv.org/pdf/2604.11142v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Low-light 3D Gaussian Splatting and geometric initialization",
+      "llm_evidence_cn": "弱光环境下的3D高斯泼溅与几何初始化",
+      "llm_evidence": "弱光环境下的3D高斯泼溅与几何初始化",
+      "canonical_evidence": "弱光环境下的3D高斯泼溅与几何初始化",
+      "llm_tldr_en": "Enhances low-light 3DGS reconstruction through bionics-inspired correction and point pruning.",
+      "llm_tldr_cn": "通过仿生启发式校正和点云剪枝，增强弱光环境下的3DGS重建。",
+      "llm_tldr": "通过仿生启发式校正和点云剪枝，增强弱光环境下的3DGS重建。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Geometry and surface reconstruction from Gaussians",
+      "matched_requirement_id": "req-6",
+      "selection_source": "carryover_cache",
+      "paper_id": "2604.11142v1",
+      "carry_days": 1
+    },
+    {
+      "id": "2604.15239v1",
+      "title": "TokenGS: Decoupling 3D Gaussian Prediction from Pixels with Learnable Tokens",
+      "abstract": "In this work, we revisit several key design choices of modern Transformer-based approaches for feed-forward 3D Gaussian Splatting (3DGS) prediction. We argue that the common practice of regressing Gaussian means as depths along camera rays is suboptimal, and instead propose to directly regress 3D mean coordinates using only a self-supervised rendering loss. This formulation allows us to move from the standard encoder-only design to an encoder-decoder architecture with learnable Gaussian tokens, thereby unbinding the number of predicted primitives from input image resolution and number of views. Our resulting method, TokenGS, demonstrates improved robustness to pose noise and multiview inconsistencies, while naturally supporting efficient test-time optimization in token space without degrading learned priors. TokenGS achieves state-of-the-art feed-forward reconstruction performance on both static and dynamic scenes, producing more regularized geometry and more balanced 3DGS distribution, while seamlessly recovering emergent scene attributes such as static-dynamic decomposition and scene flow.",
+      "authors": [
+        "Jiawei Ren",
+        "Michal Jan Tyszkiewicz",
+        "Jiahui Huang",
+        "Zan Gojcic"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-16T17:12:37+00:00",
+      "link": "https://arxiv.org/pdf/2604.15239v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "feed-forward 3D Gaussian Splatting prediction and self-supervised rendering loss",
+      "llm_evidence_cn": "前馈3D高斯泼溅预测与自监督渲染损失",
+      "llm_evidence": "前馈3D高斯泼溅预测与自监督渲染损失",
+      "canonical_evidence": "前馈3D高斯泼溅预测与自监督渲染损失",
+      "llm_tldr_en": "TokenGS uses learnable tokens to decouple 3D Gaussian prediction from pixels for robust reconstruction.",
+      "llm_tldr_cn": "TokenGS通过可学习的Token将3D高斯预测与像素解耦，实现了更鲁棒的场景重建。",
+      "llm_tldr": "TokenGS通过可学习的Token将3D高斯预测与像素解耦，实现了更鲁棒的场景重建。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "3D Gaussian Splatting representation and rendering",
+      "matched_requirement_id": "req-3",
+      "selection_source": "carryover_cache",
+      "paper_id": "2604.15239v1",
+      "carry_days": 1
+    },
+    {
+      "id": "2604.13589v1",
+      "title": "Dehaze-then-Splat: Generative Dehazing with Physics-Informed 3D Gaussian Splatting for Smoke-Free Novel View Synthesis",
+      "abstract": "We present Dehaze-then-Splat, a two-stage pipeline for multi-view smoke removal and novel view synthesis developed for Track~2 of the NTIRE 2026 3D Restoration and Reconstruction Challenge. In the first stage, we produce pseudo-clean training images via per-frame generative dehazing using Nano Banana Pro, followed by brightness normalization. In the second stage, we train 3D Gaussian Splatting (3DGS) with physics-informed auxiliary losses -- depth supervision via Pearson correlation with pseudo-depth, dark channel prior regularization, and dual-source gradient matching -- that compensate for cross-view inconsistencies inherent in frame-wise generative processing. We identify a fundamental tension in dehaze-then-reconstruct pipelines: per-image restoration quality does not guarantee multi-view consistency, and such inconsistency manifests as blurred renders and structural instability in downstream 3D reconstruction.Our analysis shows that MCMC-based densification with early stopping, combined with depth and haze-suppression priors, effectively mitigates these artifacts. On the Akikaze validation scene, our pipeline achieves 20.98\\,dB PSNR and 0.683 SSIM for novel view synthesis, a +1.50\\,dB improvement over the unregularized baseline.",
+      "authors": [
+        "Yuchao Chen",
+        "Hanqing Wang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-15T07:52:53+00:00",
+      "link": "https://arxiv.org/pdf/2604.13589v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "physics-informed 3D Gaussian Splatting with auxiliary losses for reconstruction",
+      "llm_evidence_cn": "带有辅助损失的物理启发式3D高斯泼溅重建",
+      "llm_evidence": "带有辅助损失的物理启发式3D高斯泼溅重建",
+      "canonical_evidence": "带有辅助损失的物理启发式3D高斯泼溅重建",
+      "llm_tldr_en": "A two-stage pipeline using physics-informed 3DGS for smoke removal and novel view synthesis.",
+      "llm_tldr_cn": "一种利用物理启发式3DGS进行去雾和新视角合成的两阶段流水线。",
+      "llm_tldr": "一种利用物理启发式3DGS进行去雾和新视角合成的两阶段流水线。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Physically based inverse rendering with 3D Gaussian primitives",
+      "matched_requirement_id": "req-9",
+      "selection_source": "carryover_cache",
+      "paper_id": "2604.13589v1",
+      "carry_days": 1
+    },
+    {
+      "id": "2604.13340v1",
+      "title": "MSGS: Multispectral 3D Gaussian Splatting",
+      "abstract": "We present a multispectral extension to 3D Gaussian Splatting (3DGS) for wavelength-aware view synthesis. Each Gaussian is augmented with spectral radiance, represented via per-band spherical harmonics, and optimized under a dual-loss supervision scheme combining RGB and multispectral signals. To improve rendering fidelity, we perform spectral-to-RGB conversion at the pixel level, allowing richer spectral cues to be retained during optimization. Our method is evaluated on both public and self-captured real-world datasets, demonstrating consistent improvements over the RGB-only 3DGS baseline in terms of image quality and spectral consistency. Notably, it excels in challenging scenes involving translucent materials and anisotropic reflections. The proposed approach maintains the compactness and real-time efficiency of 3DGS while laying the foundation for future integration with physically based shading models.",
+      "authors": [
+        "Iris Zheng",
+        "Guojun Tang",
+        "Alexander Doronin",
+        "Paul Teal",
+        "Fang-Lue Zhang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.GR"
+      ],
+      "published": "2026-04-14T23:03:38+00:00",
+      "link": "https://arxiv.org/pdf/2604.13340v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "multispectral extension to 3DGS for wavelength-aware view synthesis and radiance",
+      "llm_evidence_cn": "针对波长感知视角合成和辐射度的3DGS多光谱扩展",
+      "llm_evidence": "针对波长感知视角合成和辐射度的3DGS多光谱扩展",
+      "canonical_evidence": "针对波长感知视角合成和辐射度的3DGS多光谱扩展",
+      "llm_tldr_en": "MSGS extends 3DGS to multispectral signals, improving rendering for translucent and anisotropic materials.",
+      "llm_tldr_cn": "MSGS将3DGS扩展到多光谱信号，改进了半透明和各向异性材料的渲染效果。",
+      "llm_tldr": "MSGS将3DGS扩展到多光谱信号，改进了半透明和各向异性材料的渲染效果。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Physically based rendering for Gaussian Splatting",
+      "matched_requirement_id": "req-5",
+      "selection_source": "carryover_cache",
+      "paper_id": "2604.13340v1",
+      "carry_days": 1
+    },
+    {
+      "id": "2604.12580v2",
+      "title": "PDF-GS: Progressive Distractor Filtering for Robust 3D Gaussian Splatting",
+      "abstract": "Recent advances in 3D Gaussian Splatting (3DGS) have enabled impressive real-time photorealistic rendering. However, conventional training pipelines inherently assume full multi-view consistency among input images, which makes them sensitive to distractors that violate this assumption and cause visual artifacts. In this work, we revisit an underexplored aspect of 3DGS: its inherent ability to suppress inconsistent signals. Building on this insight, we propose PDF-GS (Progressive Distractor Filtering for Robust 3D Gaussian Splatting), a framework that amplifies this self-filtering property through a progressive multi-phase optimization. The progressive filtering phases gradually remove distractors by exploiting discrepancy cues, while the following reconstruction phase restores fine-grained, view-consistent details from the purified Gaussian representation. Through this iterative refinement, PDF-GS achieves robust, high-fidelity, and distractor-free reconstructions, consistently outperforming baselines across diverse datasets and challenging real-world conditions. Moreover, our approach is lightweight and easily adaptable to existing 3DGS frameworks, requiring no architectural changes or additional inference overhead, leading to a new state-of-the-art performance. The code is publicly available at https://github.com/kangrnin/PDF-GS.",
+      "authors": [
+        "Kangmin Seo",
+        "MinKyu Lee",
+        "Tae-Young Kim",
+        "ByeongCheol Lee",
+        "JoonSeoung An",
+        "Jae-Pil Heo"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-14T11:03:55+00:00",
+      "link": "https://arxiv.org/pdf/2604.12580v2",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Robust 3D Gaussian Splatting with progressive distractor filtering",
+      "llm_evidence_cn": "具有渐进式干扰过滤功能的鲁棒3D高斯泼溅",
+      "llm_evidence": "具有渐进式干扰过滤功能的鲁棒3D高斯泼溅",
+      "canonical_evidence": "具有渐进式干扰过滤功能的鲁棒3D高斯泼溅",
+      "llm_tldr_en": "Proposes PDF-GS to improve 3DGS robustness by filtering out inconsistent signals during optimization.",
+      "llm_tldr_cn": "提出PDF-GS框架，通过在优化过程中过滤不一致信号来提高3DGS的鲁棒性。",
+      "llm_tldr": "提出PDF-GS框架，通过在优化过程中过滤不一致信号来提高3DGS的鲁棒性。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "3D Gaussian Splatting representation and rendering",
+      "matched_requirement_id": "req-3",
+      "selection_source": "carryover_cache",
+      "paper_id": "2604.12580v2",
+      "carry_days": 1
+    },
+    {
+      "id": "2604.12217v1",
+      "title": "VVGT: Visual Volume-Grounded Transformer",
+      "abstract": "Volumetric visualization has long been dominated by Direct Volume Rendering (DVR), which operates on dense voxel grids and suffers from limited scalability as resolution and interactivity demands increase. Recent advances in 3D Gaussian Splatting (3DGS) offer a representation-centric alternative; however, existing volumetric extensions still depend on costly per-scene optimization, limiting scalability and interactivity. We present VVGT (Visual Volume-Grounded Transformer), a feed-forward, representation-first framework that directly maps volumetric data to a 3D Gaussian Splatting representation, advancing a new paradigm for volumetric visualization beyond DVR. Unlike prior feed-forward 3DGS methods designed for surface-centric reconstruction, VVGT explicitly accounts for volumetric rendering, where each pixel aggregates contributions along a ray. VVGT employs a dual-transformer network and introduces Volume Geometry Forcing, an epipolar cross-attention mechanism that integrates multi-view observations into distributed 3D Gaussian primitives without surface assumptions. This design eliminates per-scene optimization while enabling accurate volumetric representations. Extensive experiments show that VVGT achieves high-quality visualization with orders-of-magnitude faster conversion, improved geometric consistency, and strong zero-shot generalization across diverse datasets, enabling truly interactive and scalable volumetric visualization. The code will be publicly released upon acceptance.",
+      "authors": [
+        "Yuxuan Wang",
+        "Qibiao Li",
+        "Youcheng Cai"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR"
+      ],
+      "published": "2026-04-14T02:51:41+00:00",
+      "link": "https://arxiv.org/pdf/2604.12217v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Maps volumetric data to a 3D Gaussian Splatting representation",
+      "llm_evidence_cn": "将体积数据映射到3D高斯泼溅表示",
+      "llm_evidence": "将体积数据映射到3D高斯泼溅表示",
+      "canonical_evidence": "将体积数据映射到3D高斯泼溅表示",
+      "llm_tldr_en": "Introduces VVGT, a transformer framework that maps volumetric data to 3DGS for efficient visualization.",
+      "llm_tldr_cn": "引入VVGT，一个将体积数据映射到3DGS以实现高效可视化的Transformer框架。",
+      "llm_tldr": "引入VVGT，一个将体积数据映射到3DGS以实现高效可视化的Transformer框架。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "3D Gaussian Splatting representation and rendering",
+      "matched_requirement_id": "req-3",
+      "selection_source": "carryover_cache",
+      "paper_id": "2604.12217v1",
+      "carry_days": 1
+    },
+    {
+      "id": "2604.15284v1",
+      "title": "GlobalSplat: Efficient Feed-Forward 3D Gaussian Splatting via Global Scene Tokens",
+      "abstract": "The efficient spatial allocation of primitives serves as the foundation of 3D Gaussian Splatting, as it directly dictates the synergy between representation compactness, reconstruction speed, and rendering fidelity. Previous solutions, whether based on iterative optimization or feed-forward inference, suffer from significant trade-offs between these goals, mainly due to the reliance on local, heuristic-driven allocation strategies that lack global scene awareness. Specifically, current feed-forward methods are largely pixel-aligned or voxel-aligned. By unprojecting pixels into dense, view-aligned primitives, they bake redundancy into the 3D asset. As more input views are added, the representation size increases and global consistency becomes fragile. To this end, we introduce GlobalSplat, a framework built on the principle of align first, decode later. Our approach learns a compact, global, latent scene representation that encodes multi-view input and resolves cross-view correspondences before decoding any explicit 3D geometry. Crucially, this formulation enables compact, globally consistent reconstructions without relying on pretrained pixel-prediction backbones or reusing latent features from dense baselines. Utilizing a coarse-to-fine training curriculum that gradually increases decoded capacity, GlobalSplat natively prevents representation bloat. On RealEstate10K and ACID, our model achieves competitive novel-view synthesis performance while utilizing as few as 16K Gaussians, significantly less than required by dense pipelines, obtaining a light 4MB footprint. Further, GlobalSplat enables significantly faster inference than the baselines, operating under 78 milliseconds in a single forward pass. Project page is available at https://r-itk.github.io/globalsplat/",
+      "authors": [
+        "Roni Itkin",
+        "Noam Issachar",
+        "Yehonatan Keypur",
+        "Yehonatan Keypur",
+        "Anpei Chen",
+        "Sagie Benaim"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-16T17:52:06+00:00",
+      "link": "https://arxiv.org/pdf/2604.15284v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Efficient feed-forward 3D Gaussian Splatting via global scene tokens",
+      "llm_evidence_cn": "通过全局场景令牌实现高效的前馈3D高斯泼溅",
+      "llm_evidence": "通过全局场景令牌实现高效的前馈3D高斯泼溅",
+      "canonical_evidence": "通过全局场景令牌实现高效的前馈3D高斯泼溅",
+      "llm_tldr_en": "GlobalSplat improves 3DGS spatial allocation using global scene awareness for better rendering fidelity.",
+      "llm_tldr_cn": "GlobalSplat利用全局场景感知改进3DGS空间分配，提升渲染保真度。",
+      "llm_tldr": "GlobalSplat利用全局场景感知改进3DGS空间分配，提升渲染保真度。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "3D Gaussian Splatting representation and rendering",
+      "matched_requirement_id": "req-3",
+      "selection_source": "carryover_cache",
+      "paper_id": "2604.15284v1",
+      "carry_days": 1
+    },
+    {
+      "id": "2604.10593v1",
+      "title": "MonoEM-GS: Monocular Expectation-Maximization Gaussian Splatting SLAM",
+      "abstract": "Feed-forward geometric foundation models can infer dense point clouds and camera motion directly from RGB streams, providing priors for monocular SLAM. However, their predictions are often view-dependent and noisy: geometry can vary across viewpoints and under image transformations, and local metric properties may drift between frames. We present MonoEM-GS, a monocular mapping pipeline that integrates such geometric predictions into a global Gaussian Splatting representation while explicitly addressing these inconsistencies. MonoEM-GS couples Gaussian Splatting with an Expectation--Maximization formulation to stabilize geometry, and employs ICP-based alignment for monocular pose estimation. Beyond geometry, MonoEM-GS parameterizes Gaussians with multi-modal features, enabling in-place open-set segmentation and other downstream queries directly on the reconstructed map. We evaluate MonoEM-GS on 7-Scenes, TUM RGB-D and Replica, and compare against recent baselines.",
+      "authors": [
+        "Evgenii Kruzhkov",
+        "Sven Behnke"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-04-12T11:51:16+00:00",
+      "link": "https://arxiv.org/pdf/2604.10593v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Global Gaussian Splatting representation for monocular SLAM mapping",
+      "llm_evidence_cn": "用于单目SLAM建图的全局高斯泼溅表示",
+      "llm_evidence": "用于单目SLAM建图的全局高斯泼溅表示",
+      "canonical_evidence": "用于单目SLAM建图的全局高斯泼溅表示",
+      "llm_tldr_en": "MonoEM-GS integrates geometric predictions into a global 3DGS representation for stable monocular mapping.",
+      "llm_tldr_cn": "MonoEM-GS将几何预测集成到全局3DGS表示中，实现稳定的单目建图。",
+      "llm_tldr": "MonoEM-GS将几何预测集成到全局3DGS表示中，实现稳定的单目建图。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Geometry and surface reconstruction from Gaussians",
+      "matched_requirement_id": "req-6",
+      "selection_source": "carryover_cache",
+      "paper_id": "2604.10593v1",
+      "carry_days": 1
+    },
+    {
+      "id": "2604.10578v1",
+      "title": "Rein3D: Reinforced 3D Indoor Scene Generation with Panoramic Video Diffusion Models",
+      "abstract": "The growing demand for Embodied AI and VR applications has highlighted the need for synthesizing high-quality 3D indoor scenes from sparse inputs. However, existing approaches struggle to infer massive amounts of missing geometry in large unseen areas while maintaining global consistency, often producing locally plausible but globally inconsistent reconstructions. We present Rein3D, a framework that reconstructs full 360-degree indoor environments by coupling explicit 3D Gaussian Splatting (3DGS) with temporally coherent priors from video diffusion models. Our approach follows a \"restore-and-refine\" paradigm: we employ a radial exploration strategy to render imperfect panoramic videos along trajectories starting from the origin, effectively uncovering occluded regions from a coarse 3DGS initialization. These sequences are restored by a panoramic video-to-video diffusion model and further enhanced via video super-resolution to synthesize high-fidelity geometry and textures. Finally, these refined videos serve as pseudo-ground truths to update the global 3D Gaussian field. To support this task, we construct PanoV2V-15K, a dataset of over 15K paired clean and degraded panoramic videos for diffusion-based scene restoration. Experiments demonstrate that Rein3D produces photorealistic and globally consistent 3D scenes and significantly improves long-range camera exploration compared with existing baselines.",
+      "authors": [
+        "Dehui Wang",
+        "Congsheng Xu",
+        "Rong Wei",
+        "Yue Shi",
+        "Shoufa Chen",
+        "Dingxiang Luo",
+        "Tianshuo Yang",
+        "Xiaokang Yang",
+        "Yusen Qin",
+        "Rui Tang",
+        "Yao Mu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-12T10:55:14+00:00",
+      "link": "https://arxiv.org/pdf/2604.10578v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Coupling explicit 3D Gaussian Splatting with video diffusion models",
+      "llm_evidence_cn": "将显式3D高斯泼溅与视频扩散模型耦合",
+      "llm_evidence": "将显式3D高斯泼溅与视频扩散模型耦合",
+      "canonical_evidence": "将显式3D高斯泼溅与视频扩散模型耦合",
+      "llm_tldr_en": "Rein3D generates 360-degree indoor scenes by combining 3DGS with temporally coherent video priors.",
+      "llm_tldr_cn": "Rein3D通过结合3DGS和时间相干视频先验，生成360度室内场景。",
+      "llm_tldr": "Rein3D通过结合3DGS和时间相干视频先验，生成360度室内场景。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "3D Gaussian Splatting representation and rendering",
+      "matched_requirement_id": "req-3",
+      "selection_source": "carryover_cache",
+      "paper_id": "2604.10578v1",
+      "carry_days": 1
+    },
+    {
+      "id": "2604.12592v1",
+      "title": "ELoG-GS: Dual-Branch Gaussian Splatting with Luminance-Guided Enhancement for Extreme Low-light 3D Reconstruction",
+      "abstract": "This paper presents our approach to the NTIRE 2026 3D Restoration and Reconstruction Challenge (Track 1), which focuses on reconstructing high-quality 3D representations from degraded multi-view inputs. The challenge involves recovering geometrically consistent and photorealistic 3D scenes in extreme low-light environments. To address this task, we propose Extreme Low-light Optimized Gaussian Splatting (ELoG-GS), a robust low-light 3D reconstruction pipeline that integrates learning-based point cloud initialization and luminance-guided color enhancement for stable and photorealistic Gaussian Splatting. Our method incorporates both geometry-aware initialization and photometric adaptation strategies to improve reconstruction fidelity under challenging conditions. Extensive experiments on the NTIRE Track 1 benchmark demonstrate that our approach significantly improves reconstruction quality over the baselines, achieving superior visual fidelity and geometric consistency. The proposed method provides a practical solution for robust 3D reconstruction in real-world degraded scenarios. In the final testing phase, our method achieved a PSNR of 18.6626 and an SSIM of 0.6855 on the official platform leaderboard. Code is available at https://github.com/lyh120/FSGS_EAPGS.",
+      "authors": [
+        "Yuhao Liu",
+        "Dingju Wang",
+        "Ziyang Zheng"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-14T11:17:29+00:00",
+      "link": "https://arxiv.org/pdf/2604.12592v1",
+      "tags": [
+        "keyword:3DGSIR",
+        "query:3DGSIR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "3D reconstruction and photometric adaptation using Gaussian Splatting",
+      "llm_evidence_cn": "利用高斯泼溅进行3D重建与光度自适应",
+      "llm_evidence": "利用高斯泼溅进行3D重建与光度自适应",
+      "canonical_evidence": "利用高斯泼溅进行3D重建与光度自适应",
+      "llm_tldr_en": "Develops a robust 3D reconstruction pipeline using 3DGS optimized for extreme low-light environments.",
+      "llm_tldr_cn": "开发了一种针对极端低光环境优化的3DGS鲁棒3D重建流水线。",
+      "llm_tldr": "开发了一种针对极端低光环境优化的3DGS鲁棒3D重建流水线。",
+      "llm_tags": [
+        "query:3dgsir"
+      ],
+      "matched_query_tag": "query:3dgsir",
+      "matched_query_text": "Inverse rendering techniques for 3D reconstruction",
+      "matched_requirement_id": "req-1",
+      "selection_source": "carryover_cache",
+      "paper_id": "2604.12592v1",
       "carry_days": 1
     }
   ]
