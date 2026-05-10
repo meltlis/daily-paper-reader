@@ -6,74 +6,73 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-05-03
-- 运行时间：2026-05-03 20:25:53 UTC
+- 最新运行日期：2026-05-10
+- 运行时间：2026-05-10 20:04:25 UTC
 - 运行状态：成功
-- 本次总论文数：18
-- 精读区：7
+- 本次总论文数：17
+- 精读区：6
 - 速读区：11
 
 ### 今日简报（AI）
-今日聚焦 18 篇 3DGS 领域前沿进展，深度解析弱光重建、人体建模及实时
-- 详情：[/202605/03/README](/202605/03/README)
+今日聚焦 3D Gaussian Splatting 的前沿突破，深度解析了从超写实头部重建到复杂表面渲染的 17 篇最新成果。
+重点推荐两篇 10 分满分佳作，展示了 3DGS 在大规模高质量头部建模与逆向渲染（3DSS）领域的精度跨越。
+建议关注 3DGS 在水下、医疗影像及第一人称视角等垂直场景的跨界应用，感受三维重建技术的全面爆发。
+- 详情：[/202605/10/README](/202605/10/README)
 
 ### 精读区论文标签
-1. [Light 'em Up: Enabling Few-Shot Low-Light 3D Gaussian Splatting with Multi-Scale Explicit Retinex Illumination Decoupling](/202605/03/2604.24053v1-light-em-up-enabling-few-shot-low-light-3d-gaussian-splatting-with-multi-scale-explicit-retinex-illumination-decoupling)  
+1. [Large-Scale High-Quality 3D Gaussian Head Reconstruction from Multi-View Captures](/202605/10/2605.04035v1-large-scale-high-quality-3d-gaussian-head-reconstruction-from-multi-view-captures)  
    标签：评分：10.0/10、query:3dgsir
-   evidence：利用3D高斯泼溅和Retinex理论进行光照解耦
-2. [Generalizable Human Gaussian Splatting via Multi-view Semantic Consistency](/202605/03/2604.25466v1-generalizable-human-gaussian-splatting-via-multi-view-semantic-consistency)  
+   evidence：从多视图采集进行3D高斯头部重建
+2. [3DSS: 3D Surface Splatting for Inverse Rendering](/202605/10/2605.05876v1-3dss-3d-surface-splatting-for-inverse-rendering)  
+   标签：评分：10.0/10、query:3dgsir
+   evidence：用于基于物理的逆向渲染的可微表面泼溅
+3. [Multi-Scale Gaussian-Language Map for Zero-shot Embodied Navigation and Reasoning](/202605/10/2605.01736v1-multi-scale-gaussian-language-map-for-zero-shot-embodied-navigation-and-reasoning)  
    标签：评分：9.0/10、query:3dgsir
-   evidence：可泛化的人体高斯泼溅
-3. [EnerGS: Energy-Based Gaussian Splatting with Partial Geometric Priors](/202605/03/2604.26238v1-energs-energy-based-gaussian-splatting-with-partial-geometric-priors)  
+   evidence：用于快速渲染和地图构建的3D高斯表示
+4. [Ground4D: Spatially-Grounded Feedforward 4D Reconstruction for Unstructured Off-Road Scenes](/202605/10/2605.04435v1-ground4d-spatially-grounded-feedforward-4d-reconstruction-for-unstructured-off-road-scenes)  
    标签：评分：9.0/10、query:3dgsir
-   evidence：使用几何先验进行场景重建的3D高斯泼溅
-4. [Sparse-View 3D Gaussian Splatting in the Wild](/202605/03/2604.27422v1-sparse-view-3d-gaussian-splatting-in-the-wild)  
+   evidence：用于4D重建的前馈高斯泼溅
+5. [QuadBox: Accelerating 3D Gaussian Splatting with Geometry-Aware Boxes](/202605/10/2605.04844v1-quadbox-accelerating-3d-gaussian-splatting-with-geometry-aware-boxes)  
    标签：评分：9.0/10、query:3dgsir
-   evidence：使用3D高斯泼溅的稀疏视图合成框架
-5. [Softmax-GS: Generalized Gaussians Learning When to Blend or Bound](/202605/03/2604.27437v1-softmax-gs-generalized-gaussians-learning-when-to-blend-or-bound)  
+   evidence：利用几何感知框加速3D高斯泼溅
+6. [Aes3D: Aesthetic Assessment in 3D Gaussian Splatting](/202605/10/2605.05155v1-aes3d-aesthetic-assessment-in-3d-gaussian-splatting)  
    标签：评分：9.0/10、query:3dgsir
-   evidence：基于高斯的几何与表面重建
-6. [Faster 3D Gaussian Splatting Convergence via Structure-Aware Densification](/202605/03/2604.28016v1-faster-3d-gaussian-splatting-convergence-via-structure-aware-densification)  
-   标签：评分：9.0/10、query:3dgsir
-   evidence：3D高斯泼溅表示与加密策略
-7. [Generalizable Sparse-View 3D Reconstruction from Unconstrained Images](/202605/03/2604.28193v1-generalizable-sparse-view-3d-reconstruction-from-unconstrained-images)  
-   标签：评分：9.0/10、query:3dgsir
-   evidence：预测3D高斯并针对目标光照条件调节外观
+   evidence：3D Gaussian Splatting的审美评估框架
 
 ### 速读区论文标签
-1. [A Comparative Evaluation of Geometric Accuracy in NeRF and Gaussian Splatting](/202605/03/2604.18205v1-a-comparative-evaluation-of-geometric-accuracy-in-nerf-and-gaussian-splatting)  
+1. [Spatiotemporal Degradation-Aware 3D Gaussian Splatting for Realistic Underwater Scene Reconstruction](/202605/10/2604.23551v1-spatiotemporal-degradation-aware-3d-gaussian-splatting-for-realistic-underwater-scene-reconstruction)  
    标签：评分：8.0/10、query:3dgsir
-   evidence：评估高斯泼溅中的几何精度与表面保真度
-2. [SketchFaceGS: Real-Time Sketch-Driven Face Editing and Generation with Gaussian Splatting](/202605/03/2604.19202v1-sketchfacegs-real-time-sketch-driven-face-editing-and-generation-with-gaussian-splatting)  
+   evidence：用于水下场景重建和退化建模的3D高斯泼溅
+2. [GS-DOT: Gaussian splatting-based image reconstruction for diffuse optical tomography](/202605/10/2604.23675v1-gs-dot-gaussian-splatting-based-image-reconstruction-for-diffuse-optical-tomography)  
    标签：评分：8.0/10、query:3dgsir
-   evidence：3D高斯头部模型的实时生成与编辑
-3. [An Object-Centered Data Acquisition Method for 3D Gaussian Splatting using Mobile Phones](/202605/03/2604.19216v1-an-object-centered-data-acquisition-method-for-3d-gaussian-splatting-using-mobile-phones)  
+   evidence：使用高斯泼溅进行3D重建的逆向渲染
+3. [Bringing a Personal Point of View: Evaluating Dynamic 3D Gaussian Splatting for Egocentric Scene Reconstruction](/202605/10/2604.23803v1-bringing-a-personal-point-of-view-evaluating-dynamic-3d-gaussian-splatting-for-egocentric-scene-reconstruction)  
    标签：评分：8.0/10、query:3dgsir
-   evidence：专门针对3D高斯泼溅重建的数据采集方法
-4. [FluSplat: Sparse-View 3D Editing without Test-Time Optimization](/202605/03/2604.20038v1-flusplat-sparse-view-3d-editing-without-test-time-optimization)  
+   evidence：评估用于重建的动态3D高斯泼溅
+4. [Fake3DGS: A Benchmark for 3D Manipulation Detection in Neural Rendering](/202605/10/2604.27590v1-fake3dgs-a-benchmark-for-3d-manipulation-detection-in-neural-rendering)  
    标签：评分：8.0/10、query:3dgsir
-   evidence：使用3D高斯泼溅进行3D场景编辑的前馈框架
-5. [Multivariate Gaussian NeRF for Wide Field-of-View Ultrasound Reconstruction](/202605/03/2604.24187v1-multivariate-gaussian-nerf-for-wide-field-of-view-ultrasound-reconstruction)  
+   evidence：涉及几何和外观的3DGS篡改检测基准
+5. [A Principled Approach for Creating High-fidelity Synthetic Demonstrations for Imitation Learning](/202605/10/2605.01232v1-a-principled-approach-for-creating-high-fidelity-synthetic-demonstrations-for-imitation-learning)  
    标签：评分：7.0/10、query:3dgsir
-   evidence：使用3D高斯进行超声重建
-6. [Power Foam: Unifying Real-Time Differentiable Ray Tracing and Rasterization](/202605/03/2604.24994v1-power-foam-unifying-real-time-differentiable-ray-tracing-and-rasterization)  
+   evidence：用于视觉逼真演示生成的3D高斯泼溅
+6. [SplAttN: Bridging 2D and 3D with Gaussian Soft Splatting and Attention for Point Cloud Completion](/202605/10/2605.01466v1-splattn-bridging-2d-and-3d-with-gaussian-soft-splatting-and-attention-for-point-cloud-completion)  
    标签：评分：7.0/10、query:3dgsir
-   evidence：统一光线追踪与光栅化的可微3D表示
-7. [Generalizable 3D Gaussian Splatting enabled Semantic Coding for Real-Time Immersive Video Communications](/202605/03/2604.25330v1-generalizable-3d-gaussian-splatting-enabled-semantic-coding-for-real-time-immersive-video-communications)  
+   evidence：使用可微分高斯泼溅
+7. [From Concept to Capability: Evaluating 3D Gaussian Splatting for Synthetic Scene Editing in Autonomous Driving](/202605/10/2605.01995v1-from-concept-to-capability-evaluating-3d-gaussian-splatting-for-synthetic-scene-editing-in-autonomous-driving)  
    标签：评分：7.0/10、query:3dgsir
-   evidence：用于实时视频的可泛化3D高斯泼溅
-8. [Semantic Foam: Unifying Spatial and Semantic Scene Decomposition](/202605/03/2604.26262v1-semantic-foam-unifying-spatial-and-semantic-scene-decomposition)  
+   evidence：评估3DGS在自动驾驶中的重建与编辑
+8. [FreeTimeGS++: Secrets of Dynamic Gaussian Splatting and Their Principles](/202605/10/2605.03337v1-freetimegs-secrets-of-dynamic-gaussian-splatting-and-their-principles)  
    标签：评分：7.0/10、query:3dgsir
-   evidence：扩展3D高斯泼溅用于语义场景分解
-9. [AmaraSpatial-10K: A Spatially and Semantically Aligned 3D Dataset for Spatial Computing and Embodied AI](/202605/03/2604.23018v1-amaraspatial-10k-a-spatially-and-semantically-aligned-3d-dataset-for-spatial-computing-and-embodied-ai)  
+   evidence：用于动态场景重建的4D高斯泼溅分析
+9. [GETA-3DGS: Automatic Joint Structured Pruning and Quantization for 3D Gaussian Splatting](/202605/10/2605.02086v1-geta-3dgs-automatic-joint-structured-pruning-and-quantization-for-3d-gaussian-splatting)  
    标签：评分：6.0/10、query:3dgsir
-   evidence：提供具有分离PBR材质贴图的3D资产以支持重光照
-10. [Learning Sparse BRDF Measurement Samples from Image](/202605/03/2604.26740v1-learning-sparse-brdf-measurement-samples-from-image)  
+   evidence：3D高斯泼溅的压缩框架
+10. [First Shape, Then Meaning: Efficient Geometry and Semantics Learning for Indoor Reconstruction](/202605/10/2605.03463v1-first-shape-then-meaning-efficient-geometry-and-semantics-learning-for-indoor-reconstruction)  
    标签：评分：6.0/10、query:3dgsir
-   evidence：学习BRDF测量与材质外观
-11. [D-Rex : Diffusion Rendering for Relightable Expressive Avatars](/202605/03/2604.27871v1-d-rex--diffusion-rendering-for-relightable-expressive-avatars)  
+   evidence：室内重建的几何与语义学习
+11. [Spark3R: Asymmetric Token Reduction Makes Fast Feed-Forward 3D Reconstruction](/202605/10/2605.06270v1-spark3r-asymmetric-token-reduction-makes-fast-feed-forward-3d-reconstruction)  
    标签：评分：6.0/10、query:3dgsir
-   evidence：可重光照的人体化身及重光照与建模的解耦
+   evidence：从少量输入图像进行前馈3D重建
 
 
 <div class="dpr-home-promo-card">
